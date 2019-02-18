@@ -47,14 +47,27 @@ void CfwDlg::setSliderPos(int pos) {
 }
 
 void CfwDlg::myInitialize() {
-	/*------- opengl --------*/
+
 	MoveWindow(100, 100, 800, 800);
-	pOpenGLWindow = new OpenGLWindow();
+
+	/*------- firework -----*/
+	// 放在这里，实例化fw对象的时候，不执行任何opengl相关的初始化工作
+	float* args = nullptr;
+	fw.reset(getFirework(FireWorkType::Normal, args));
+
+
+	/*------- opengl --------*/
+	// 放在这里，已保证fw已经被实例化出具体的对象
+	pOpenGLWindow = new OpenGLWindow(*fw);
 	pOpenGLWindow->Create(
 		NULL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE,
 		CRect(50, 50, 349, 349),
 		this,   //this is the parent
 		0);
+
+	/*------- initialize firework --------*/
+	// 构造OpenGLWindow对象时候，初始化glew，因此与glew有关的初始化操作放在这里
+	fw->initialize();
 
 	/*------- opencv --------*/
 	//CWnd是MFC窗口类的基类,提供了微软基础类库中所有窗口类的基本功能。
@@ -69,11 +82,6 @@ void CfwDlg::myInitialize() {
 	::SetParent(hWnd, pWnd->m_hWnd);
 	//ShowWindow指定窗口中显示
 	::ShowWindow(hParent, SW_HIDE);
-
-	/*------- firework -----*/
-	// 放在这里，已保证FireWork实例化的时候，glew已经初始化完成
-	float* args = nullptr;
-	fw.reset(getFirework(FireWorkType::Normal, args));
 
 	/*------- combo --------*/
 	for (auto it = fw->attrs_.begin(); it != fw->attrs_.end(); ++it) {
@@ -175,6 +183,7 @@ HCURSOR CfwDlg::OnQueryDragIcon()
  * 自定义鼠标移动响应事件
  * ========================================
  */
+
 void CfwDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CSliderCtrl* pSlider = reinterpret_cast<CSliderCtrl*>(pScrollBar);
@@ -203,7 +212,8 @@ void CfwDlg::onSliderChange() {
 	int pos = m_sliderc.GetPos();
 	cv::Mat photo(300, 300, CV_8UC3, cv::Scalar(pos * 10, 0, 255));
 	cv::imshow(opencvWindow, photo);
-	fw->GetParticles();
+	resetArgValue();
+	pOpenGLWindow->RedrawWindow();
 }
 
 void CfwDlg::OnBnClickedButtonMinus(){
@@ -242,14 +252,14 @@ void CfwDlg::resetArgValue(){
 			int r = static_cast<int>(color.r * 255);
 			int g = static_cast<int>(color.g * 255);
 			int b = static_cast<int>(color.b * 255);
-			colorDlg.SetCurrentColor(RGB(r, g, b));
-			m_bn_color.SetFaceColor(RGB(r, g, b));
+			auto color = RGB(r, g, b);
+			// colorDlg.SetCurrentColor()无效，必须直接修改其值
+			colorDlg.m_cc.rgbResult = color;
+			m_bn_color.SetFaceColor(color);
 		}
 		m_edit.ShowWindow(false);
 		m_bn_color.ShowWindow(true);
 		break;
-	default:
-		printf("Unexpected Arg Type!\n");
 	}
 }
 
@@ -277,6 +287,8 @@ void CfwDlg::OnBnClickedConform(){
 	default:
 		printf("Unexpected Arg Type!\n");
 	}
+	fw->GetParticles();
+	pOpenGLWindow->Invalidate();
 }
 
 void CfwDlg::OnBnClickedColorBtn(){

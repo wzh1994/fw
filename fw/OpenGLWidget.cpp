@@ -17,6 +17,9 @@ BEGIN_MESSAGE_MAP(OpenGLWidget, CWnd)
 	//{{AFX_MSG_MAP(COpenGL)
 	ON_WM_CREATE()
 	ON_WM_PAINT()
+	ON_WM_MOUSELEAVE()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -90,7 +93,7 @@ void OpenGLWidget::OnPaint() {
 		//render here
 		RenderScene();
 		::glFlush();
-		SwapBuffers(m_hDC);
+	 	SwapBuffers(m_hDC);
 	};
 	// Do not call CWnd::OnPaint() for painting messages
 }

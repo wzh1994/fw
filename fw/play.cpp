@@ -88,3 +88,8 @@ void playInNewThread() {
 extern "C" __declspec(dllexport) void play() {
 	playInNewThread();
 }
+
+int main() {
+	std::thread t(playInNewThread);
+	t.join();
+}

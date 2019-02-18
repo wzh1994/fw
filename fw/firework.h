@@ -29,22 +29,32 @@ protected:
 
 protected:
 	std::vector<Attr> attrs_;
-	FwBase() {
-		//shader_.reset(new Shader("fw.vs", "fw.frag"));
-		printf("Open fw shader\n");
-	};
+	FwBase() = default;
 
-private:
+protected:
 	std::unique_ptr<Shader> shader_;
 
+private:
+	/* ==========================================
+	 * 子类需实现以下几个方法
+	 * ==========================================
+	 */
+
+	// 与opengl有关的初始化放在这里，以保证其在glewInit之后执行
+	virtual void initialize() {
+		shader_.reset(new Shader("fw.vs", "fw.fs"));
+		GetParticles();
+	}
+
+	virtual void GetParticles() = 0;
+	virtual void RenderParticles() = 0;
+
+public:
 	void RenderScene() {
-		//shader_->use();
 		RenderParticles();
 	}
 
-	// 子类需实现以下几个方法
-	virtual void GetParticles() = 0;
-	virtual void RenderParticles() = 0;
+	virtual ~FwBase() = default;
 };
 
 enum class FireWorkType {
