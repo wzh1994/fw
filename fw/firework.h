@@ -3,28 +3,30 @@
 #include <glm.hpp>
 #include <memory>
 #include "Shader.h"
+#include "Camera.h"
 
 class CfwDlg;
 enum class ArgType {
-	Value = 0,
-	Color
+	Scalar = 0,
+	Color,
+	Vector3
+
 };
 class FwBase {
 	friend class CfwDlg;
 protected:
 	struct Attr {
-		std::wstring name;
 		ArgType type;
-		float value;
-		glm::vec3 color;
+		std::wstring name;
+		glm::vec3 value;
 		Attr(std::wstring name, float value)
-			: name(name)
-			, type(ArgType::Value)
+			: type(ArgType::Scalar)
+			, name(name)
+			, value(value, 0, 0) {}
+		Attr(ArgType type, std::wstring name, glm::vec3 value)
+			: type(type)
+			, name(name)
 			, value(value) {}
-		Attr(std::wstring name, glm::vec3 color)
-			: name(name)
-			, type(ArgType::Color)
-			, color(color) {}
 	};
 
 protected:
@@ -47,11 +49,11 @@ private:
 	}
 
 	virtual void GetParticles() = 0;
-	virtual void RenderParticles() = 0;
+	virtual void RenderParticles(const Camera& camera) = 0;
 
 public:
-	void RenderScene() {
-		RenderParticles();
+	void RenderScene(const Camera& camera) {
+		RenderParticles(camera);
 	}
 
 	virtual ~FwBase() = default;
@@ -63,3 +65,13 @@ enum class FireWorkType {
 
 // 构造所有FireWork类的唯一入口函数
 FwBase* getFirework(FireWorkType type, float* args);
+
+// useful definations used in sub classes
+#define AddValue(_name, _value) \
+	attrs_.push_back(Attr(L##_name, _value));
+
+#define AddColor(_name, _r, _g, _b) \
+	attrs_.push_back(Attr(ArgType::Color, L##_name, glm::vec3(_r, _g, _b)));
+
+#define AddVec3(_name, _x, _y, _z) \
+	attrs_.push_back(Attr(ArgType::Vector3, L##_name, glm::vec3(_x, _y, _z)));

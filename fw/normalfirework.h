@@ -1,13 +1,6 @@
 #pragma once
 #include "firework.h"
 
-
-// useful definations
-#define AddValue(_name, _value) \
-	attrs_.push_back(Attr(L##_name, _value));
-#define AddColor(_name, _r, _g, _b) \
-	attrs_.push_back(Attr(L##_name, glm::vec3(_r, _g, _b)));
-
 class NormalFirework : public FwBase {
 	friend FwBase* getFirework(FireWorkType type, float* args);
 	GLuint vbo = 0;
@@ -17,12 +10,11 @@ class NormalFirework : public FwBase {
 	float* colors;
 private:
 	NormalFirework(float* args) {
-		points = new float[9]{
-			-0.5f, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f,
-			0.0f,  0.5f, 0.0f
-		};
+		points = new float[9];
 		colors = new float[9];
+		AddVec3("顶点1", -0.5f, -0.5f, 0.0f);
+		AddVec3("顶点2", 0.5f, -0.5f, 0.0f);
+		AddVec3("顶点3", 0.0f, 0.5f, 0.0f);
 		AddColor("颜色左下", 1.0f, 0.0f, 0.0f);
 		AddColor("颜色右下", 0.0f, 1.0f, 0.0f);
 		AddColor("颜色上", 0.0f, 0.0f, 1.0f);
@@ -31,7 +23,14 @@ private:
 	void GetParticles() override {
 		for (int i = 0; i < 3; ++i) {
 			for (int j = 0; j < 3; ++j) {
-				colors[i * 3 + j] = attrs_[i].color[j];
+				points[i * 3 + j] = attrs_[i].value[j];
+				printf("%f ", points[i * 3 + j]);
+			}
+			printf("\n");
+		}
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				colors[i * 3 + j] = attrs_[i + 3].value[j];
 				printf("%f ", colors[i * 3 + j]);
 			}
 			printf("\n");
@@ -64,9 +63,10 @@ private:
 		glBindVertexArray(0);
 	}
 
-	void RenderParticles() override {
-		printf("here\n");
+	void RenderParticles(const Camera& camera) override {
 		shader_->use();
+		shader_->setMat4("view", camera.GetViewMatrix());
+		shader_->setMat4("projection", camera.GetProjectionMatrix());
 		glBindVertexArray(vao);
 		// draw points 0-3 from the currently bound VAO with current in-use shader
 		glDrawArrays(GL_TRIANGLES, 0, 3);

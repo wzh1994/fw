@@ -14,6 +14,7 @@
 #include "resource.h"
 #include "OpenGLWindow.h"
 #include "firework.h"
+
 // CfwDlg 对话框
 class CfwDlg : public CDialogEx
 {
@@ -36,6 +37,8 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+private:
+	int sliderLen;
 
 // 实现
 protected:
@@ -47,21 +50,41 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 	void CfwDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+
+public:
+	bool bColorSelecting_ = false;
+	CColorDialog colorDlg;
+	std::vector<cv::Mat*> pPhotos_;
+
+	/*控件成员变量*/
 public:
 	CSliderCtrl m_sliderc;
-	CButton m_pic;
 	// 关闭combo的自动排序
 	CComboBox m_combo;
-	CEdit m_edit;
-	CButton m_bn_reset;
-	CButton m_bn_conform;
-	CMFCButton m_bn_color;
-	float m_edit_value;
+	CEdit m_edit1;
+	CEdit m_edit2;
+	CEdit m_edit3;
+	CButton m_btn_reset;
+	CButton m_btn_conform;
+	CMFCButton m_btn_color;
+	CButton m_btn_get_color;
+	float m_edit_value1;
+	float m_edit_value2;
+	float m_edit_value3;
+
+	// 按钮事件函数
 	afx_msg void OnBnClickedButtonMinus();
 	afx_msg void OnBnClickedButtonPlus();
 	afx_msg void OnArgComboChange();
 	afx_msg void resetArgValue();
 	afx_msg void OnBnClickedConform();
 	afx_msg void OnBnClickedColorBtn();
+	afx_msg void changeGetColorStatus();
+	afx_msg void OnBnClickAutoPlay();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
+private:
+	// 其他实用函数
+	void autoPlay();
+	void changeAllControlStatus(BOOL bEnable);
 };

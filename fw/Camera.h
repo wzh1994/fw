@@ -11,126 +11,84 @@
 using std::cout;
 using std::endl;
 
-
-// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-enum Camera_Movement {
-	FORWARD,
-	BACKWARD,
-	LEFT,
-	RIGHT
-};
-
-// Default camera values
-const GLfloat YAW = -90.0f;
-const GLfloat PITCH = 0.0f;
-const GLfloat SPEED = 3.0f;
-const GLfloat SENSITIVTY = 0.25f;
-const GLfloat ZOOM = 45.0f;
-
-
 // An abstract camera class that processes input and calculates the corresponding Eular Angles, Vectors and Matrices for use in OpenGL
 class Camera
 {
-public:
 	// Camera Attributes
-	glm::vec3 Position;
-	glm::vec3 Front;
-	glm::vec3 Up;
-	glm::vec3 Right;
-	glm::vec3 WorldUp;
-	// Eular Angles
-	GLfloat Yaw;
-	GLfloat Pitch;
-	// Camera options
-	GLfloat MovementSpeed;
-	GLfloat MouseSensitivity;
-	GLfloat Zoom;
+	glm::vec3 position_;
+	glm::vec3 center_;
+	glm::vec3 up_;
+	float zoom_;
+	float windowWidth_;
+	float windowHeight_;
 
+public:
 	// Constructor with vectors
-	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH) : Front(glm::vec3(0, 0, -1)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
-	{
-		this->Position = position;
-		this->WorldUp = up;
-		this->Yaw = yaw;
-		this->Pitch = pitch;
-		this->updateCameraVectors();
-	}
-	// Constructor with scalar values
-	Camera(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, GLfloat upZ, GLfloat yaw, GLfloat pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
-	{
-		this->Position = glm::vec3(posX, posY, posZ);
-		this->WorldUp = glm::vec3(upX, upY, upZ);
-		this->Yaw = yaw;
-		this->Pitch = pitch;
-		this->updateCameraVectors();
-	}
+	Camera(float width, float height,
+		   glm::vec3 position = glm::vec3(0.0f, 0.0f, -3.0f), 
+		   glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f),
+		   glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
+		   float zoom = 45.0f)
+		: position_(position)
+		, center_(center)
+		, up_(up)
+		, zoom_(zoom) 
+		, windowWidth_(width)
+		, windowHeight_(height) {}
 
 	// Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-	glm::mat4 GetViewMatrix()
-	{
-		glm::vec3 r = this->Position + this->Front;
-		return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
+	glm::mat4 GetViewMatrix() const {
+		return glm::lookAt(this->position_, this->center_, this->up_);
 	}
 
-	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-	void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime)
-	{
-		GLfloat velocity = this->MovementSpeed * deltaTime;
-		if (direction == FORWARD)
-			this->Position += this->Front * velocity;
-		if (direction == BACKWARD)
-			this->Position -= this->Front * velocity;
-		if (direction == LEFT)
-			this->Position -= this->Right * velocity;
-		if (direction == RIGHT)
-			this->Position += this->Right * velocity;
+	glm::mat4 GetProjectionMatrix(float width, float height) const {
+		return glm::perspective(glm::radians(zoom_), width / height, 0.1f, 100.0f);
 	}
 
-	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-	void ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean constrainPitch = true)
-	{
-		xoffset *= this->MouseSensitivity;
-		yoffset *= this->MouseSensitivity;
-
-		this->Yaw += xoffset;
-		this->Pitch += yoffset;
-
-		// Make sure that when pitch is out of bounds, screen doesn't get flipped
-		if (constrainPitch)
-		{
-			if (this->Pitch > 89.0f)
-				this->Pitch = 89.0f;
-			if (this->Pitch < -89.0f)
-				this->Pitch = -89.0f;
-		}
-
-		// Update Front, Right and Up Vectors using the updated Eular angles
-		this->updateCameraVectors();
+	glm::mat4 GetProjectionMatrix() const {
+		return GetProjectionMatrix(windowWidth_, windowHeight_);
 	}
 
-	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-	void ProcessMouseScroll(GLfloat yoffset)
-	{
-		if (this->Zoom >= 1.0f && this->Zoom <= 45.0f)
-			this->Zoom -= yoffset;
-		if (this->Zoom <= 1.0f)
-			this->Zoom = 1.0f;
-		if (this->Zoom >= 45.0f)
-			this->Zoom = 45.0f;
-	}
+	/* ===================================
+     * 摄像头方向调节
+	 * 目前只考虑center不变的情况
+	 * TODO: 未来会加入centor改变的情况
+	 * ===================================
+	 */
 
 private:
-	// Calculates the front vector from the Camera's (updated) Eular Angles
-	void updateCameraVectors()
-	{
-		// Calculate the new Front vector
-		glm::vec3 front;
-		front.x = cos(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
-		front.y = sin(glm::radians(this->Pitch));
-		front.z = sin(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
-		this->Front = glm::normalize(front);
-		// Also re-calculate the Right and Up vector
-		this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-		this->Up = glm::normalize(glm::cross(this->Right, this->Front));
+	void rotateBase(float angleX, float angleY) {
+		glm::mat4 transUp(1.0f);
+		glm::mat4 transPos(1.0f);
+		if (angleX != 0) {
+			transPos = glm::rotate(transPos, glm::radians(angleX), this->up_);
+		}
+		if (angleY != 0) {
+			glm::vec3 right = glm::cross(this->up_, this->position_);
+			glm::mat4 trans(1.0f);
+			transUp = glm::rotate(transUp, glm::radians(angleY), right);
+			transPos = glm::rotate(transPos, glm::radians(angleY), right);
+		}
+		this->position_ = transPos * glm::vec4(this->position_, 1.0);
+		this->up_ = transUp * glm::vec4(this->up_, 1.0);
+	}
+
+public:
+	enum class RotateDirection {
+		Horizontal,
+		Vertical,
+		ErrorArg
+	};
+
+	template <RotateDirection D, typename... Args>
+	void rotate(Args&&... arg) {
+		switch(D) {
+		case RotateDirection::Horizontal:
+			rotateBase(std::forward<Args>(arg)..., 0);
+			break;
+		case RotateDirection::Vertical:
+			rotateBase(0, std::forward<Args>(arg)...);
+			break;
+		}
 	}
 };

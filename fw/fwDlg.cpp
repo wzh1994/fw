@@ -10,13 +10,52 @@
 #include "resource.h"		// 主符号
 #include "fwDlg.h"
 #include "afxdialogex.h"
+#include <ctime>
+#include <thread>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+// 与窗口有关的变量在这里，限定本cpp文件内部使用
 namespace {
 	const char opencvWindow[] = "IDC_OPENCV_OUTPUT";
+
+	// 子窗口大小
+	const int subWindowWidth = 400;
+	const int subWindowHeight = 400;
+
+	// 外边距
+	const int leftMargin = 50;
+	const int rightMargin = 50;
+	const int topMargin = 50;
+	const int bottomMargin = 50;
+
+	// 内边距
+	const int windowMargin = 100;
+	const int rowMargin = 20;
+
+	// 控件边距
+	const int widgetMargin = 15;
+
+	// 控件大小
+	const int widgetWidth = 70;
+	const int widgetHeight = 25;
+	const int comboWidth = 100;
+	const int sliderWidth = 600;
+	const int sliderHeight = 50;
+	const int autoPlaySide = 50;
+
+	//窗口大小
+	const int windowWidth =
+		leftMargin + subWindowWidth * 2 + rightMargin + windowMargin;
+	const int windowHeight = topMargin + subWindowHeight +
+		rowMargin * 3 + widgetHeight * 3 + sliderHeight + bottomMargin;
+}
+
+// 其他实用常量
+namespace {
+	const UINT_PTR autoPlayId = 0;
 }
 
 // CfwDlg 对话框
@@ -31,73 +70,204 @@ extern "C" __declspec(dllexport) void ShowDialog()
 FwBase* getFirework(FireWorkType type, float* args);
 CfwDlg::CfwDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FW_DIALOG, pParent)
-	, m_edit_value(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	/* -------------------------------
+	 * firework
+	 * 实例化fw对象的时候，不执行任何opengl相关的初始化工作
+	 * 后续在初始化opengl之后，通过调用initialize来初始化opengl相关的东西
+	 * -------------------------------
+	 */
+	float* args = nullptr;
+	fw.reset(getFirework(FireWorkType::Normal, args));
+
+	// temp
+	sliderLen = 48;
+	for (int i = 0; i < sliderLen; ++i) {
+		pPhotos_.push_back(new cv::Mat(300, 300, CV_8UC3, cv::Scalar(i * 5, (sliderLen - i) * 5, 255)));
+	}
 }
+
 
 /* ==================================================
  * 初始化，包括opencv窗口，opengl窗口，和一些控件位置
  * ==================================================
  */
-
 void CfwDlg::setSliderPos(int pos) {
 	m_sliderc.SetPos(pos);//当前停留的位置
 	onSliderChange();
 }
 
+// 初始化opencv窗口时，用于拾色器的回调函数
+void opencv_mouse_callback(int event, int x, int y, int flags, void* ustc) {
+	CfwDlg* dlg = static_cast<CfwDlg*>(ustc);
+	if (dlg->bColorSelecting_) {
+		if (flags == 2) {
+			dlg->changeGetColorStatus();;
+			dlg->resetArgValue();
+		} else {
+			int pos = dlg->m_sliderc.GetPos();
+			cv::Mat& m = *(dlg->pPhotos_[pos]);
+			auto re = m.at<cv::Vec3b>(x, y);
+			// opencv 的颜色是BGR，而opengl的颜色是RGB
+			auto color = RGB(re[2], re[1], re[0]);
+			if (flags == 1) {
+				dlg->colorDlg.m_cc.rgbResult = color;
+				dlg->changeGetColorStatus();
+			}
+			dlg->m_btn_color.SetFaceColor(color);
+		}
+	}
+}
+
 void CfwDlg::myInitialize() {
 
-	MoveWindow(100, 100, 800, 800);
+	// 初始化整个窗口
+	MoveWindow(300, 100, windowWidth, windowHeight);
 
-	/*------- firework -----*/
-	// 放在这里，实例化fw对象的时候，不执行任何opengl相关的初始化工作
-	float* args = nullptr;
-	fw.reset(getFirework(FireWorkType::Normal, args));
-
-
-	/*------- opengl --------*/
-	// 放在这里，已保证fw已经被实例化出具体的对象
-	pOpenGLWindow = new OpenGLWindow(*fw);
+	/* -------------------------------
+	 * opengl
+	 * -------------------------------
+	 */
+	// 由于OpenGLWindow需要使用FwBase类的引用，因此需要放在fw类的实例化之后
+	// 以保证fw已经被实例化出具体的对象
+	pOpenGLWindow = new OpenGLWindow(*fw, subWindowWidth, subWindowHeight);
 	pOpenGLWindow->Create(
 		NULL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE,
-		CRect(50, 50, 349, 349),
+		CRect(leftMargin, topMargin,
+			leftMargin + subWindowWidth, topMargin + subWindowHeight),
 		this,   //this is the parent
 		0);
 
-	/*------- initialize firework --------*/
+	/* -------------------------------
+	 * initialize firework
+	 * -------------------------------
+	 */
 	// 构造OpenGLWindow对象时候，初始化glew，因此与glew有关的初始化操作放在这里
 	fw->initialize();
 
-	/*------- opencv --------*/
+	/* -------------------------------
+	 * opencv
+	 * -------------------------------
+	 */
 	//CWnd是MFC窗口类的基类,提供了微软基础类库中所有窗口类的基本功能。
-	CWnd  *pWnd = GetDlgItem(IDC_PIC);
-	pWnd->SetWindowPos(NULL, 450, 50, 300, 300, SWP_NOZORDER);
+	//CWnd  *pPictureWnd = GetDlgItem(IDC_PIC);
+	CWnd *pPictureWnd = new CStatic();
+	// 创建窗口并设置位置
+	pPictureWnd->Create(
+		NULL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE,
+		CRect(leftMargin + subWindowWidth + windowMargin, topMargin,
+			leftMargin + subWindowWidth * 2 + windowMargin,
+			topMargin + subWindowHeight),
+		this/*this is the parent */, 0);
 	cvNamedWindow(opencvWindow, 0);//设置窗口名
-	cvResizeWindow(opencvWindow, 300, 300);
+	cvResizeWindow(opencvWindow, subWindowWidth, subWindowWidth);
+	// 设置回调函数，用于拾色器鼠标移动事件
+	cv::setMouseCallback(opencvWindow, opencv_mouse_callback, this);
 	//hWnd 表示窗口句柄,获取窗口句柄
 	HWND hWnd = (HWND)cvGetWindowHandle("IDC_OPENCV_OUTPUT");
 	//GetParent函数一个指定子窗口的父窗口句柄
 	HWND hParent = ::GetParent(hWnd);
-	::SetParent(hWnd, pWnd->m_hWnd);
+	::SetParent(hWnd, pPictureWnd->m_hWnd);
 	//ShowWindow指定窗口中显示
 	::ShowWindow(hParent, SW_HIDE);
 
-	/*------- combo --------*/
+	/* -------------------------------
+	 * combo
+	 * -------------------------------
+	 */
+	// 调整位置
+	CWnd *pComboWnd = GetDlgItem(IDC_COMBO1);
+	pComboWnd->SetWindowPos(NULL, leftMargin,
+		topMargin + subWindowHeight + rowMargin,
+		comboWidth, widgetHeight, SWP_NOZORDER);
+	// 将fw的所有attr放在选择框里面
 	for (auto it = fw->attrs_.begin(); it != fw->attrs_.end(); ++it) {
 		m_combo.AddString(it->name.c_str());
 	}
 
-	/*------- slider --------*/
-	// 因为setSliderPos会触发onSliderChange， 而该函数需要使用fw变量
-	m_sliderc.SetRange(0, 20);//设置范围
+	/* -------------------------------
+	 * edit box and color button
+	 * 设置位置
+	 * -------------------------------
+	 */
+	CWnd  *pColorWnd = GetDlgItem(IDC_BUTTON5);
+	CWnd  *pColorPickWnd = GetDlgItem(IDC_BUTTON6);
+	CWnd  *pEditWnd1 = GetDlgItem(IDC_EDIT1);
+	CWnd  *pEditWnd2 = GetDlgItem(IDC_EDIT2);
+	CWnd  *pEditWnd3 = GetDlgItem(IDC_EDIT3);
+	pColorWnd->SetWindowPos(NULL, leftMargin + comboWidth + widgetMargin,
+		topMargin + subWindowHeight + rowMargin,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+	pColorPickWnd->SetWindowPos(NULL,
+		leftMargin + comboWidth + widgetMargin * 2 + widgetWidth,
+		topMargin + subWindowHeight + rowMargin,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+	pEditWnd1->SetWindowPos(NULL, leftMargin + comboWidth + widgetMargin,
+		topMargin + subWindowHeight + rowMargin,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+	pEditWnd2->SetWindowPos(NULL,
+		leftMargin + comboWidth + widgetMargin * 2 + widgetWidth,
+		topMargin + subWindowHeight + rowMargin,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+	pEditWnd3->SetWindowPos(NULL,
+		leftMargin + comboWidth + widgetMargin * 3 + widgetWidth * 2,
+		topMargin + subWindowHeight + rowMargin,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+
+	/* -------------------------------
+	 * autoplay button
+	 * 设置位置
+	 * -------------------------------
+	 */
+	CWnd  *pAutoPlayWnd = GetDlgItem(IDC_BUTTON7);
+	pAutoPlayWnd->SetWindowPos(NULL, (windowWidth - autoPlaySide) / 2,
+		topMargin + subWindowHeight + rowMargin,
+		autoPlaySide, autoPlaySide, SWP_NOZORDER);
+
+	/* -------------------------------
+	 * reset and conform button
+	 * 设置位置
+	 * -------------------------------
+	 */
+	CWnd  *pResetWnd = GetDlgItem(IDC_BUTTON2);
+	CWnd  *pConformWnd = GetDlgItem(IDC_BUTTON3);
+	pResetWnd->SetWindowPos(NULL, leftMargin + comboWidth + widgetMargin,
+		topMargin + subWindowHeight + rowMargin * 2 + widgetHeight,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+	pConformWnd->SetWindowPos(NULL,
+		leftMargin + comboWidth + widgetMargin * 2 + widgetWidth,
+		topMargin + subWindowHeight + rowMargin * 2 + widgetHeight,
+		widgetWidth, widgetHeight, SWP_NOZORDER);
+
+	/* -------------------------------
+	 * slider and its control button
+	 * -------------------------------
+	 */
+	// 设置位置
+	CWnd  *pSliderWnd = GetDlgItem(IDC_SLIDER1);
+	CWnd  *pSubWnd = GetDlgItem(IDC_BUTTON4);
+	CWnd  *pAddWnd = GetDlgItem(IDC_BUTTON1);
+	pSliderWnd->SetWindowPos(NULL, (windowWidth - sliderWidth)/ 2,
+		topMargin + subWindowHeight + rowMargin * 3 + widgetHeight * 2,
+		sliderWidth, sliderHeight, SWP_NOZORDER);
+	pAddWnd->SetWindowPos(NULL, (windowWidth + sliderWidth) / 2 + widgetMargin,
+		topMargin + subWindowHeight + rowMargin * 3 + widgetHeight * 2,
+		sliderHeight, sliderHeight, SWP_NOZORDER);
+	pSubWnd->SetWindowPos(NULL,
+		(windowWidth - sliderWidth) / 2 - widgetMargin - sliderHeight,
+		topMargin + subWindowHeight + rowMargin * 3 + widgetHeight * 2,
+		sliderHeight, sliderHeight, SWP_NOZORDER);
+	// 因为setSliderPos会触发onSliderChange， 该函数需要在fw被实例化之后调用
+	m_sliderc.SetRange(0, sliderLen - 1);//设置范围
 	m_sliderc.SetTicFreq(2);//设置显示刻度的间隔
 	setSliderPos(5);
 	m_sliderc.SetLineSize(10);//一行的大小，对应键盘的方向键
 }
 
 /* ========================================
- * 系统生成的映射函数
+ * 事件映射函数
  * ========================================
  */
  
@@ -105,25 +275,32 @@ void CfwDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_SLIDER1, m_sliderc);
-	DDX_Control(pDX, IDC_BUTTON1, m_pic);
 	DDX_Control(pDX, IDC_COMBO1, m_combo);
-	DDX_Control(pDX, IDC_EDIT1, m_edit);
-	DDX_Text(pDX, IDC_EDIT1, m_edit_value);
-	DDX_Control(pDX, IDC_BUTTON2, m_bn_reset);
-	DDX_Control(pDX, IDC_BUTTON3, m_bn_conform);
-	DDX_Control(pDX, IDC_BUTTON5, m_bn_color);
+	DDX_Control(pDX, IDC_EDIT1, m_edit1);
+	DDX_Control(pDX, IDC_EDIT2, m_edit3);
+	DDX_Control(pDX, IDC_EDIT3, m_edit2);
+	DDX_Text(pDX, IDC_EDIT1, m_edit_value1);
+	DDX_Text(pDX, IDC_EDIT2, m_edit_value2);
+	DDX_Text(pDX, IDC_EDIT3, m_edit_value3);
+	DDX_Control(pDX, IDC_BUTTON2, m_btn_reset);
+	DDX_Control(pDX, IDC_BUTTON3, m_btn_conform);
+	DDX_Control(pDX, IDC_BUTTON5, m_btn_color);
+	DDX_Control(pDX, IDC_BUTTON6, m_btn_get_color);
 }
 
 BEGIN_MESSAGE_MAP(CfwDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_HSCROLL()
+	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON1, &CfwDlg::OnBnClickedButtonMinus)
 	ON_BN_CLICKED(IDC_BUTTON4, &CfwDlg::OnBnClickedButtonPlus)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CfwDlg::OnArgComboChange)
 	ON_BN_CLICKED(IDC_BUTTON2, &CfwDlg::resetArgValue)
 	ON_BN_CLICKED(IDC_BUTTON3, &CfwDlg::OnBnClickedConform)
 	ON_BN_CLICKED(IDC_BUTTON5, &CfwDlg::OnBnClickedColorBtn)
+	ON_BN_CLICKED(IDC_BUTTON6, &CfwDlg::changeGetColorStatus)
+	ON_BN_CLICKED(IDC_BUTTON7, &CfwDlg::OnBnClickAutoPlay)
 END_MESSAGE_MAP()
 
 // CfwDlg 消息处理程序
@@ -209,9 +386,10 @@ void CfwDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
  */
 
 void CfwDlg::onSliderChange() {
+	static std::mutex mtx;
+	std::unique_lock<std::mutex> l(mtx);
 	int pos = m_sliderc.GetPos();
-	cv::Mat photo(300, 300, CV_8UC3, cv::Scalar(pos * 10, 0, 255));
-	cv::imshow(opencvWindow, photo);
+	cv::imshow(opencvWindow, *pPhotos_[pos]);
 	resetArgValue();
 	pOpenGLWindow->RedrawWindow();
 }
@@ -232,22 +410,36 @@ void CfwDlg::OnBnClickedButtonPlus(){
 	setSliderPos(pos);
 }
 
-namespace {
-	// 全局变量，构造颜色对话框 
-	CColorDialog colorDlg;
-}
-
 void CfwDlg::resetArgValue(){
 	int r = m_combo.GetCurSel();
+	if (r == -1) {
+		m_edit1.ShowWindow(false);
+		m_btn_color.ShowWindow(false);
+		return;
+	}
 	switch (fw->attrs_[r].type) {
-	case ArgType::Value:
-		m_edit_value = fw->attrs_[r].value;
+	case ArgType::Scalar:
+		m_edit_value1 = fw->attrs_[r].value.x;
 		UpdateData(false);
-		m_edit.ShowWindow(true);
-		m_bn_color.ShowWindow(false);
+		m_edit1.ShowWindow(true);
+		m_edit2.ShowWindow(false);
+		m_edit3.ShowWindow(false);
+		m_btn_color.ShowWindow(false);
+		m_btn_get_color.ShowWindow(false);
+		break;
+	case ArgType::Vector3:
+		m_edit_value1 = fw->attrs_[r].value.x;
+		m_edit_value2 = fw->attrs_[r].value.y;
+		m_edit_value3 = fw->attrs_[r].value.z;
+		UpdateData(false);
+		m_edit1.ShowWindow(true);
+		m_edit2.ShowWindow(true);
+		m_edit3.ShowWindow(true);
+		m_btn_color.ShowWindow(false);
+		m_btn_get_color.ShowWindow(false);
 		break;
 	case ArgType::Color:
-		glm::vec3 color = fw->attrs_[r].color;
+		glm::vec3 color = fw->attrs_[r].value;
 		{
 			int r = static_cast<int>(color.r * 255);
 			int g = static_cast<int>(color.g * 255);
@@ -255,30 +447,39 @@ void CfwDlg::resetArgValue(){
 			auto color = RGB(r, g, b);
 			// colorDlg.SetCurrentColor()无效，必须直接修改其值
 			colorDlg.m_cc.rgbResult = color;
-			m_bn_color.SetFaceColor(color);
+			m_btn_color.SetFaceColor(color);
 		}
-		m_edit.ShowWindow(false);
-		m_bn_color.ShowWindow(true);
+		m_edit1.ShowWindow(false);
+		m_edit2.ShowWindow(false);
+		m_edit3.ShowWindow(false);
+		m_btn_color.ShowWindow(true);
+		m_btn_get_color.ShowWindow(true);
 		break;
 	}
 }
 
 void CfwDlg::OnArgComboChange() {
 	resetArgValue();
-	m_bn_reset.ShowWindow(true);
-	m_bn_conform.ShowWindow(true);
+	m_btn_reset.ShowWindow(true);
+	m_btn_conform.ShowWindow(true);
 }
 
 void CfwDlg::OnBnClickedConform(){
 	int r = m_combo.GetCurSel();
 	switch (fw->attrs_[r].type) {
-	case ArgType::Value:
+	case ArgType::Scalar:
 		UpdateData(true);
-		fw->attrs_[r].value = m_edit_value;
+		fw->attrs_[r].value.x = m_edit_value1;
+		break;
+	case ArgType::Vector3:
+		UpdateData(true);
+		fw->attrs_[r].value.x = m_edit_value1;
+		fw->attrs_[r].value.y = m_edit_value2;
+		fw->attrs_[r].value.z = m_edit_value3;
 		break;
 	case ArgType::Color: {
 			COLORREF color = colorDlg.GetColor();
-			fw->attrs_[r].color = glm::vec3(
+			fw->attrs_[r].value = glm::vec3(
 				GetRValue(color) / 255.0,
 				GetGValue(color) / 255.0,
 				GetBValue(color) / 255.0);
@@ -295,6 +496,56 @@ void CfwDlg::OnBnClickedColorBtn(){
 	// 显示颜色对话框，并判断是否点击了“确定”
 	if (IDOK == colorDlg.DoModal()) {
 		COLORREF color = colorDlg.GetColor();  
-		m_bn_color.SetFaceColor(color);
+		m_btn_color.SetFaceColor(color);
+	}
+}
+
+void CfwDlg::changeGetColorStatus() {
+	bColorSelecting_ = !bColorSelecting_;
+	if (bColorSelecting_) {
+		GetDlgItem(IDC_BUTTON6)->EnableWindow(FALSE);
+	} else {
+		GetDlgItem(IDC_BUTTON6)->EnableWindow(TRUE);
+	}
+}
+
+// 自动播放
+void CfwDlg::autoPlay() {
+	int pos = m_sliderc.GetPos();
+	if (++pos < sliderLen) {
+		setSliderPos(pos);
+	} else {
+		KillTimer(autoPlayId);
+		changeAllControlStatus(true);
+	}
+}
+
+void CfwDlg::changeAllControlStatus(BOOL bEnable) {
+	GetDlgItem(IDC_BUTTON1)->EnableWindow(bEnable);
+	GetDlgItem(IDC_BUTTON2)->EnableWindow(bEnable);
+	GetDlgItem(IDC_BUTTON3)->EnableWindow(bEnable);
+	GetDlgItem(IDC_BUTTON4)->EnableWindow(bEnable);
+	GetDlgItem(IDC_BUTTON5)->EnableWindow(bEnable);
+	GetDlgItem(IDC_BUTTON6)->EnableWindow(bEnable);
+	GetDlgItem(IDC_BUTTON7)->EnableWindow(bEnable);
+	GetDlgItem(IDC_COMBO1)->EnableWindow(bEnable);
+	GetDlgItem(IDC_EDIT1)->EnableWindow(bEnable);
+	GetDlgItem(IDC_EDIT2)->EnableWindow(bEnable);
+	GetDlgItem(IDC_EDIT3)->EnableWindow(bEnable);
+	// GetDlgItem(IDC_SLIDER1)->EnableWindow(bEnable);
+}
+
+void CfwDlg::OnBnClickAutoPlay() {
+	changeAllControlStatus(false);
+	SetTimer(autoPlayId, 1 / 24.0, nullptr);
+};
+
+void CfwDlg::OnTimer(UINT_PTR nIDEvent) {
+	switch (nIDEvent) {
+	case autoPlayId:
+		autoPlay();
+		break;
+	default:
+		break;
 	}
 }
