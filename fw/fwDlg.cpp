@@ -79,7 +79,24 @@ CfwDlg::CfwDlg(CWnd* pParent /*=nullptr*/)
 	 * 后续在初始化opengl之后，通过调用initialize来初始化opengl相关的东西
 	 * -------------------------------
 	 */
-	float* args = nullptr;
+	float *args = new float[28 * 49];
+	float pos[12]{
+			-0.5f, -0.5f, 0.0f, -0.3f, -0.3f, 0.0f, -0.1f, -0.2f, 0.0f, 0.0f,
+			0.0f, 0.0f };
+	float color[12]{ 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+			1.0f, 1.0f, 1.0f };
+	float size[4]{ 0.1f, 0.2f, 0.2f, 0.1f };
+	for (int i = 0; i < 49; ++i) {
+		for (int j = 0; j < 12; ++j) {
+			args[i * 12 + j] = pos[j] + 0.05 * (i - 25);
+		}
+		for (int j = 0; j < 12; ++j) {
+			args[12 * 49 + i * 12 + j] = color[j];
+		}
+		for (int j = 0; j < 4; ++j) {
+			args[24 * 49 + i * 4 + j] = size[j];
+		}
+	}
 	fw.reset(getFirework(FireWorkType::Normal, args));
 
 	// temp
@@ -145,7 +162,9 @@ void CfwDlg::myInitialize() {
 	 * -------------------------------
 	 */
 	// 构造OpenGLWindow对象时候，初始化glew，因此与glew有关的初始化操作放在这里
+	printf("init~");
 	fw->initialize();
+	printf("init done");
 
 	/* -------------------------------
 	 * opencv
@@ -218,13 +237,20 @@ void CfwDlg::myInitialize() {
 
 	/* -------------------------------
 	 * autoplay button
-	 * 设置位置
 	 * -------------------------------
 	 */
+	m_speed_combo.AddString(L"0.2倍速");
+	m_speed_combo.AddString(L"0.5倍速");
+	m_speed_combo.AddString(L"1.0倍速");
+	//设置位置
+	CWnd  *pAutoPlayComboWnd = GetDlgItem(IDC_COMBO2);
+	pAutoPlayComboWnd->SetWindowPos(NULL, (windowWidth - autoPlaySide) / 2,
+		topMargin + subWindowHeight + rowMargin,
+		autoPlaySide, widgetHeight, SWP_NOZORDER);
 	CWnd  *pAutoPlayWnd = GetDlgItem(IDC_BUTTON7);
 	pAutoPlayWnd->SetWindowPos(NULL, (windowWidth - autoPlaySide) / 2,
-		topMargin + subWindowHeight + rowMargin,
-		autoPlaySide, autoPlaySide, SWP_NOZORDER);
+		topMargin + subWindowHeight + rowMargin * 2 + widgetHeight,
+		autoPlaySide, widgetHeight, SWP_NOZORDER);
 
 	/* -------------------------------
 	 * reset and conform button
@@ -276,6 +302,7 @@ void CfwDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_SLIDER1, m_sliderc);
 	DDX_Control(pDX, IDC_COMBO1, m_combo);
+	DDX_Control(pDX, IDC_COMBO2, m_speed_combo);
 	DDX_Control(pDX, IDC_EDIT1, m_edit1);
 	DDX_Control(pDX, IDC_EDIT2, m_edit3);
 	DDX_Control(pDX, IDC_EDIT3, m_edit2);
@@ -286,6 +313,7 @@ void CfwDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON3, m_btn_conform);
 	DDX_Control(pDX, IDC_BUTTON5, m_btn_color);
 	DDX_Control(pDX, IDC_BUTTON6, m_btn_get_color);
+	
 }
 
 BEGIN_MESSAGE_MAP(CfwDlg, CDialogEx)
@@ -301,6 +329,7 @@ BEGIN_MESSAGE_MAP(CfwDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON5, &CfwDlg::OnBnClickedColorBtn)
 	ON_BN_CLICKED(IDC_BUTTON6, &CfwDlg::changeGetColorStatus)
 	ON_BN_CLICKED(IDC_BUTTON7, &CfwDlg::OnBnClickAutoPlay)
+	ON_CBN_SELCHANGE(IDC_COMBO2, &CfwDlg::OnCbnSelchangeCombo2)
 END_MESSAGE_MAP()
 
 // CfwDlg 消息处理程序
@@ -390,7 +419,10 @@ void CfwDlg::onSliderChange() {
 	std::unique_lock<std::mutex> l(mtx);
 	int pos = m_sliderc.GetPos();
 	cv::imshow(opencvWindow, *pPhotos_[pos]);
+	printf("here1");
 	resetArgValue();
+	printf("here2");
+	fw->GetParticles(pos);
 	pOpenGLWindow->RedrawWindow();
 }
 
@@ -417,9 +449,10 @@ void CfwDlg::resetArgValue(){
 		m_btn_color.ShowWindow(false);
 		return;
 	}
+	size_t idx = fw->attrs_[r].start;
 	switch (fw->attrs_[r].type) {
 	case ArgType::Scalar:
-		m_edit_value1 = fw->attrs_[r].value.x;
+		m_edit_value1 = fw->args_[idx];
 		UpdateData(false);
 		m_edit1.ShowWindow(true);
 		m_edit2.ShowWindow(false);
@@ -428,9 +461,9 @@ void CfwDlg::resetArgValue(){
 		m_btn_get_color.ShowWindow(false);
 		break;
 	case ArgType::Vector3:
-		m_edit_value1 = fw->attrs_[r].value.x;
-		m_edit_value2 = fw->attrs_[r].value.y;
-		m_edit_value3 = fw->attrs_[r].value.z;
+		m_edit_value1 = fw->args_[idx];
+		m_edit_value2 = fw->args_[idx + 1];
+		m_edit_value3 = fw->args_[idx + 2];
 		UpdateData(false);
 		m_edit1.ShowWindow(true);
 		m_edit2.ShowWindow(true);
@@ -439,11 +472,10 @@ void CfwDlg::resetArgValue(){
 		m_btn_get_color.ShowWindow(false);
 		break;
 	case ArgType::Color:
-		glm::vec3 color = fw->attrs_[r].value;
 		{
-			int r = static_cast<int>(color.r * 255);
-			int g = static_cast<int>(color.g * 255);
-			int b = static_cast<int>(color.b * 255);
+			int r = static_cast<int>(fw->args_[idx] * 255);
+			int g = static_cast<int>(fw->args_[idx + 1] * 255);
+			int b = static_cast<int>(fw->args_[idx + 2] * 255);
 			auto color = RGB(r, g, b);
 			// colorDlg.SetCurrentColor()无效，必须直接修改其值
 			colorDlg.m_cc.rgbResult = color;
@@ -466,29 +498,30 @@ void CfwDlg::OnArgComboChange() {
 
 void CfwDlg::OnBnClickedConform(){
 	int r = m_combo.GetCurSel();
+	size_t idx = fw->attrs_[r].start;
 	switch (fw->attrs_[r].type) {
 	case ArgType::Scalar:
 		UpdateData(true);
-		fw->attrs_[r].value.x = m_edit_value1;
+		fw->args_[idx] = m_edit_value1;
 		break;
 	case ArgType::Vector3:
 		UpdateData(true);
-		fw->attrs_[r].value.x = m_edit_value1;
-		fw->attrs_[r].value.y = m_edit_value2;
-		fw->attrs_[r].value.z = m_edit_value3;
+		fw->args_[idx] = m_edit_value1;
+		fw->args_[idx + 1] = m_edit_value2;
+		fw->args_[idx + 2] = m_edit_value3;
 		break;
 	case ArgType::Color: {
 			COLORREF color = colorDlg.GetColor();
-			fw->attrs_[r].value = glm::vec3(
-				GetRValue(color) / 255.0,
-				GetGValue(color) / 255.0,
-				GetBValue(color) / 255.0);
+			fw->args_[idx] = GetRValue(color) / 255.0;
+			fw->args_[idx + 1] = GetGValue(color) / 255.0;
+			fw->args_[idx + 2] = GetBValue(color) / 255.0;
 		}
 		break;
 	default:
 		printf("Unexpected Arg Type!\n");
 	}
-	fw->GetParticles();
+	int pos = m_sliderc.GetPos();
+	fw->GetParticles(pos);
 	pOpenGLWindow->Invalidate();
 }
 
@@ -509,7 +542,16 @@ void CfwDlg::changeGetColorStatus() {
 	}
 }
 
-// 自动播放
+/* ========================================
+ * 自动播放
+ * ========================================
+ */
+// 播放速率调整
+void CfwDlg::OnCbnSelchangeCombo2(){
+	static float speeds[3]{0.2, 0.5, 1.0};
+	autoPlaySpeed_ = speeds[m_speed_combo.GetCurSel()];
+}
+
 void CfwDlg::autoPlay() {
 	int pos = m_sliderc.GetPos();
 	if (++pos < sliderLen) {
@@ -529,15 +571,17 @@ void CfwDlg::changeAllControlStatus(BOOL bEnable) {
 	GetDlgItem(IDC_BUTTON6)->EnableWindow(bEnable);
 	GetDlgItem(IDC_BUTTON7)->EnableWindow(bEnable);
 	GetDlgItem(IDC_COMBO1)->EnableWindow(bEnable);
+	GetDlgItem(IDC_COMBO2)->EnableWindow(bEnable);
 	GetDlgItem(IDC_EDIT1)->EnableWindow(bEnable);
 	GetDlgItem(IDC_EDIT2)->EnableWindow(bEnable);
 	GetDlgItem(IDC_EDIT3)->EnableWindow(bEnable);
-	// GetDlgItem(IDC_SLIDER1)->EnableWindow(bEnable);
+	GetDlgItem(IDC_SLIDER1)->EnableWindow(bEnable);
 }
 
 void CfwDlg::OnBnClickAutoPlay() {
 	changeAllControlStatus(false);
-	SetTimer(autoPlayId, 1 / 24.0, nullptr);
+	float freq = 1000 / (36.0 * autoPlaySpeed_);
+	SetTimer(autoPlayId, freq, nullptr);
 };
 
 void CfwDlg::OnTimer(UINT_PTR nIDEvent) {

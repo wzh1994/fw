@@ -39,6 +39,7 @@ public:
 
 private:
 	int sliderLen;
+	float autoPlaySpeed_ = 1.0;
 
 // 实现
 protected:
@@ -61,6 +62,7 @@ public:
 	CSliderCtrl m_sliderc;
 	// 关闭combo的自动排序
 	CComboBox m_combo;
+	CComboBox m_speed_combo;
 	CEdit m_edit1;
 	CEdit m_edit2;
 	CEdit m_edit3;
@@ -87,4 +89,7 @@ private:
 	// 其他实用函数
 	void autoPlay();
 	void changeAllControlStatus(BOOL bEnable);
+public:
+	afx_msg void OnCbnSelchangeCombo2();
+	
 };
