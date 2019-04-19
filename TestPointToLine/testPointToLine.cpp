@@ -152,9 +152,9 @@ void testThreeneGroupWithHorizenLine() {
 	printf("\n\n\n");
 	delete[] hIndices;
 
-	float* hBuffer = new float[288];
-	cudaMemcpy(hBuffer, buffer, 288 * sizeof(float), cudaMemcpyDeviceToHost);
-	for (size_t i = 0; i < 288; ++i) {
+	float* hBuffer = new float[2880];
+	cudaMemcpy(hBuffer, buffer, 2880 * sizeof(float), cudaMemcpyDeviceToHost);
+	for (size_t i = 0; i < 2880; ++i) {
 		if (i > 0 && i % 6 == 0) printf("\n");
 		printf("%f ", hBuffer[i]);
 	}
