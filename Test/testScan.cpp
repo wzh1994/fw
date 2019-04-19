@@ -7,22 +7,23 @@ using std::endl;
 
 bool testCase(int n) {
 	bool result = true;
-	float* arr = new float[n];
-	float* cpuResult = new float[n];
-	float* gpuResult = new float[n];
-	for (int i = 0; i < n; ++i) {
+	float* arr = new float[3 * n];
+	float* cpuResult = new float[3 * n];
+	float* gpuResult = new float[3 * n];
+	for (int i = 0; i < 3 * n; ++i) {
 		arr[i] = i;
-		cpuResult[i] = i == 0 ? arr[i] : arr[i] + cpuResult[i - 1];
+		cpuResult[i] = i % n == 0 ? arr[i] : arr[i] + cpuResult[i - 1];
 	}
 	float *dIn, *dOut; 
-	cudaMalloc(&dIn, n * sizeof(float));
-	cudaMalloc(&dOut, n * sizeof(float));
-	cudaMemcpy(dIn, arr, n * sizeof(float), cudaMemcpyHostToDevice);
-	cuSum(dOut, dIn, n);
-	cudaMemcpy(gpuResult, dOut, n * sizeof(float), cudaMemcpyDeviceToHost);
-	for (int i = 0; i < n; ++i) {
+	cudaMalloc(&dIn, 3 * n * sizeof(float));
+	cudaMalloc(&dOut, 3 * n * sizeof(float));
+	cudaMemcpy(dIn, arr, 3 * n * sizeof(float), cudaMemcpyHostToDevice);
+	cuSum(dOut, dIn, n, 3);
+	cudaMemcpy(gpuResult, dOut, 3 * n * sizeof(float), cudaMemcpyDeviceToHost);
+	for (int i = 0; i < 3 * n; ++i) {
 		if (abs(gpuResult[i] - cpuResult[i]) > 1e-5)
-			cout << n << ": " << gpuResult[i] << "!=" << cpuResult[i] << endl;
+			cout << "(" << n << ", "<< i << "): " <<
+				gpuResult[i] << "!=" << cpuResult[i] << endl;
 		result = false;
 		break;
 	}

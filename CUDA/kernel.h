@@ -5,6 +5,5 @@
  */
 
 using uint32_t = unsigned int;
-using unary_func_t = float(float);
-using binary_func_t = float(float, float);
-
+using unary_func_t = float(*)(float);
+using binary_func_t = float(*)(float, float);

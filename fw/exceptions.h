@@ -65,14 +65,18 @@ struct FwException : public FwExceptionBase
 		str_ += " " + s;
 		return *this;
 	}
+	~FwException() {
+		std::cout << str_ << std::endl;
+		terminate();
+	}
 };
 
 #define FW_THROW(ExceptionType) \
-    throw FwException<ErrorCode::ExceptionType>(\
+    FwException<ErrorCode::ExceptionType>(\
             "Assertion failed at " FW_CODELOC)
 
 #define FW_CHECK(ExceptionType, cond) \
-    if (!(cond)) throw FwException<ErrorCode::ExceptionType>(\
+    if (!(cond)) FwException<ErrorCode::ExceptionType>(\
             "Assertion " #cond " failed at " FW_CODELOC)
 
 #define FW_NOTSUPPORTED FW_THROW(NotSupported)

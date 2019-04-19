@@ -9,27 +9,23 @@ class NormalFirework : public FwBase {
 	GLuint vbo = 0;
 	GLuint ebo = 0;
 	GLuint vao = 0;
+	size_t pointSize;
 	struct cudaGraphicsResource *cuda_vbo_resource, *cuda_ebo_resource;
 
 private:
 	NormalFirework(float* args) : FwBase(args) {
-		printf("--- cons normal firework\n");
-		//BeginGroup(4, 3);
-
-		//EndGroup(12);
-
-		/*for (int i = 0; i < 4; ++i) {
-			AddVec3("顶点" + std::to_wstring(i));
-		}
-
-		for (int i = 0; i < 4; ++i) {
-			AddColor("颜色" + std::to_wstring(i));
-		}
-
-		for (int i = 0; i < 4; ++i) {
-			AddValue("尺寸" + std::to_wstring(i));
-		}*/
-		printf("--- cons normal firework done\n");
+		BeginGroup(4, 3);
+		AddVec3Group("顶点1");
+		AddVec3Group("顶点2");
+		AddVec3Group("顶点3");
+		AddVec3Group("顶点4");
+		EndGroup(12);
+		BeginGroup(4, 3);
+		AddVec3Group("颜色1");
+		AddVec3Group("颜色2");
+		AddVec3Group("颜色3");
+		AddVec3Group("颜色4");
+		EndGroup(12);
 	}
 
 	void initialize() override {
@@ -52,7 +48,7 @@ private:
 		cudaGraphicsGLRegisterBuffer(&cuda_ebo_resource, ebo,
 			cudaGraphicsMapFlagsWriteDiscard);
 
-		glGenVertexArrays(1, &vao);
+		/*glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glEnableVertexAttribArray(0);
@@ -64,7 +60,7 @@ private:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);*/
 	}
 
 	void GetParticles(int frameIdx) override {
@@ -90,7 +86,7 @@ private:
 		cudaMemcpy(dSizes, args_ + 49 * 24 + 4 * frameIdx,
 			4 * sizeof(float), cudaMemcpyHostToDevice);
 
-		sizeEbo = getTrianglesAndIndices(static_cast<float*>(pVboData),
+		pointSize = getTrianglesAndIndices(static_cast<float*>(pVboData),
 			static_cast<GLuint*>(pEboData), dPoints, dColors, dSizes, 4);
 
 		cudaFree(dPoints);
@@ -106,11 +102,25 @@ private:
 		shader_->use();
 		shader_->setMat4("view", camera.GetViewMatrix());
 		shader_->setMat4("projection", camera.GetProjectionMatrix());
+
+		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+			6 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+			6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
 		// draw points 0-3 from the currently bound VAO with current in-use shader;
-		glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, pointSize, GL_UNSIGNED_INT, 0);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
+
 		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 public:

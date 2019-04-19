@@ -34,7 +34,7 @@ protected:
 			, name(name)
 			, start(idx)
 			, offset(0)
-			, stride(1) {
+			, stride(0) {
 			switch (type) {
 			case ArgType::Scalar:
 				idx += 1;
@@ -61,7 +61,8 @@ protected:
 		}
 
 		static void stopGroup() {
-			FW_ASSERT(groupNums * groupStep == groupOffset);
+			FW_ASSERT(groupNums * groupStep == groupOffset) << "Check whether"
+					"the number of Attr is the same as set in startGroup";
 			idx += 49 * groupNums * groupStep;
 		}
 	};
@@ -91,6 +92,10 @@ private:
 	virtual void RenderParticles(const Camera& camera) = 0;
 
 public:
+	float* getArgs(int idx, int frame = 0) {
+		return args_ + attrs_[idx].start +
+			attrs_[idx].offset + frame * attrs_[idx].stride;
+	}
 	void RenderScene(const Camera& camera) {
 		RenderParticles(camera);
 	}

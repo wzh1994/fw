@@ -162,9 +162,7 @@ void CfwDlg::myInitialize() {
 	 * -------------------------------
 	 */
 	// 构造OpenGLWindow对象时候，初始化glew，因此与glew有关的初始化操作放在这里
-	printf("init~");
 	fw->initialize();
-	printf("init done");
 
 	/* -------------------------------
 	 * opencv
@@ -419,9 +417,7 @@ void CfwDlg::onSliderChange() {
 	std::unique_lock<std::mutex> l(mtx);
 	int pos = m_sliderc.GetPos();
 	cv::imshow(opencvWindow, *pPhotos_[pos]);
-	printf("here1");
 	resetArgValue();
-	printf("here2");
 	fw->GetParticles(pos);
 	pOpenGLWindow->RedrawWindow();
 }
@@ -444,6 +440,7 @@ void CfwDlg::OnBnClickedButtonPlus(){
 
 void CfwDlg::resetArgValue(){
 	int r = m_combo.GetCurSel();
+	int pos = m_sliderc.GetPos();
 	if (r == -1) {
 		m_edit1.ShowWindow(false);
 		m_btn_color.ShowWindow(false);
@@ -452,7 +449,7 @@ void CfwDlg::resetArgValue(){
 	size_t idx = fw->attrs_[r].start;
 	switch (fw->attrs_[r].type) {
 	case ArgType::Scalar:
-		m_edit_value1 = fw->args_[idx];
+		m_edit_value1 = *fw->getArgs(idx);
 		UpdateData(false);
 		m_edit1.ShowWindow(true);
 		m_edit2.ShowWindow(false);
@@ -461,9 +458,10 @@ void CfwDlg::resetArgValue(){
 		m_btn_get_color.ShowWindow(false);
 		break;
 	case ArgType::Vector3:
-		m_edit_value1 = fw->args_[idx];
-		m_edit_value2 = fw->args_[idx + 1];
-		m_edit_value3 = fw->args_[idx + 2];
+	case ArgType::Vec3Group:
+		m_edit_value1 = fw->getArgs(idx, pos)[0];
+		m_edit_value2 = fw->getArgs(idx, pos)[1];
+		m_edit_value3 = fw->getArgs(idx, pos)[2];
 		UpdateData(false);
 		m_edit1.ShowWindow(true);
 		m_edit2.ShowWindow(true);
@@ -472,10 +470,11 @@ void CfwDlg::resetArgValue(){
 		m_btn_get_color.ShowWindow(false);
 		break;
 	case ArgType::Color:
+	case ArgType::ColorGroup:
 		{
-			int r = static_cast<int>(fw->args_[idx] * 255);
-			int g = static_cast<int>(fw->args_[idx + 1] * 255);
-			int b = static_cast<int>(fw->args_[idx + 2] * 255);
+			int r = static_cast<int>(fw->getArgs(idx, pos)[0] * 255);
+			int g = static_cast<int>(fw->getArgs(idx, pos)[1] * 255);
+			int b = static_cast<int>(fw->getArgs(idx, pos)[2] * 255);
 			auto color = RGB(r, g, b);
 			// colorDlg.SetCurrentColor()无效，必须直接修改其值
 			colorDlg.m_cc.rgbResult = color;
@@ -498,29 +497,33 @@ void CfwDlg::OnArgComboChange() {
 
 void CfwDlg::OnBnClickedConform(){
 	int r = m_combo.GetCurSel();
+	int pos = m_sliderc.GetPos();
 	size_t idx = fw->attrs_[r].start;
 	switch (fw->attrs_[r].type) {
 	case ArgType::Scalar:
 		UpdateData(true);
-		fw->args_[idx] = m_edit_value1;
+		*fw->getArgs(idx) = m_edit_value1;
 		break;
 	case ArgType::Vector3:
+	case ArgType::Vec3Group:
 		UpdateData(true);
-		fw->args_[idx] = m_edit_value1;
-		fw->args_[idx + 1] = m_edit_value2;
-		fw->args_[idx + 2] = m_edit_value3;
+		fw->getArgs(idx, pos)[0] = m_edit_value1;
+		fw->getArgs(idx, pos)[1] = m_edit_value2;
+		fw->getArgs(idx, pos)[2] = m_edit_value3;
 		break;
-	case ArgType::Color: {
+	case ArgType::Color:
+	case ArgType::ColorGroup:
+		{
+			// 一个新的作用域 用于定义临时变量color
 			COLORREF color = colorDlg.GetColor();
-			fw->args_[idx] = GetRValue(color) / 255.0;
-			fw->args_[idx + 1] = GetGValue(color) / 255.0;
-			fw->args_[idx + 2] = GetBValue(color) / 255.0;
+			fw->getArgs(idx, pos)[0] = GetRValue(color) / 255.0;
+			fw->getArgs(idx, pos)[1] = GetGValue(color) / 255.0;
+			fw->getArgs(idx, pos)[2] = GetBValue(color) / 255.0;
 		}
 		break;
 	default:
-		printf("Unexpected Arg Type!\n");
+		FW_NOTSUPPORTED << "Unexpected data type!";
 	}
-	int pos = m_sliderc.GetPos();
 	fw->GetParticles(pos);
 	pOpenGLWindow->Invalidate();
 }

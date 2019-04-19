@@ -28,7 +28,7 @@ void init() {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK) {
-		printf("init failed!");
+		FW_THROW(NotInitialized) << "Init failed!";
 	};
 	glEnable(GL_DEPTH_TEST);
 }

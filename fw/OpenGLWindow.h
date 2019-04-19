@@ -60,7 +60,6 @@ public:
 	// TODO: 遗留问题，此事件并不响应，
 	// 导致鼠标从内移出，再从外移入仍然响应OnLButtonUp事件
 	afx_msg void OnMouseLeave() override {
-		printf("leave\n");
 		startPoint_.reset();
 		CWnd::OnMouseLeave();
 	};
