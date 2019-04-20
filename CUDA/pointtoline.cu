@@ -10,7 +10,6 @@
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 #include <cstdio>
-#include <windows.h>
 
 // 此处用宏定义是为了让这个常量可以同时在cuda和host上面生效
 #define kCirclePoints 24
@@ -96,7 +95,7 @@ __constant__ uint32_t indices1[kCircleIndices]{
 	20, 44, 21, 21, 44, 45,
 	21, 45, 22, 22, 45, 46,
 	22, 46, 23, 23, 46, 47,
-	23, 47, 24, 24, 47, 48
+	23, 47, 0, 0, 47, 24
 };
 
 __constant__ uint32_t indices2[kCircleIndices]{
@@ -193,7 +192,7 @@ __device__ void normalize(float& a, float& b, float& c) {
 __device__ void rotate(float u, float v, float w, float cos_theta,
 					   float sin_theta, float& a, float& b, float& c)
 {
-	if (fabsf(cos_theta - 1.0f) < 1e-5) { 
+	if (fabsf(cos_theta - 1.0f) < 1e-6) { 
 		printf("No need to rotate!");
 		return; 
 	}
@@ -491,26 +490,3 @@ size_t pointToLine(
 	cudaFree(indicesOffsets);
 	return totalIndices;
 }
-
-__global__ void testStatic(float* in) {
-	rotate(in[0], in[1], in[2], in[3], in[4], in[5], in[6]);
-}
-
-
-
-void test() {
-	float *a, *h;
-	float in[7]{0.0f, 1.0f, 1.0f, 3.14f, 0, 1.0f, 0};
-	cudaMalloc(&a, 7 * sizeof(float));
-	cudaMemcpy(a, in, 7 * sizeof(float), cudaMemcpyHostToDevice);
-	testStatic<<<1, 1>>>(a);
-	h = new float[7];
-	cudaMemcpy(h, a, 7 * sizeof(float), cudaMemcpyDeviceToHost);
-	for (int i = 0; i < 7; ++i) {
-		printf("%f ", h[i]);
-	}
-	cudaFree(a);
-	delete[] h;
-	system("pause");
-}
-

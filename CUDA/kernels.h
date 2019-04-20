@@ -14,6 +14,7 @@
 
 // 累加和操作
 void cuSum(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
+void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup = 1);
 
 // 累计 最大值操作
 void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
@@ -22,6 +23,10 @@ void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
 /*
  * 烟花相关方法
  */
+
+// 对烟花的粒子进行空间压缩，除去其中的不可见粒子
+size_t compress(float* dPoints, float* dColors, float* dSizes,
+	size_t nGroups, size_t size, size_t* dGroupOffsets);
 
 // 把点连成线，生成这一条线上面的三角形面片
 // 输入要求： 每条线上面的点为奇数；

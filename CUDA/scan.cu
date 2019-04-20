@@ -44,8 +44,8 @@ __global__ void scan(float* dOut, float* dIn, binary_func_t func)
 		(idx >= step ? dIn[idx + offset - step] : 0));
 	__syncthreads();
 	for (step*=2; step<size; step*=2){
-		dOut[idx + offset] = dOut[idx + offset] +
-				(idx >= step ?  dOut[idx + offset - step] : 0);
+		dOut[idx + offset] = func(dOut[idx + offset],
+				(idx >= step ?  dOut[idx + offset - step] : 0));
 		__syncthreads();
 	}
 }
@@ -68,6 +68,31 @@ void cuSum(float* dOut, float* dIn, size_t size, size_t numGroup) {
 	cudaMemcpyFromSymbol(&add, add_float_d, sizeof(binary_func_t));
 	scan << <numGroup, size >> > (dOut, dIn, add);
 	cudaDeviceSynchronize();
+}
+
+__global__ void cusum(size_t* dOut, const size_t* dIn)
+{
+	uint32_t size = blockDim.x;
+	uint32_t offset = blockIdx.x * size;
+	uint32_t idx = threadIdx.x;
+	size_t step = 1;
+	size_t sum = dIn[idx + offset] +
+		(idx >= step ? dIn[idx + offset - step] : 0);
+	__syncthreads();
+	dOut[idx + offset] = sum;
+	__syncthreads();
+	for (step *= 2; step < size; step *= 2) {
+		size_t sum = dOut[idx + offset] +
+			(idx >= step ? dOut[idx + offset - step] : 0);
+		__syncthreads();
+		dOut[idx + offset] = sum;
+		__syncthreads();
+	}
+	printf("cusum: %llu, %llu\n", idx, dOut[idx]);
+}
+
+void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup) {
+	cusum << <numGroup, size >> > (dOut, dIn);
 }
 
 // ================================
