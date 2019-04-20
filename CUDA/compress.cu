@@ -107,6 +107,7 @@ size_t compress(float* dPoints, float* dColors, float* dSizes,
 	cudaMalloc(&judgement, nGroups * size * sizeof(size_t));
 	cudaMalloc(&indices, nGroups * size * sizeof(size_t));
 	cudaMalloc(&groupFlag, nGroups * sizeof(size_t));
+	cudaMalloc(&groupPos, nGroups * sizeof(size_t));
 	cudaMalloc(&dNumGroup, sizeof(size_t));
 
 	judge<<<nGroups, size >>>(dColors, dSizes, judgement);
@@ -125,6 +126,7 @@ size_t compress(float* dPoints, float* dColors, float* dSizes,
 	cudaFree(judgement);
 	cudaFree(indices);
 	cudaFree(groupFlag);
+	cudaFree(groupPos);
 	cudaFree(dNumGroup);
 	return numGroup;
 }

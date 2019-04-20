@@ -24,9 +24,19 @@ void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
  * 烟花相关方法
  */
 
+// 给定某一方向上每一时刻的力，求出任一时刻生成的粒子在的在该力作用下的位移
+// size表示时刻的数量，count表示插值的数量, time表示时间间隔。
+void calcshiftingByOutsideForce(
+	float* dIn, size_t size, size_t count, float time= 0.0416666666f);
+
 // 对烟花的粒子进行空间压缩，除去其中的不可见粒子
 size_t compress(float* dPoints, float* dColors, float* dSizes,
 	size_t nGroups, size_t size, size_t* dGroupOffsets);
+
+// 插值算法
+void interpolation(float* dArray, size_t nGroups, size_t size, size_t count);
+void interpolation(float* dPoints, float* dColors, float* dSizes,
+	size_t* dGroupOffsets, size_t nGroups, size_t maxSize, size_t count);
 
 // 把点连成线，生成这一条线上面的三角形面片
 // 输入要求： 每条线上面的点为奇数；
