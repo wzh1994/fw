@@ -8,6 +8,7 @@
 
 void testShift() {
 	float* in = new float[500000];
+	// 用initiallist初始化会造成编译时候卡死，可能是编译器优化不好
 	in[0] = 1;
 	in[1] = 2;
 	in[2] = 3;
@@ -17,7 +18,6 @@ void testShift() {
 	cudaMallocAndCopy(dIn, in, 500000, 5);
 	calcshiftingByOutsideForce(dIn, 5, 150, 1);
 	showAndFree(dIn, 2000, 605);
-	//showAndFree(dIn, 42025, 205);
 	delete[] in;
 }
 

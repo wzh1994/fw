@@ -1,0 +1,36 @@
+#include "kernel.h"
+#include "kernels.h"
+#include "cuda_runtime.h"
+#include "corecrt_math.h"
+
+// 为了让__syncthreads()通过语法检查
+#ifndef __CUDACC__
+#define __CUDACC__
+#endif // !__CUDACC__
+#include "device_launch_parameters.h"
+#include "device_functions.h"
+#include <cstdio>
+
+__global__ void calcFinalPosition(float* points, size_t count, 
+		size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
+		float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize) {
+	size_t bid = blockIdx.x;
+	size_t tid = threadIdx.x;
+	float* basePtr = points + dGroupOffsets[bid] * 3;
+	size_t numPointsThisGroup = dGroupOffsets[bid + 1] - dGroupOffsets[bid];
+	if (tid < numPointsThisGroup) {
+		size_t start = dGroupStarts[bid] * (count + 1) + tid;
+		size_t end = frame * (count + 1);
+		basePtr[3 * tid] += dXShiftMatrix[start * shiftsize + end];
+		basePtr[3 * tid + 1] += dYShiftMatrix[start * shiftsize + end];
+	}
+}
+
+void calcFinalPosition(
+		float* points, size_t nGroups, size_t maxSize, size_t count,
+		size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
+		float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize) {
+	calcFinalPosition<<<nGroups, maxSize>>>(points, count, frame, dGroupOffsets, dGroupStarts,
+		dXShiftMatrix, dYShiftMatrix, shiftsize);
+		
+}

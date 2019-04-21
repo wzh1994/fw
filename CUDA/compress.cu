@@ -73,15 +73,16 @@ __global__ void compressData(float* dPoints, float* dColors, float* dSizes,
 		dSizes[targetIdx] = s;
 	}
 }
-__global__ void compressIndex(size_t* dGroupOffsets, size_t* groupFlag,
-		size_t* groupPos, size_t* dNumGroup) {
+__global__ void compressIndex(size_t* dGroupOffsets, size_t* dGroupStarts,
+		size_t* groupFlag, size_t* groupPos, size_t* dNumGroup) {
 	size_t idx = threadIdx.x;
 	size_t offset = dGroupOffsets[idx + 1];
+	size_t start = dGroupStarts[idx];
 	__syncthreads();
 	printf("compressIndex-comp: %llu, %llu, %llu, %llu\n", idx, groupFlag[idx], groupPos[idx], offset);
 	if (groupFlag[idx]) {
-		// 0号位置一定是0，不进行压缩
 		dGroupOffsets[groupPos[idx]] = offset;
+		dGroupStarts[groupPos[idx] - 1] = start;
 	}
 
 	// 求有效的组数
@@ -100,8 +101,8 @@ __global__ void compressIndex(size_t* dGroupOffsets, size_t* groupFlag,
 	}
 }
 
-size_t compress(float* dPoints, float* dColors, float* dSizes,
-		size_t nGroups, size_t size, size_t* dGroupOffsets) {
+size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
+		size_t size, size_t* dGroupOffsets, size_t* dGroupStarts) {
 	dim3 dimBlock(nGroups, size);
 	size_t *indices, *judgement, *groupFlag, *groupPos, *dNumGroup;
 	cudaMalloc(&judgement, nGroups * size * sizeof(size_t));
@@ -112,13 +113,15 @@ size_t compress(float* dPoints, float* dColors, float* dSizes,
 
 	judge<<<nGroups, size >>>(dColors, dSizes, judgement);
 	getGroupFlag<<<nGroups, size>>>(judgement, groupFlag);
+	argFirstNoneZero(judgement, dGroupStarts, nGroups, size);
 	cuSum(indices, judgement, nGroups * size);
 	printf("\n");
 	cuSum(groupPos, groupFlag, nGroups);
 	printf("\n");
 	getOffsets<<<1, nGroups>>>(indices, size, dGroupOffsets);
 	compressData<<<1, dimBlock >>>(dPoints, dColors, dSizes, judgement, indices);
-	compressIndex<<<1, nGroups>>>(dGroupOffsets, groupFlag, groupPos, dNumGroup);
+	compressIndex<<<1, nGroups>>>(dGroupOffsets, dGroupStarts,
+		groupFlag, groupPos, dNumGroup);
 	size_t numGroup;
 	cudaMemcpy(&numGroup, dNumGroup, sizeof(size_t), cudaMemcpyDeviceToHost);
 	printf("%llu\n", numGroup);

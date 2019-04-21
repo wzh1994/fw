@@ -8,6 +8,7 @@
 using uint32_t = unsigned int;
 using unary_func_t = float(*)(float);
 using binary_func_t = float(*)(float, float);
+using binary_func_size_t_t = size_t(*)(size_t, size_t);
 
 #define CUDACHECK(cmd) do {                         \
   cudaError_t e = cmd;                              \

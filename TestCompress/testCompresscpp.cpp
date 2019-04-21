@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cuda_runtime.h>
 #include <windows.h>
+#include "test.h"
 
 // size_t compress(float* dPoints, float* dColors, float* dSizes,
 //     size_t nGroups, size_t size, size_t* dGroupOffsets);
@@ -10,7 +11,7 @@ void testOneGroup(){
 	float *dPoints, *dColors, *dSizes;
 	size_t nGroups = 1;
 	size_t size = 5;
-	size_t *dGroupOffsets;
+	size_t *dGroupOffsets, *dGroupStarts;
 	float points[15]{
 		1, 1.1, 1.2,
 		2, 2.2, 2.2,
@@ -30,11 +31,12 @@ void testOneGroup(){
 	cudaMalloc(&dColors, 3 * size * sizeof(float));
 	cudaMalloc(&dSizes, size * sizeof(float));
 	cudaMalloc(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+	cudaMalloc(&dGroupStarts, nGroups * sizeof(size_t));
 	cudaMemcpy(dPoints, points, 3 * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dColors, colors, 3 * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizes, sizes, size * sizeof(float), cudaMemcpyHostToDevice);
 
-	size_t res = compress(dPoints, dColors, dSizes, nGroups, size, dGroupOffsets);
+	size_t res = compress(dPoints, dColors, dSizes, nGroups, size, dGroupOffsets, dGroupStarts);
 	cudaMemcpy(points, dPoints, 3 * size * sizeof(float), cudaMemcpyDeviceToHost);
 	cudaMemcpy(colors, dColors, 3 * size * sizeof(float), cudaMemcpyDeviceToHost);
 	cudaMemcpy(sizes, dSizes, size * sizeof(float), cudaMemcpyDeviceToHost);
@@ -65,13 +67,14 @@ void testOneGroup(){
 	cudaFree(dColors);
 	cudaFree(dSizes);
 	cudaFree(dGroupOffsets);
+	showAndFree(dGroupStarts, res);
 }
 
 void testFiveGroupsWithTwoEmpty() {
 	float *dPoints, *dColors, *dSizes;
 	size_t nGroups = 5;
 	size_t size = 5;
-	size_t *dGroupOffsets;
+	size_t *dGroupOffsets, *dGroupStarts;
 	float points[75]{
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		1, 1.1, 1.2,
@@ -106,18 +109,19 @@ void testFiveGroupsWithTwoEmpty() {
 		0, 0, 0, 0, 0,
 		0, 0.15, 0.4, 0.07, 1,
 		0, 0, 0, 0, 0, 
-		0, 0.15, 0.4, 0.17, 1,
+		0, 0.07, 0.4, 0.17, 1,
 		0, 0, 0, 0, 0
 	};
 	cudaMalloc(&dPoints, 3 * nGroups * size * sizeof(float));
 	cudaMalloc(&dColors, 3 * nGroups *  size * sizeof(float));
 	cudaMalloc(&dSizes, nGroups * size * sizeof(float));
 	cudaMalloc(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+	cudaMalloc(&dGroupStarts, nGroups * sizeof(size_t));
 	cudaMemcpy(dPoints, points, 3 * nGroups * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dColors, colors, 3 * nGroups * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizes, sizes, nGroups * size * sizeof(float), cudaMemcpyHostToDevice);
 
-	size_t res = compress(dPoints, dColors, dSizes, nGroups, size, dGroupOffsets);
+	size_t res = compress(dPoints, dColors, dSizes, nGroups, size, dGroupOffsets, dGroupStarts);
 	cudaMemcpy(points, dPoints, 3 * nGroups * size * sizeof(float), cudaMemcpyDeviceToHost);
 	cudaMemcpy(colors, dColors, 3 * nGroups * size * sizeof(float), cudaMemcpyDeviceToHost);
 	cudaMemcpy(sizes, dSizes, nGroups * size * sizeof(float), cudaMemcpyDeviceToHost);
@@ -149,6 +153,7 @@ void testFiveGroupsWithTwoEmpty() {
 	cudaFree(dColors);
 	cudaFree(dSizes);
 	cudaFree(dGroupOffsets);
+	showAndFree(dGroupStarts, res);
 }
 
 int main() {

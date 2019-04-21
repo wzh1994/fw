@@ -16,8 +16,24 @@
 void cuSum(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
 void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup = 1);
 
+// 归约操作
+enum class ReduceOption {
+	sum,
+	min
+};
+void reduce(size_t *dMatrix, size_t* dResult,
+	size_t nGroups, size_t size, ReduceOption op = ReduceOption::sum);
+void reduce(float *dMatrix, float* dResult,
+	size_t nGroups, size_t size, ReduceOption op = ReduceOption::sum);
+void reduceMin(float *dMatrix, float* dResult, size_t nGroups, size_t size);
+void reduceMin(size_t *dMatrix, size_t* dResult, size_t nGroups, size_t size);
+
 // 累计 最大值操作
 void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
+
+// 求矩阵中每一行最大元素的位置
+void argFirstNoneZero(size_t* dMatrix, size_t* result,
+	size_t nGroups, size_t size);
 
 
 /*
@@ -31,7 +47,7 @@ void calcshiftingByOutsideForce(
 
 // 对烟花的粒子进行空间压缩，除去其中的不可见粒子
 size_t compress(float* dPoints, float* dColors, float* dSizes,
-	size_t nGroups, size_t size, size_t* dGroupOffsets);
+	size_t nGroups, size_t size, size_t* dGroupOffsets, size_t* dGroupStarts);
 
 // 插值算法
 void interpolation(float* dArray, size_t nGroups, size_t size, size_t count);
