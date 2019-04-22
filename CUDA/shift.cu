@@ -25,11 +25,11 @@ __global__ void fillForceMatrix(float* dIn) {
 	if (bIdx > tIdx) {
 		dIn[idx] = 0;
 	} else {
-		dIn[idx] = dIn[tIdx - bIdx];
+		dIn[idx] = dIn[tIdx];
 	}
 }
 
-void calcshiftingByOutsideForce(float* dIn, size_t size, size_t count, float time) {
+void calcShiftingByOutsideForce(float* dIn, size_t size, size_t count, float time) {
 	interpolation(dIn, 1, size, count);
 	size_t numPerRow = size + count * (size - 1);
 	rescale<<<1, numPerRow >>>(

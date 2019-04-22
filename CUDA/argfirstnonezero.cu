@@ -25,7 +25,7 @@ __global__ void argFirstNoneZero(size_t* matrix, size_t* result) {
 		__syncthreads();
 	}
 	if (threadIdx.x == 0) {
-		result[bid] = mem[0];
+		result[bid] += mem[0];
 	}
 	// printf("%llu %llu : %llu\n", bid, tid, mem[tid]);
 }

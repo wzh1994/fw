@@ -23,14 +23,21 @@ __global__ void calcFinalPosition(float* points, size_t count,
 		size_t end = frame * (count + 1);
 		basePtr[3 * tid] += dXShiftMatrix[start * shiftsize + end];
 		basePtr[3 * tid + 1] += dYShiftMatrix[start * shiftsize + end];
+		/*if (bid == 0) {
+			printf("FinalPos: (%llu, %llu, %llu) : %llu, %llu, %f, %f\n",
+				bid, tid, numPointsThisGroup, start, end,
+				dXShiftMatrix[start * shiftsize + end],
+				dXShiftMatrix[start * shiftsize + end]);
+		}*/
 	}
 }
 
 void calcFinalPosition(
-		float* points, size_t nGroups, size_t maxSize, size_t count,
+		float* dPoints, size_t nGroups, size_t maxSize, size_t count,
 		size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
 		float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize) {
-	calcFinalPosition<<<nGroups, maxSize>>>(points, count, frame, dGroupOffsets, dGroupStarts,
+	calcFinalPosition<<<nGroups, maxSize>>>(
+		dPoints, count, frame, dGroupOffsets, dGroupStarts,
 		dXShiftMatrix, dYShiftMatrix, shiftsize);
 		
 }

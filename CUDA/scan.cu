@@ -93,7 +93,7 @@ __global__ void cusum(size_t* dOut, const size_t* dIn)
 		dOut[idx + offset] = sum;
 		__syncthreads();
 	}
-	printf("cusum: %llu, %llu\n", idx, dOut[idx]);
+	// printf("cusum: %llu, %llu\n", idx, dOut[idx]);
 }
 
 void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup) {

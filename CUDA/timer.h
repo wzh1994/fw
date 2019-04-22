@@ -1,4 +1,6 @@
-#pragma once
+#ifndef FW_KERNEL_UTILS_TIMER_HPP
+#define FW_KERNEL_UTILS_TIMER_HPP
+
 #include<chrono>
 #include <iostream>
 using namespace std::chrono;
@@ -22,3 +24,5 @@ public:
 		printf("%s cost: %f ms\n", s.c_str(), r);
 	}
 };
+
+#endif
