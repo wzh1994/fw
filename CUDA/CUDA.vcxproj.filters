@@ -15,11 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu">
-      <Filter>kernels</Filter>
-    </CudaCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="timer.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -29,5 +24,40 @@
     <ClInclude Include="kernel.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="test.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="scan.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="pointtoline.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="compress.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="interpolation.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="shift.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="argfirstnonezero.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="reduce.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="finalpos.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="particleSystemToPoints.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

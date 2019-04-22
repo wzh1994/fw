@@ -85,15 +85,27 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>%(CodeGeneration)</CodeGeneration>
+      <Warning>W0</Warning>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="argfirstnonezero.cu" />
+    <CudaCompile Include="finalpos.cu" />
+    <CudaCompile Include="particleSystemToPoints.cu" />
+    <CudaCompile Include="reduce.cu" />
+    <CudaCompile Include="shift.cu" />
+    <CudaCompile Include="compress.cu" />
+    <CudaCompile Include="interpolation.cu" />
+    <CudaCompile Include="pointtoline.cu" />
+    <CudaCompile Include="scan.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kernel.h" />
     <ClInclude Include="kernels.h" />
+    <ClInclude Include="test.h" />
     <ClInclude Include="timer.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
