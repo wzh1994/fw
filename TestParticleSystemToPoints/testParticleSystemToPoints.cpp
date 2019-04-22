@@ -57,8 +57,10 @@ int testParticleSystemToPoints() {
 		-1, 0, 1
 	};
 
-	float speeds[nGroups]{
-		0.1, 0.2, 0.3
+	float speeds[3 * nGroups]{
+		0.1, 0.2, 0.3,
+		0.4, 0.5, 0.6,
+		0.7, 0.8, 0.9
 	};
 
 	float startPoses[3 * nGroups]{
@@ -69,7 +71,7 @@ int testParticleSystemToPoints() {
 
 	float *dDirections, *dSpeeds, *dStartPoses;
 	cudaMallocAndCopy(dDirections, directions, 3 * nGroups);
-	cudaMallocAndCopy(dSpeeds, speeds, nGroups);
+	cudaMallocAndCopy(dSpeeds, speeds, 3 * nGroups);
 	cudaMallocAndCopy(dStartPoses, startPoses, 3 * nGroups);
 	particleSystemToPoints(dPoints, dColors, dSizes, dGroupStarts,
 		dStartFrames, nGroups, dDirections, dSpeeds, dStartPoses,

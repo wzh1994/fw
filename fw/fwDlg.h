@@ -27,7 +27,7 @@ class CfwDlg : public CDialogEx
 	void onSliderChange();
 // 构造
 public:
-	CfwDlg(CWnd* pParent = nullptr);	// 标准构造函数
+	CfwDlg(float* args, CWnd* pParent = nullptr);	// 标准构造函数
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -38,7 +38,7 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 private:
-	int sliderLen;
+	int sliderLen_;
 	float autoPlaySpeed_ = 1.0;
 
 // 实现

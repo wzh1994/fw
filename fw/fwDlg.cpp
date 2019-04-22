@@ -63,22 +63,6 @@ namespace {
 extern "C" __declspec(dllexport) void ShowDialog()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-	CfwDlg dlg;
-	dlg.DoModal();
-}
-
-FwBase* getFirework(FireWorkType type, float* args);
-CfwDlg::CfwDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_FW_DIALOG, pParent)
-{
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-
-	/* -------------------------------
-	 * firework
-	 * 实例化fw对象的时候，不执行任何opengl相关的初始化工作
-	 * 后续在初始化opengl之后，通过调用initialize来初始化opengl相关的东西
-	 * -------------------------------
-	 */
 	float *args = new float[28 * 49];
 	float pos[12]{
 			-0.5f, -0.5f, 0.0f, -0.3f, -0.3f, 0.0f, -0.1f, -0.2f, 0.0f, 0.0f,
@@ -97,12 +81,29 @@ CfwDlg::CfwDlg(CWnd* pParent /*=nullptr*/)
 			args[24 * 49 + i * 4 + j] = size[j];
 		}
 	}
+	CfwDlg dlg(args);
+	dlg.DoModal();
+}
+
+FwBase* getFirework(FireWorkType type, float* args);
+CfwDlg::CfwDlg(float* args, CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_FW_DIALOG, pParent)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	/* -------------------------------
+	 * firework
+	 * 实例化fw对象的时候，不执行任何opengl相关的初始化工作
+	 * 后续在初始化opengl之后，通过调用initialize来初始化opengl相关的东西
+	 * -------------------------------
+	 */
+	
 	fw.reset(getFirework(FireWorkType::Normal, args));
 
 	// temp
-	sliderLen = 48;
-	for (int i = 0; i < sliderLen; ++i) {
-		pPhotos_.push_back(new cv::Mat(300, 300, CV_8UC3, cv::Scalar(i * 5, (sliderLen - i) * 5, 255)));
+	sliderLen_ = fw->getTotalFrame();
+	for (int i = 0; i < sliderLen_; ++i) {
+		pPhotos_.push_back(new cv::Mat(300, 300, CV_8UC3, cv::Scalar(i * 5, (sliderLen_ - i) * 5, 255)));
 	}
 }
 
@@ -284,7 +285,7 @@ void CfwDlg::myInitialize() {
 		topMargin + subWindowHeight + rowMargin * 3 + widgetHeight * 2,
 		sliderHeight, sliderHeight, SWP_NOZORDER);
 	// 因为setSliderPos会触发onSliderChange， 该函数需要在fw被实例化之后调用
-	m_sliderc.SetRange(0, sliderLen - 1);//设置范围
+	m_sliderc.SetRange(0, sliderLen_ - 1);//设置范围
 	m_sliderc.SetTicFreq(2);//设置显示刻度的间隔
 	setSliderPos(5);
 	m_sliderc.SetLineSize(10);//一行的大小，对应键盘的方向键
@@ -557,7 +558,7 @@ void CfwDlg::OnCbnSelchangeCombo2(){
 
 void CfwDlg::autoPlay() {
 	int pos = m_sliderc.GetPos();
-	if (++pos < sliderLen) {
+	if (++pos < sliderLen_) {
 		setSliderPos(pos);
 	} else {
 		KillTimer(autoPlayId);

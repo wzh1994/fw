@@ -2,6 +2,7 @@
 #include "kernels.h"
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
+#include "utils.h"
 
 // 为了让__syncthreads()通过语法检查
 #ifndef __CUDACC__
@@ -193,7 +194,7 @@ __device__ void rotate(float u, float v, float w, float cos_theta,
 					   float sin_theta, float& a, float& b, float& c)
 {
 	if (fabsf(cos_theta - 1.0f) < 1e-6) { 
-		printf("No need to rotate!");
+		deviceDebugPrint("No need to rotate!");
 		return; 
 	}
 	normalize(u, v, w);
@@ -338,7 +339,8 @@ __device__ void calcCircularTruncatedConeItem(
 	float axisX, axisY, axisZ, cos_theta;
 	crossAndAngle(axisX, axisY, axisZ, cos_theta, normX, normY, normZ);
 	float sin_theta = sqrtf(1 - cos_theta * cos_theta);
-	printf("|||--- %f, %f, %f, %f, %f ---|||\n", axisX, axisY, axisZ, cos_theta, sin_theta);
+	deviceDebugPrint("|||--- %f, %f, %f, %f, %f ---|||\n",
+		axisX, axisY, axisZ, cos_theta, sin_theta);
 	for (size_t i = 0; i < kCirclePoints; ++i) {
 		pBufferBase[6 * i] = circle[3 * i];
 		pBufferBase[6 * i + 1] = circle[3 * i + 1];
@@ -368,13 +370,13 @@ __global__ void calcCircularTruncatedConeGroup(
 		const size_t* groupOffsets, const size_t* bufferOffsets,
 		const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut,
 		const float* circle, const uint32_t* indices, trans_func_t trans) {
-	printf("in : %u, %u\n", blockIdx.x, threadIdx.x);
+	deviceDebugPrint("in : %u, %u\n", blockIdx.x, threadIdx.x);
 	size_t idx = trans(threadIdx.x);
 	size_t bidx = blockIdx.x;
 	size_t totalNum = groupOffsets[bidx + 1] - groupOffsets[bidx];
-	printf("here~~ : %llu, %llu\n", idx, totalNum);
+	deviceDebugPrint("here~~ : %llu, %llu\n", idx, totalNum);
 	if ((idx + 1 ) < totalNum) {
-		printf("idx less than totalNum : %llu, %llu\n", idx, totalNum);
+		deviceDebugPrint("idx less than totalNum : %llu, %llu\n", idx, totalNum);
 		size_t bufferOffset = bufferOffsets[bidx] / 6 +
 			(kHalfBallPoints + kCirclePoints * (idx - 1));
 		float* pBufferBase = buffer + bufferOffset * 6;
@@ -402,7 +404,8 @@ __global__ void calcFinalIndices(
 		kHalfBallIndices + kCircleIndices * offset;
 	uint32_t baseIndex = bufferOffsets[idx] / 6 +
 		kHalfBallPoints + kCirclePoints * (offset - 1);
-	printf("fill final : %llu, offset: %llu, off: %llu\n", idx, offset, baseIndex);
+	deviceDebugPrint("fill final : %llu, offset: %llu, off: %llu\n",
+		idx, offset, baseIndex);
 	for (int i = 0; i < kCircleIndices; ++i) {
 		pIndicesBase[i] = baseIndex + indices2[i];
 	}
@@ -458,7 +461,8 @@ __global__ void calcOffsets(const size_t* groupOffsets,
 		12 * idx * (kHalfBallPoints - kCirclePoints);
 	indicesOffsets[idx] = (groupOffsets[idx] - idx) * kCircleIndices +
 		2 * idx * kHalfBallIndices;
-	printf("%llu - %llu : %llu, %llu\n", idx, groupOffsets[idx], bufferOffsets[idx], indicesOffsets[idx]);
+	deviceDebugPrint("%llu - %llu : %llu, %llu\n", idx, groupOffsets[idx],
+		bufferOffsets[idx], indicesOffsets[idx]);
 }
 
 size_t pointToLine(

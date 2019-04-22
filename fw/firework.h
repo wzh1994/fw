@@ -4,7 +4,9 @@
 #include <memory>
 #include "particle.h"
 #include "Shader.h"
-#include "Camera.h"
+#include "Camera.h" 
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
 
 class CfwDlg;
 enum class ArgType {
@@ -70,6 +72,16 @@ protected:
 protected:
 	std::vector<Attr> attrs_;
 	float* args_;
+	size_t nFrames_;
+
+protected:
+	GLuint vbo = 0;
+	GLuint ebo = 0;
+	GLuint vao = 0;
+	size_t eboSize;
+	struct cudaGraphicsResource *cuda_vbo_resource, *cuda_ebo_resource;
+
+protected:
 	FwBase(float* args) : args_(args) {}
 
 protected:
@@ -84,20 +96,57 @@ protected:
 	// 子类改写时候必须首先显式的调用本方法。
 	virtual void initialize() {
 		shader_.reset(new Shader("fw.vs", "fw.fs"));
-		// GetParticles();
 	}
 
-private:
-	virtual void GetParticles(int frameIdx) = 0;
-	virtual void RenderParticles(const Camera& camera) = 0;
+	void genBuffer(size_t vboSize, size_t eboSize) {
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER,
+			vboSize * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		cudaGraphicsGLRegisterBuffer(&cuda_vbo_resource, vbo,
+			cudaGraphicsMapFlagsWriteDiscard);
+
+		glGenBuffers(1, &ebo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+			eboSize * sizeof(int), nullptr, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		cudaGraphicsGLRegisterBuffer(&cuda_ebo_resource, ebo,
+			cudaGraphicsMapFlagsWriteDiscard);
+	}
+
+	// 如果子类在初始化时候调用了genBuffer
+	// 那么必须在析构函数中调用deleteBuffer
+	void deleteBuffer() {
+		glDeleteBuffers(1, &vbo);
+		glDeleteBuffers(1, &ebo);
+		glDeleteVertexArrays(1, &vao);
+	}
 
 public:
+	virtual void GetParticles(int frameIdx) = 0;
+
+public:
+
+	size_t getTotalFrame() {
+		return nFrames_;
+	}
+
 	float* getArgs(int idx, int frame = 0) {
 		return args_ + attrs_[idx].start +
 			attrs_[idx].offset + frame * attrs_[idx].stride;
 	}
 	void RenderScene(const Camera& camera) {
-		RenderParticles(camera);
+		shader_->use();
+		shader_->setMat4("view", camera.GetViewMatrix());
+		shader_->setMat4("projection", camera.GetProjectionMatrix());
+
+		glBindVertexArray(vao);
+		// draw points 0-3 from the currently bound VAO with current in-use shader;
+		glDrawElements(GL_TRIANGLES, eboSize, GL_UNSIGNED_INT, 0);
+
+		glBindVertexArray(0);
 	}
 
 	virtual ~FwBase() = default;

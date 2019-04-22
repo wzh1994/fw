@@ -67,11 +67,11 @@ __global__ void particleSystemToPoints(
 	size_t mIdx = tid * blockDim.x + existFrame;
 	if (existFrame >= 0) {
 		points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
-			static_cast<float>(existFrame) * speeds[bid];
+			static_cast<float>(existFrame) * speeds[bid * 3];
 		points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *
-			static_cast<float>(existFrame) * speeds[bid];
+			static_cast<float>(existFrame) * speeds[bid * 3 + 1];
 		points[3 * idx + 2] = poses[bid * 3 + 2] + directions[bid * 3 + 2] *
-			static_cast<float>(existFrame) * speeds[bid];
+			static_cast<float>(existFrame) * speeds[bid * 3 + 2];
 		colors[3 * idx] = colorMatrix[3 * mIdx];
 		colors[3 * idx + 1] = colorMatrix[3 * mIdx + 1];
 		colors[3 * idx + 2] = colorMatrix[3 * mIdx + 2];
