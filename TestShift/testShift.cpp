@@ -16,7 +16,7 @@ void testShift() {
 	in[4] = 5;
 	float* dIn;
 	cudaMallocAndCopy(dIn, in, 500000, 5);
-	calcshiftingByOutsideForce(dIn, 5, 150, 1);
+	calcShiftingByOutsideForce(dIn, 5, 150, 1);
 	showAndFree(dIn, 2000, 605);
 	delete[] in;
 }
