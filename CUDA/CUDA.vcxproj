@@ -91,6 +91,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="argfirstnonezero.cu" />
+    <CudaCompile Include="fill.cu" />
     <CudaCompile Include="finalpos.cu" />
     <CudaCompile Include="particleSystemToPoints.cu" />
     <CudaCompile Include="reduce.cu" />

@@ -13,6 +13,7 @@ enum class ArgType {
 	Scalar = 0,
 	Color,
 	Vector3,
+	ScalarGroup,
 	ColorGroup,
 	Vec3Group
 };
@@ -27,6 +28,7 @@ protected:
 		size_t start;
 		size_t offset;
 		size_t stride;
+		static size_t nFrames;
 		static size_t idx;
 		static size_t groupOffset;
 		static size_t groupNums;
@@ -45,41 +47,45 @@ protected:
 			case ArgType::Vector3:
 				idx += 3;
 				break;
+			case ArgType::ScalarGroup:
 			case ArgType::ColorGroup:
 			case ArgType::Vec3Group:
 				offset = groupOffset;
 				groupOffset += groupStep;
-				stride = groupNums * groupOffset;
-			default:
+				stride = groupNums * groupStep;
 				break;
+			default:
+				FW_NOTSUPPORTED << "Unexpected attr type!";
 			}
 		}
 
-		static void startGroup(int n, int step) {
+		static void startGroup(int n, int step, int nFrames) {
 			FW_ASSERT(n > 0 && step > 0);
 			groupOffset = 0;
 			groupNums = n;
 			groupStep = step;
+			Attr::nFrames = nFrames;
 		}
 
 		static void stopGroup() {
 			FW_ASSERT(groupNums * groupStep == groupOffset) << "Check whether"
 					"the number of Attr is the same as set in startGroup";
-			idx += 49 * groupNums * groupStep;
+			idx += nFrames * groupNums * groupStep;
 		}
 	};
 
 protected:
 	std::vector<Attr> attrs_;
 	float* args_;
+	// nFrames_这个名字被BeginGroup使用，修改的时候需要注意一下
 	size_t nFrames_;
 
 protected:
 	GLuint vbo = 0;
 	GLuint ebo = 0;
 	GLuint vao = 0;
-	size_t eboSize;
-	struct cudaGraphicsResource *cuda_vbo_resource, *cuda_ebo_resource;
+	size_t eboSize_ = 0;
+	struct cudaGraphicsResource *cuda_vbo_resource_, *cuda_ebo_resource_;
 
 protected:
 	FwBase(float* args) : args_(args) {}
@@ -104,7 +110,7 @@ protected:
 		glBufferData(GL_ARRAY_BUFFER,
 			vboSize * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		cudaGraphicsGLRegisterBuffer(&cuda_vbo_resource, vbo,
+		cudaGraphicsGLRegisterBuffer(&cuda_vbo_resource_, vbo,
 			cudaGraphicsMapFlagsWriteDiscard);
 
 		glGenBuffers(1, &ebo);
@@ -112,7 +118,7 @@ protected:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 			eboSize * sizeof(int), nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		cudaGraphicsGLRegisterBuffer(&cuda_ebo_resource, ebo,
+		cudaGraphicsGLRegisterBuffer(&cuda_ebo_resource_, ebo,
 			cudaGraphicsMapFlagsWriteDiscard);
 	}
 
@@ -125,6 +131,7 @@ protected:
 	}
 
 public:
+	virtual void prepare() = 0;
 	virtual void GetParticles(int frameIdx) = 0;
 
 public:
@@ -133,7 +140,10 @@ public:
 		return nFrames_;
 	}
 
-	float* getArgs(int idx, int frame = 0) {
+	float* getArgs(size_t idx, size_t frame) {
+		// printf("%llu, %llu : %llu, %llu, %llu, %llu\n", idx, frame,
+		//     attrs_[idx].start, attrs_[idx].offset, attrs_[idx].stride,
+		//     attrs_[idx].start + attrs_[idx].offset + frame * attrs_[idx].stride);
 		return args_ + attrs_[idx].start +
 			attrs_[idx].offset + frame * attrs_[idx].stride;
 	}
@@ -141,12 +151,12 @@ public:
 		shader_->use();
 		shader_->setMat4("view", camera.GetViewMatrix());
 		shader_->setMat4("projection", camera.GetProjectionMatrix());
-
-		glBindVertexArray(vao);
-		// draw points 0-3 from the currently bound VAO with current in-use shader;
-		glDrawElements(GL_TRIANGLES, eboSize, GL_UNSIGNED_INT, 0);
-
-		glBindVertexArray(0);
+		if (eboSize_ > 0) {
+			glBindVertexArray(vao);
+			// draw points 0-3 from the currently bound VAO with current in-use shader;
+			glDrawElements(GL_TRIANGLES, eboSize_, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+		}
 	}
 
 	virtual ~FwBase() = default;
@@ -169,7 +179,7 @@ FwBase* getFirework(FireWorkType type, float* args);
 #define AddVec3(_name) \
 	attrs_.push_back(Attr(ArgType::Vector3, L##_name));
 
-#define BeginGroup(_n, _step) Attr::startGroup((_n), (_step))
+#define BeginGroup(_n, _step) Attr::startGroup((_n), (_step), nFrames_)
 #define EndGroup() Attr::stopGroup()
 
 #define AddColorGroup(_name) \
@@ -177,3 +187,6 @@ FwBase* getFirework(FireWorkType type, float* args);
 
 #define AddVec3Group(_name) \
 	attrs_.push_back(Attr(ArgType::Vec3Group, L##_name));
+
+#define AddScalarGroup(_name) \
+	attrs_.push_back(Attr(ArgType::ScalarGroup, L##_name));

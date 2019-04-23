@@ -13,10 +13,18 @@
 /*
  * 基础通用数学方法
  */
+// 填充操作
+void fill(float* dArray, float data, size_t size);
+void fill(size_t* dArray, size_t data, size_t size);
+void fill(float* dArray, const float* data, size_t size, size_t step);
+void fill(size_t* dArray, const size_t* data, size_t size, size_t step);
 
 // 累加和操作
 void cuSum(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
 void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup = 1);
+
+// 正则化
+void normalize(float* vectors, size_t size);
 
 // 归约操作
 enum class ReduceOption {

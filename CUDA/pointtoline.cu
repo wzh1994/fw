@@ -185,9 +185,21 @@ __constant__ uint32_t halfBallIndicesRight[1]{};
 
 __device__ void normalize(float& a, float& b, float& c) {
 	float temp = 1 / sqrtf(a * a + b * b + c * c);
+	deviceDebugPrint("normalize: %f, %f, %f\n", a, b, c);
 	a = a * temp;
 	b = b * temp;
 	c = c * temp;
+	deviceDebugPrint("%f, %f, %f\n", a, b, c);
+}
+
+__global__ void normalize(float* vectors) {
+	size_t idx = threadIdx.x;
+	normalize(vectors[3 * idx], vectors[3 * idx + 1], vectors[3 * idx + 2]);
+}
+
+void normalize(float* vectors, size_t size) {
+	normalize << <1, size >> > (vectors);
+	CUDACHECK(cudaGetLastError());
 }
 
 __device__ void rotate(float u, float v, float w, float cos_theta,

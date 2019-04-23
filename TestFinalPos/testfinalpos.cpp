@@ -38,7 +38,8 @@ void testFinalPos() {
 
 	size_t realNGroups = compress(
 		dPoints, dColors, dSizes, nGroups, size, dGroupOffsets, dGroupStarts);
-	interpolation(dPoints, dColors, dSizes, dGroupOffsets, nGroups, size, count);
+	interpolation(
+		dPoints, dColors, dSizes, dGroupOffsets, realNGroups, size, count);
 	
 	constexpr size_t currFrame = 10;
 	calcFinalPosition(dPoints, realNGroups, size, count, currFrame,

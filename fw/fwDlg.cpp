@@ -55,7 +55,7 @@ namespace {
 
 // 其他实用常量
 namespace {
-	const UINT_PTR autoPlayId = 0;
+	const UINT_PTR autoPlayId = 0; // MFC计时器id
 }
 
 // CfwDlg 对话框
@@ -63,24 +63,28 @@ namespace {
 extern "C" __declspec(dllexport) void ShowDialog()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-	float *args = new float[28 * 49];
-	float pos[12]{
-			-0.5f, -0.5f, 0.0f, -0.3f, -0.3f, 0.0f, -0.1f, -0.2f, 0.0f, 0.0f,
-			0.0f, 0.0f };
-	float color[12]{ 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-			1.0f, 1.0f, 1.0f };
-	float size[4]{ 0.1f, 0.2f, 0.2f, 0.1f };
-	for (int i = 0; i < 49; ++i) {
-		for (int j = 0; j < 12; ++j) {
-			args[i * 12 + j] = pos[j] + 0.05 * (i - 25);
-		}
-		for (int j = 0; j < 12; ++j) {
-			args[12 * 49 + i * 12 + j] = color[j];
-		}
-		for (int j = 0; j < 4; ++j) {
-			args[24 * 49 + i * 4 + j] = size[j];
-		}
-	}
+	float *args = new float[36]{
+		// 每一帧初始颜色
+		0.0f, 0.0f, 0.5f,
+		0.0f, 0.2f, 0.7f,
+		0.0f, 0.3f, 0.8f,
+		0.1f, 0.2f, 0.5f,
+		0.1f, 0.1f, 0.3f,
+		// 每一帧初始尺寸
+		0.15f, 0.19f, 0.17f, 0.16f, 0.14f,
+		// 每一帧初始X方向加速度
+		0.01f, 0.02f, -0.01f, 0.03f, 0.05f,
+		// 每一帧初始Y方向加速度
+		-0.2f, -0.2f, -0.2f, -0.2f, -0.2f,
+		// 颜色衰减
+		0.99f,
+		// 尺寸衰减
+		0.98f,
+		// 初速度
+		1.0f,
+		// 初位置
+		0.0f, 0.1f, 0.0f
+	};
 	CfwDlg dlg(args);
 	dlg.DoModal();
 }
@@ -286,9 +290,9 @@ void CfwDlg::myInitialize() {
 		sliderHeight, sliderHeight, SWP_NOZORDER);
 	// 因为setSliderPos会触发onSliderChange， 该函数需要在fw被实例化之后调用
 	m_sliderc.SetRange(0, sliderLen_ - 1);//设置范围
-	m_sliderc.SetTicFreq(2);//设置显示刻度的间隔
-	setSliderPos(5);
-	m_sliderc.SetLineSize(10);//一行的大小，对应键盘的方向键
+	m_sliderc.SetTicFreq(1);//设置显示刻度的间隔
+	setSliderPos(0);
+	m_sliderc.SetLineSize(2);//一行的大小，对应键盘的方向键
 }
 
 /* ========================================
@@ -447,10 +451,11 @@ void CfwDlg::resetArgValue(){
 		m_btn_color.ShowWindow(false);
 		return;
 	}
-	size_t idx = fw->attrs_[r].start;
-	switch (fw->attrs_[r].type) {
+	size_t idx = r;
+	switch (fw->attrs_[idx].type) {
 	case ArgType::Scalar:
-		m_edit_value1 = *fw->getArgs(idx);
+	case ArgType::ScalarGroup:
+		m_edit_value1 = *fw->getArgs(idx, pos);
 		UpdateData(false);
 		m_edit1.ShowWindow(true);
 		m_edit2.ShowWindow(false);
@@ -499,11 +504,12 @@ void CfwDlg::OnArgComboChange() {
 void CfwDlg::OnBnClickedConform(){
 	int r = m_combo.GetCurSel();
 	int pos = m_sliderc.GetPos();
-	size_t idx = fw->attrs_[r].start;
-	switch (fw->attrs_[r].type) {
+	size_t idx = r;
+	switch (fw->attrs_[idx].type) {
 	case ArgType::Scalar:
+	case ArgType::ScalarGroup:
 		UpdateData(true);
-		*fw->getArgs(idx) = m_edit_value1;
+		*fw->getArgs(idx, pos) = m_edit_value1;
 		break;
 	case ArgType::Vector3:
 	case ArgType::Vec3Group:
@@ -525,6 +531,7 @@ void CfwDlg::OnBnClickedConform(){
 	default:
 		FW_NOTSUPPORTED << "Unexpected data type!";
 	}
+	fw->prepare();
 	fw->GetParticles(pos);
 	pOpenGLWindow->Invalidate();
 }
