@@ -192,6 +192,12 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CudaRuntime>Shared</CudaRuntime>
     </CudaCompile>
+    <PostBuildEvent>
+      <Command>copy /y "D:\GraduationProject\firework\fw\fw\fw.vs" "D:\GraduationProject\firework\fw\python"
+copy /y "D:\GraduationProject\firework\fw\fw\fw.fs" "D:\GraduationProject\firework\fw\python"
+copy /y "D:\GraduationProject\firework\fw\x64\Release\fw.dll" "D:\GraduationProject\firework\fw\python"
+copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\GraduationProject\firework\fw\python"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />

@@ -104,6 +104,11 @@ protected:
 		shader_.reset(new Shader("fw.vs", "fw.fs"));
 	}
 
+public:
+	virtual void prepare() = 0;
+	virtual void GetParticles(int frameIdx) = 0;
+
+protected:
 	void genBuffer(size_t vboSize, size_t eboSize) {
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -129,10 +134,6 @@ protected:
 		glDeleteBuffers(1, &ebo);
 		glDeleteVertexArrays(1, &vao);
 	}
-
-public:
-	virtual void prepare() = 0;
-	virtual void GetParticles(int frameIdx) = 0;
 
 public:
 

@@ -41,7 +41,7 @@ void reduceMin(size_t *dMatrix, size_t* dResult, size_t nGroups, size_t size);
 // 累计 最大值操作
 void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
 
-// 求矩阵中每一行最大元素的位置
+// 求矩阵中每一行第一个非0元素的位置
 void argFirstNoneZero(size_t* dMatrix, size_t* result,
 	size_t nGroups, size_t size);
 
@@ -61,7 +61,8 @@ void getColorAndSizeMatrix(
 	float* dColorMatrix, float* dSizeMatrix);
 
 // 由N个粒子系统生成N组点，求出每个点对应的位置，颜色，尺寸
-void particleSystemToPoints(float* dPoints, float* dColors, float* dSizes, size_t* dGroupStarts,
+void particleSystemToPoints(
+	float* dPoints, float* dColors, float* dSizes, size_t* dGroupStarts,
 	const size_t* dStartFrames, size_t nGroups, const float* dDirections,
 	const float* dSpeeds, const float* dStartPoses, size_t currFrame,
 	size_t nFrames, const float* dColorMatrix,

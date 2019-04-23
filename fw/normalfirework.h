@@ -140,14 +140,6 @@ public:
 			dStartFrames_, nParticleGroups_, dDirections_, dSpeeds_, 
 			dStartPoses_, currFrame, nFrames_, dColorMatrix_, dSizeMatrix_);
 
-		/*show(dPoints_, nParticleGroups_ * nFrames_ * 3, nFrames_ * 3);
-		printSplitLine();
-		show(dColors_, nParticleGroups_ * nFrames_ * 3, nFrames_ * 3);
-		printSplitLine();
-		show(dSizes_, nParticleGroups_ * nFrames_, nFrames_);
-		printSplitLine();
-		show(dGroupStarts_, nParticleGroups_);*/
-
 		realNGroups_ = compress(dPoints_, dColors_, dSizes_,
 			nParticleGroups_, nFrames_, dGroupOffsets_, dGroupStarts_);
 
