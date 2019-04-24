@@ -39,5 +39,5 @@ void calcFinalPosition(
 	calcFinalPosition<<<nGroups, maxSize>>>(
 		dPoints, count, frame, dGroupOffsets, dGroupStarts,
 		dXShiftMatrix, dYShiftMatrix, shiftsize);
-		
+	CUDACHECK(cudaGetLastError());
 }

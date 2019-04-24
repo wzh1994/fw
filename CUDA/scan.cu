@@ -83,13 +83,18 @@ void callScanKernel(T* dOut, const T* dIn, size_t size, size_t nGroups, F f) {
 	size_t nBlockDim = kMmaxBlockDim;
 	if (size <= nBlockDim) {
 		scan << <nGroups, size >> > (dOut, dIn, f, size);
+		CUDACHECK(cudaGetLastError());
 	} else if (size <= nBlockDim * nBlockDim) {
 		size_t nSubGroups = ceilAlign(size, nBlockDim);
 		scan<<<dim3(nGroups, nSubGroups), nBlockDim>>>(dOut, dIn, f, size);
+		CUDACHECK(cudaGetLastError());
 		T* groupScanResults;
 		cudaMallocAlign(&groupScanResults, nGroups * nSubGroups * sizeof(T));
-		scanGroup << <nGroups, nSubGroups >> > (groupScanResults, dOut, f, size, nBlockDim);
-		groupResultToOut<<<dim3(nGroups, nSubGroups), nBlockDim >>>(dOut, groupScanResults, f, size);
+		scanGroup << <nGroups, nSubGroups >> > (
+			groupScanResults, dOut, f, size, nBlockDim);
+		CUDACHECK(cudaGetLastError());
+		groupResultToOut<<<dim3(nGroups, nSubGroups), nBlockDim >>>(
+			dOut, groupScanResults, f, size);
 		CUDACHECK(cudaGetLastError());
 		CUDACHECK(cudaFree(groupScanResults));
 	} else {

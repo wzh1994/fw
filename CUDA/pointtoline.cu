@@ -3,6 +3,7 @@
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
 #include "utils.h"
+#include "test.h"
 
 // 为了让__syncthreads()通过语法检查
 #ifndef __CUDACC__
@@ -337,10 +338,12 @@ void calcHalfBall(
 	// leftBall
 	calcLeftHalfBall << <1, nGroups >> > (dPointsIn, dSizesIn, dColorsIn,
 		groupOffsets, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
+	CUDACHECK(cudaGetLastError());
 
 	// rightBall
 	calcRightHalfBall << <1, nGroups >> > (dPointsIn, dSizesIn, dColorsIn,
 		groupOffsets, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
+	CUDACHECK(cudaGetLastError());
 }
 
 __device__ void calcCircularTruncatedConeItem(
@@ -441,17 +444,18 @@ void calcCircularTruncatedCone(
 	float *circle = nullptr;
 	uint32_t *indices = nullptr;
 	trans_func_t odd;
-	cudaMemcpyFromSymbol(&odd, d_odd, sizeof(trans_func_t));
+	CUDACHECK(cudaMemcpyFromSymbol(&odd, d_odd, sizeof(trans_func_t)));
 
 	// 使用__constant__地址的方法来自于
 	// https://devtalk.nvidia.com/default/topic/487853/can-i-use-__constant__-memory-with-pointer-to-it-as-kernel-arg/
-	cudaGetSymbolAddress((void**)&circle, circle2);
-	cudaGetSymbolAddress((void**)&indices, indices1);
+	CUDACHECK(cudaGetSymbolAddress((void**)&circle, circle2));
+	CUDACHECK(cudaGetSymbolAddress((void**)&indices, indices1));
 	calcCircularTruncatedConeGroup << <nGroups, maxSize >> > (
 		dPointsIn, dSizesIn, dColorsIn, groupOffsets,
 		bufferOffsets, indicesOffsets, buffer, dIndicesOut,
 		circle, indices, odd);
-	
+	CUDACHECK(cudaGetLastError());
+
 	trans_func_t even;
 	cudaMemcpyFromSymbol(&even, d_even, sizeof(trans_func_t));
 	cudaGetSymbolAddress((void**)&circle, circle1);
@@ -460,10 +464,11 @@ void calcCircularTruncatedCone(
 		dPointsIn, dSizesIn, dColorsIn, groupOffsets,
 		bufferOffsets, indicesOffsets, buffer, dIndicesOut,
 		circle, indices, even);
-
+	CUDACHECK(cudaGetLastError());
 	// 填充最后一个indices
 	calcFinalIndices<<<1, nGroups>>>(
 		groupOffsets, indicesOffsets, bufferOffsets, dIndicesOut);
+	CUDACHECK(cudaGetLastError());
 }
 
 __global__ void calcOffsets(const size_t* groupOffsets,
@@ -487,12 +492,12 @@ size_t pointToLine(
 		float* buffer,
 		uint32_t* dIndicesOut) {
 	size_t *bufferOffsets, *indicesOffsets;
-	cudaMalloc(&bufferOffsets, (nGroups + 1) * sizeof(size_t));
-	cudaMalloc(&indicesOffsets, (nGroups + 1) * sizeof(size_t));
+	CUDACHECK(cudaMallocAlign(&bufferOffsets, (nGroups + 1) * sizeof(size_t)));
+	CUDACHECK(cudaMallocAlign(&indicesOffsets, (nGroups + 1) * sizeof(size_t)));
 
 	calcOffsets << <1, nGroups + 1>> > (groupOffsets,
 		bufferOffsets, indicesOffsets);
-	cudaDeviceSynchronize();
+	CUDACHECK(cudaGetLastError());
 	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, groupOffsets,
 		nGroups, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
 	calcCircularTruncatedCone(
@@ -500,9 +505,9 @@ size_t pointToLine(
 		nGroups, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
 
 	size_t totalIndices;
-	cudaMemcpy(&totalIndices, indicesOffsets + nGroups,
-		sizeof(size_t), cudaMemcpyDeviceToHost);
-	cudaFree(bufferOffsets);
-	cudaFree(indicesOffsets);
+	CUDACHECK(cudaMemcpy(&totalIndices, indicesOffsets + nGroups,
+		sizeof(size_t), cudaMemcpyDeviceToHost));
+	CUDACHECK(cudaFree(bufferOffsets));
+	CUDACHECK(cudaFree(indicesOffsets));
 	return totalIndices;
 }

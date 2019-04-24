@@ -98,6 +98,10 @@ void particleSystemToPoints(
 		const float* dSpeeds, const float* dStartPoses, size_t currFrame,
 		size_t nFrames, const float* dColorMatrix,
 		const float* dSizeMatrix, float time) {
+	if (nFrames > kMmaxBlockDim) {
+		throw std::runtime_error("Max nFrames allowed is "
+			+ std::to_string(kMmaxBlockDim) + "!");
+	}
 	particleSystemToPoints<<<nGroups, nFrames>>>(
 		dPoints, dColors, dSizes, dGroupStarts, dStartFrames, dDirections,
 		dSpeeds, dStartPoses, currFrame, dColorMatrix, dSizeMatrix, time);

@@ -124,16 +124,17 @@ size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
 	cuSum(indices, judgement, size * nGroups);
 	cuSum(groupPos, groupFlag, nGroups);
 	getOffsets<<<1, nGroups>>>(indices, size, dGroupOffsets);
-
+	CUDACHECK(cudaGetLastError());
 	compressData<<<nGroups, size >>>(dPoints, dColors, dSizes,
 		dPointsTemp, dColorsTemp, dSizesTemp, judgement, indices);
-
-	CUDACHECK(cudaDeviceSynchronize());
+	CUDACHECK(cudaGetLastError());
 	compressIndex<<<1, nGroups>>>(dGroupOffsets, dGroupStarts,
 		groupFlag, groupPos, dNumGroup);
+	CUDACHECK(cudaGetLastError());
 	// printSplitLine();
 	size_t numGroup;
-	cudaMemcpy(&numGroup, dNumGroup, sizeof(size_t), cudaMemcpyDeviceToHost);
+	CUDACHECK(cudaMemcpy(
+		&numGroup, dNumGroup, sizeof(size_t), cudaMemcpyDeviceToHost));
 
 	CUDACHECK(cudaFree(dPointsTemp));
 	CUDACHECK(cudaFree(dColorsTemp));

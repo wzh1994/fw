@@ -22,7 +22,7 @@ inline void printSplitLine(std::string s) {
 }
 
 template<class T>
-void show(T* source, size_t size, size_t step) {
+void show(const T* source, size_t size, size_t step) {
 	T* h = new T[size];
 	CUDACHECK(cudaMemcpy(h, source, size * sizeof(T), cudaMemcpyDeviceToHost));
 	for (size_t i = 0; i < size;) {
