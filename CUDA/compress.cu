@@ -2,6 +2,8 @@
 #include "kernels.h"
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
+#include "utils.h"
+#include "test.h"
 
 // 为了让__syncthreads()通过语法检查
 #ifndef __CUDACC__
@@ -14,28 +16,31 @@
 __global__ void judge(float* dColors, float* dSizes, size_t* indices) {
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (fmaxf(fmaxf(dColors[3 * idx], dColors[3 * idx + 1]),
-			dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.005 ) {
+			dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.005f ) {
 		indices[idx] = 0;
 	} else {
 		indices[idx] = 1;
 	}
-	// printf("judging: %llu, %llu\n", idx, indices[idx]);
+	deviceDebugPrint("judging: %llu, %llu\n",
+		idx, indices[idx]);
 }
 
-__global__ void getOffsets(size_t *indices, size_t size, size_t* dGroupOffsets) {
+__global__ void getOffsets(
+		const size_t *indices, size_t size, size_t* dGroupOffsets) {
 	size_t idx = threadIdx.x;
 	if (idx == 0) {
 		dGroupOffsets[0] = 0;
 	}
 	dGroupOffsets[idx + 1] = indices[(idx + 1) * size - 1];
-	// printf("getOffsets: %llu, %llu\n", idx, dGroupOffsets[idx + 1]);
+	deviceDebugPrint("getOffsets: %llu, %llu\n",
+		idx, dGroupOffsets[idx + 1]);
 }
 
 __global__ void getGroupFlag(size_t *judgement, size_t* groupFlag) {
 	size_t tidx = threadIdx.x;
 	size_t bidx = blockIdx.x;
 	size_t idx = bidx * blockDim.x + tidx;
-	__shared__ size_t sum[100];
+	__shared__ size_t sum[1024];
 	sum[tidx] = judgement[idx];
 	for (int s = 1; s < blockDim.x; s *= 2) {
 		if (tidx % (2 * s) == 0) {
@@ -48,38 +53,34 @@ __global__ void getGroupFlag(size_t *judgement, size_t* groupFlag) {
 		groupFlag[bidx] = flag;
 	}
 	judgement[idx] = judgement[idx] & flag;
-	// printf("getGroupFlag: %llu, %llu, %llu\n", idx, groupFlag[bidx], judgement[idx]);
+	deviceDebugPrint("getGroupFlag: %llu, %llu, %llu\n",
+		idx, groupFlag[bidx], judgement[idx]);
 }
-__global__ void compressData(float* dPoints, float* dColors, float* dSizes,
+__global__ void compressData(float* points, float* colors, float* sizes,
+		const float* pointsIn, const float* colorsIn, const float* sizesIn,
 		size_t* judgement, size_t* indices) {
-	size_t idx = threadIdx.x * blockDim.y + threadIdx.y;
-	float x = dPoints[3 * idx];
-	float y = dPoints[3 * idx + 1];
-	float z = dPoints[3 * idx + 2];
-	float r = dColors[3 * idx];
-	float g = dColors[3 * idx + 1];
-	float b = dColors[3 * idx + 2];
-	float s = dSizes[idx];
-	__syncthreads();
+	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (judgement[idx]) {
-		// printf("compressData: %llu, %u, %u\n", idx, threadIdx.x, threadIdx.y);
+		deviceDebugPrint("compressData: %llu, %u, %u\n",
+			idx, threadIdx.x, threadIdx.y);
 		size_t targetIdx = indices[idx] - 1;
-		dPoints[3 * targetIdx] = x;
-		dPoints[3 * targetIdx + 1] = y;
-		dPoints[3 * targetIdx + 2] = z;
-		dColors[3 * targetIdx] = r;
-		dColors[3 * targetIdx + 1] = g;
-		dColors[3 * targetIdx + 2] = b;
-		dSizes[targetIdx] = s;
+		points[3 * targetIdx] = pointsIn[3 * idx];
+		points[3 * targetIdx + 1] = pointsIn[3 * idx + 1];
+		points[3 * targetIdx + 2] = pointsIn[3 * idx + 2];
+		colors[3 * targetIdx] = colorsIn[3 * idx];
+		colors[3 * targetIdx + 1] = colorsIn[3 * idx + 1];
+		colors[3 * targetIdx + 2] = colorsIn[3 * idx + 2];
+		sizes[targetIdx] = sizesIn[idx];
 	}
 }
 __global__ void compressIndex(size_t* dGroupOffsets, size_t* dGroupStarts,
-		size_t* groupFlag, size_t* groupPos, size_t* dNumGroup) {
+		const size_t* groupFlag, const size_t* groupPos, size_t* dNumGroup) {
 	size_t idx = threadIdx.x;
 	size_t offset = dGroupOffsets[idx + 1];
 	size_t start = dGroupStarts[idx];
 	__syncthreads();
-	// printf("compressIndex-comp: %llu, %llu, %llu, %llu\n", idx, groupFlag[idx], groupPos[idx], offset);
+	deviceDebugPrint("compressIndex-comp: %llu, %llu, %llu, %llu\n",
+		idx, groupFlag[idx], groupPos[idx], offset);
 	if (groupFlag[idx]) {
 		dGroupOffsets[groupPos[idx]] = offset;
 		dGroupStarts[groupPos[idx] - 1] = start;
@@ -88,48 +89,59 @@ __global__ void compressIndex(size_t* dGroupOffsets, size_t* dGroupStarts,
 	// 求有效的组数
 	__shared__ size_t sum[1000];
 	sum[idx] = groupFlag[idx];
-	// printf("compressIndex: %llu, %llu\n", idx, sum[idx]);
+	deviceDebugPrint("compressIndex: %llu, %llu\n", idx, sum[idx]);
 	for (int s = 1; s < blockDim.x; s *= 2) {
-		if (idx % (2 * s) == 0) {
+		if (idx % (2 * s) == 0 && idx + s < blockDim.x) {
 			sum[idx] += sum[idx + s];
 		}
 		__syncthreads();
 	}
 	if (idx == 0) {
 		dNumGroup[0] = sum[0];
-		// printf("compressIndex done: %llu\n", dNumGroup[0]);
+		deviceDebugPrint("compressIndex done: %llu\n", dNumGroup[0]);
 	}
 }
 
 size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
 		size_t size, size_t* dGroupOffsets, size_t* dGroupStarts) {
-	dim3 dimBlock(nGroups, size);
 	size_t *indices, *judgement, *groupFlag, *groupPos, *dNumGroup;
 	cudaMallocAlign(&judgement, nGroups * size * sizeof(size_t));
 	cudaMallocAlign(&indices, nGroups * size * sizeof(size_t));
 	cudaMallocAlign(&groupFlag, nGroups * sizeof(size_t));
 	cudaMallocAlign(&groupPos, nGroups * sizeof(size_t));
 	cudaMallocAlign(&dNumGroup, sizeof(size_t));
+	float *dPointsTemp, *dColorsTemp, *dSizesTemp;
+	cudaMallocAndCopy(dPointsTemp, dPoints, 3 * nGroups * size);
+	cudaMallocAndCopy(dColorsTemp, dColors, 3 * nGroups * size);
+	cudaMallocAndCopy(dSizesTemp, dSizes, nGroups * size);
 
 	judge<<<nGroups, size >>>(dColors, dSizes, judgement);
+	CUDACHECK(cudaGetLastError());
 	getGroupFlag<<<nGroups, size>>>(judgement, groupFlag);
+	CUDACHECK(cudaGetLastError());
 	argFirstNoneZero(judgement, dGroupStarts, nGroups, size);
-	cuSum(indices, judgement, nGroups * size);
 
+	cuSum(indices, judgement, size * nGroups);
 	cuSum(groupPos, groupFlag, nGroups);
-
 	getOffsets<<<1, nGroups>>>(indices, size, dGroupOffsets);
-	compressData<<<1, dimBlock >>>(dPoints, dColors, dSizes, judgement, indices);
+
+	compressData<<<nGroups, size >>>(dPoints, dColors, dSizes,
+		dPointsTemp, dColorsTemp, dSizesTemp, judgement, indices);
+
+	CUDACHECK(cudaDeviceSynchronize());
 	compressIndex<<<1, nGroups>>>(dGroupOffsets, dGroupStarts,
 		groupFlag, groupPos, dNumGroup);
+	// printSplitLine();
 	size_t numGroup;
 	cudaMemcpy(&numGroup, dNumGroup, sizeof(size_t), cudaMemcpyDeviceToHost);
-	// printf("%llu\n", numGroup);
 
-	cudaFree(judgement);
-	cudaFree(indices);
-	cudaFree(groupFlag);
-	cudaFree(groupPos);
-	cudaFree(dNumGroup);
+	CUDACHECK(cudaFree(dPointsTemp));
+	CUDACHECK(cudaFree(dColorsTemp));
+	CUDACHECK(cudaFree(dSizesTemp));
+	CUDACHECK(cudaFree(judgement));
+	CUDACHECK(cudaFree(indices));
+	CUDACHECK(cudaFree(groupFlag));
+	CUDACHECK(cudaFree(groupPos));
+	CUDACHECK(cudaFree(dNumGroup));
 	return numGroup;
 }

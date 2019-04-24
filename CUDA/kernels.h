@@ -83,12 +83,14 @@ void particleSystemToPoints(
 	size_t nFrames, const float* dColorMatrix,
 	const float* dSizeMatrix, float time = 0.08333333333f);
 
-// 对烟花的粒子进行空间压缩，除去其中的不可见粒子
+// 对烟花的粒子进行空间压缩，除去其中的不可见粒子,
+// nGroups和size不能超过kMmaxBlockDim
 size_t compress(float* dPoints, float* dColors, float* dSizes,
 	size_t nGroups, size_t size, size_t* dGroupOffsets, size_t* dGroupStarts);
 
 // 插值算法
 // 对N组相同长度的数组做插值，每组插值的结果长度不能超过kMmaxBlockDim
+// 例如 有49帧的粒子， 每组插值15个， 则共有48 * 15 + 49个粒子
 void interpolation(float* dArray, size_t nGroups, size_t size, size_t count);
 void interpolation(float* dPoints, float* dColors, float* dSizes,
 	size_t* dGroupOffsets, size_t nGroups, size_t maxSize, size_t count);

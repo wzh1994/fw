@@ -2,7 +2,7 @@
 #define FW_KERNEL_UTILS_UTILS_HPP
 #include <cuda_runtime.h>
 #include "kernels.h"
-#define DEBUG_PRINT
+#undef DEBUG_PRINT
 
 template<class T>
 void cudaMallocAndCopy(T* &target, const T* source,

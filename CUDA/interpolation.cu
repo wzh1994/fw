@@ -76,62 +76,67 @@ void interpolation(float* dArray, size_t nGroups, size_t size, size_t count) {
 	}
 }
 
-__global__ void interpolationPoints(float* dPoints, float* dColors, float* dSizes,
+__global__ void interpolationPoints(float* points, float* colors, float* sizes,
+		const float* pointsIn, const float* colorsIn, const float* sizesIn,
 		size_t* dGroupOffsets, size_t count) {
 	float x, y, z, s, r, g, b;
-	size_t idx_x = threadIdx.x;
-	size_t idx_y = threadIdx.y;
-	size_t groupNum = dGroupOffsets[idx_x + 1] - dGroupOffsets[idx_x];
-	if (idx_y >= groupNum * (count + 1) - count)
+	size_t bidx = blockIdx.x;
+	size_t tidx = threadIdx.x;
+	size_t groupNum = dGroupOffsets[bidx + 1] - dGroupOffsets[bidx];
+	if (tidx >= groupNum * (count + 1) - count)
 		return;
-	size_t offset = dGroupOffsets[idx_x];
-	size_t idx = idx_y / (count + 1);
-	size_t lOffset = idx_y % (count + 1);
+	size_t offset = dGroupOffsets[bidx];
+	size_t idx = tidx / (count + 1);
+	size_t lOffset = tidx % (count + 1);
 
 	if (lOffset == 0) {
-		x = dPoints[3 * (offset + idx)];
-		y = dPoints[3 * (offset + idx) + 1];
-		z = dPoints[3 * (offset + idx) + 2];
-		r = dColors[3 * (offset + idx)];
-		g = dColors[3 * (offset + idx) + 1];
-		b = dColors[3 * (offset + idx) + 2];
-		s = dSizes[offset + idx];
+		x = pointsIn[3 * (offset + idx)];
+		y = pointsIn[3 * (offset + idx) + 1];
+		z = pointsIn[3 * (offset + idx) + 2];
+		r = colorsIn[3 * (offset + idx)];
+		g = colorsIn[3 * (offset + idx) + 1];
+		b = colorsIn[3 * (offset + idx) + 2];
+		s = sizesIn[offset + idx];
 	} else {
-		x = interpolationValue(dPoints[3 * (offset + idx)],
-				dPoints[3 * (offset + idx + 1)], lOffset, count + 1);
-		y = interpolationValue(dPoints[3 * (offset + idx) + 1],
-				dPoints[3 * (offset + idx + 1) + 1], lOffset, count + 1);
-		z = interpolationValue(dPoints[3 * (offset + idx) + 2],
-				dPoints[3 * (offset + idx + 1) + 2], lOffset, count + 1);
-		r = interpolationValue(dColors[3 * (offset + idx)],
-				dColors[3 * (offset + idx + 1)], lOffset, count + 1);
-		g = interpolationValue(dColors[3 * (offset + idx) + 1],
-				dColors[3 * (offset + idx + 1) + 1], lOffset, count + 1);
-		b = interpolationValue(dColors[3 * (offset + idx) + 2],
-				dColors[3 * (offset + idx + 1) + 2], lOffset, count + 1);
-		s = interpolationValue(dSizes[offset + idx],
-				dSizes[offset + idx + 1], lOffset, count + 1);
+		x = interpolationValue(pointsIn[3 * (offset + idx)],
+			pointsIn[3 * (offset + idx + 1)], lOffset, count + 1);
+		y = interpolationValue(pointsIn[3 * (offset + idx) + 1],
+			pointsIn[3 * (offset + idx + 1) + 1], lOffset, count + 1);
+		z = interpolationValue(pointsIn[3 * (offset + idx) + 2],
+			pointsIn[3 * (offset + idx + 1) + 2], lOffset, count + 1);
+		r = interpolationValue(colorsIn[3 * (offset + idx)],
+			colorsIn[3 * (offset + idx + 1)], lOffset, count + 1);
+		g = interpolationValue(colorsIn[3 * (offset + idx) + 1],
+			colorsIn[3 * (offset + idx + 1) + 1], lOffset, count + 1);
+		b = interpolationValue(colorsIn[3 * (offset + idx) + 2],
+			colorsIn[3 * (offset + idx + 1) + 2], lOffset, count + 1);
+		s = interpolationValue(sizesIn[offset + idx],
+			sizesIn[offset + idx + 1], lOffset, count + 1);
 	}
 	//printf("%llu, %llu, %llu, %llu, %llu, %f\n", idx_x, idx_y, offset, lOffset, idx, s);
 	__syncthreads();
-	size_t resultOffset = dGroupOffsets[idx_x] * (count + 1) - idx_x * count;
-	dPoints[(resultOffset + idx_y) * 3] = x;
-	dPoints[(resultOffset + idx_y) * 3 + 1] = y;
-	dPoints[(resultOffset + idx_y) * 3 + 2] = z;
-	dColors[(resultOffset + idx_y) * 3] = r;
-	dColors[(resultOffset + idx_y) * 3 + 1] = g;
-	dColors[(resultOffset + idx_y) * 3 + 2] = b;
-	dSizes[resultOffset + idx_y] = s;
-	if (idx_y == 0) {
-		dGroupOffsets[idx_x + 1] =
-			dGroupOffsets[idx_x + 1] * (count + 1) - (idx_x + 1) * count;
+	size_t resultOffset = dGroupOffsets[bidx] * (count + 1) - bidx * count;
+	points[(resultOffset + tidx) * 3] = x;
+	points[(resultOffset + tidx) * 3 + 1] = y;
+	points[(resultOffset + tidx) * 3 + 2] = z;
+	colors[(resultOffset + tidx) * 3] = r;
+	colors[(resultOffset + tidx) * 3 + 1] = g;
+	colors[(resultOffset + tidx) * 3 + 2] = b;
+	sizes[resultOffset + tidx] = s;
+	if (tidx == 0) {
+		dGroupOffsets[bidx + 1] =
+			dGroupOffsets[bidx + 1] * (count + 1) - (bidx + 1) * count;
 	}
 }
 
 void interpolation(float* dPoints, float* dColors, float* dSizes,
 		size_t* dGroupOffsets, size_t nGroups, size_t maxSize, size_t count) {
-	dim3 dimBlock(nGroups, maxSize + count * (maxSize - 1));
-	interpolationPoints << <1, dimBlock >> > (
-		dPoints, dColors, dSizes, dGroupOffsets, count);
+	float *dPointsTemp, *dColorsTemp, *dSizesTemp;
+	cudaMallocAndCopy(dPointsTemp, dPoints, 3 * nGroups * maxSize);
+	cudaMallocAndCopy(dColorsTemp, dColors, 3 * nGroups * maxSize);
+	cudaMallocAndCopy(dSizesTemp, dSizes, nGroups * maxSize);
+	interpolationPoints << <nGroups, maxSize + count * (maxSize - 1) >> > (
+		dPoints, dColors, dSizes, dPointsTemp, dColorsTemp,
+		dSizesTemp, dGroupOffsets, count);
 	CUDACHECK(cudaGetLastError());
 }

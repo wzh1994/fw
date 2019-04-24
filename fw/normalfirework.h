@@ -49,13 +49,12 @@ private:
 	void initialize() override {
 		// 调用父类的初始化
 		FwBase::initialize();
-		genBuffer(5000000, 5000000);
 		CUDACHECK(cudaMallocAlign(&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(&dSizeMatrix_, nFrames_ * nFrames_ * sizeof(float)));
 
 		// 在调用initDirections之后nParticleGroups_ 才有值
 		initDirections();
-
+		genBuffer(5000000, 5000000);
 		// 为初速度，初始位置等分配空间
 		CUDACHECK(cudaMallocAlign(&dSpeeds_, nParticleGroups_ * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
@@ -80,14 +79,13 @@ private:
 	
 	void initDirections() {
 		// 先获取所有的方向, 给dDirections_赋值
-		nParticleGroups_ = 5;
-		float* directions = new float[3 * nParticleGroups_] {
-			1, 1, 1,
-			1, 0, 1,
-			0, 0, 1,
-			1, 0, -1,
-			0, 1, 1
-		};
+		nParticleGroups_ = 40;
+		float* directions = new float[3 * nParticleGroups_] {};
+		for (int i = 0; i < nParticleGroups_; ++i) {
+			directions[3 * i] = 1 - 0.02 * i;
+			directions[3 * i + 1] = 0.02 * i;
+			directions[3 * i + 2] = sin(i);
+		}
 		CUDACHECK(cudaMallocAlign(&dDirections_, 3 * nParticleGroups_ * sizeof(float)));
 		CUDACHECK(cudaMemcpy(dDirections_, directions,
 			3 * nParticleGroups_ * sizeof(float), cudaMemcpyHostToDevice));

@@ -27,11 +27,11 @@ void testOneGroup(){
 		0.09, 0.07, 0.01
 	};
 	float sizes[5]{0, 0.15, 0.4, 0.07, 1};
-	cudaMalloc(&dPoints, 3 * size * sizeof(float));
-	cudaMalloc(&dColors, 3 * size * sizeof(float));
-	cudaMalloc(&dSizes, size * sizeof(float));
-	cudaMalloc(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
-	cudaMalloc(&dGroupStarts, nGroups * sizeof(size_t));
+	cudaMallocAlign(&dPoints, 3 * size * sizeof(float));
+	cudaMallocAlign(&dColors, 3 * size * sizeof(float));
+	cudaMallocAlign(&dSizes, size * sizeof(float));
+	cudaMallocAlign(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+	cudaMallocAlign(&dGroupStarts, nGroups * sizeof(size_t));
 	cudaMemcpy(dPoints, points, 3 * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dColors, colors, 3 * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizes, sizes, size * sizeof(float), cudaMemcpyHostToDevice);
@@ -62,6 +62,7 @@ void testOneGroup(){
 	for (size_t i = 0; i < groupOffsets[res]; ++i) {
 		printf("%f ", sizes[i]);
 	}
+	printf("\n");
 	delete[] groupOffsets;
 	cudaFree(dPoints);
 	cudaFree(dColors);
@@ -112,11 +113,11 @@ void testFiveGroupsWithTwoEmpty() {
 		0, 0.07, 0.4, 0.17, 1,
 		0, 0, 0, 0, 0
 	};
-	cudaMalloc(&dPoints, 3 * nGroups * size * sizeof(float));
-	cudaMalloc(&dColors, 3 * nGroups *  size * sizeof(float));
-	cudaMalloc(&dSizes, nGroups * size * sizeof(float));
-	cudaMalloc(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
-	cudaMalloc(&dGroupStarts, nGroups * sizeof(size_t));
+	cudaMallocAlign(&dPoints, 3 * nGroups * size * sizeof(float));
+	cudaMallocAlign(&dColors, 3 * nGroups *  size * sizeof(float));
+	cudaMallocAlign(&dSizes, nGroups * size * sizeof(float));
+	cudaMallocAlign(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+	cudaMallocAlign(&dGroupStarts, nGroups * sizeof(size_t));
 	cudaMemcpy(dPoints, points, 3 * nGroups * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dColors, colors, 3 * nGroups * size * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizes, sizes, nGroups * size * sizeof(float), cudaMemcpyHostToDevice);
@@ -149,10 +150,7 @@ void testFiveGroupsWithTwoEmpty() {
 	}
 	printf("\n");
 	delete[] groupOffsets;
-	cudaFree(dPoints);
-	cudaFree(dColors);
-	cudaFree(dSizes);
-	cudaFree(dGroupOffsets);
+	cudaFreeAll(dPoints, dColors, dSizes, dGroupOffsets);
 	showAndFree(dGroupStarts, res);
 }
 
