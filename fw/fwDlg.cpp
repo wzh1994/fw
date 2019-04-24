@@ -60,31 +60,9 @@ namespace {
 
 // CfwDlg 对话框
 
-extern "C" __declspec(dllexport) void ShowDialog()
+extern "C" __declspec(dllexport) void ShowDialog(float* args)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-	float *args = new float[36]{
-		// 每一帧初始颜色
-		0.0f, 0.0f, 0.5f,
-		0.0f, 0.2f, 0.7f,
-		0.0f, 0.3f, 0.8f,
-		0.1f, 0.2f, 0.5f,
-		0.1f, 0.1f, 0.3f,
-		// 每一帧初始尺寸
-		0.15f, 0.19f, 0.17f, 0.16f, 0.14f,
-		// 每一帧初始X方向加速度
-		0.01f, 0.02f, -0.01f, 0.03f, 0.05f,
-		// 每一帧初始Y方向加速度
-		-0.2f, -0.2f, -0.2f, -0.2f, -0.2f,
-		// 颜色衰减
-		0.99f,
-		// 尺寸衰减
-		0.98f,
-		// 初速度
-		1.0f,
-		// 初位置
-		0.0f, 0.1f, 0.0f
-	};
 	CfwDlg dlg(args);
 	dlg.DoModal();
 }

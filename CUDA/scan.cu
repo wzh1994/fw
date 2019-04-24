@@ -10,48 +10,94 @@
 #include "device_functions.h"
 
 #include <cstdio>
+#include "test.h"
 
-__global__ void dispatch(float* vbo, float* points, float* colors)
-{
-	unsigned int i = threadIdx.x;
-	vbo[(i / 3) * 6 + i % 3] = points[i];
-	vbo[(i / 3) * 6 + i % 3 + 3] = colors[i];
-
-}
-
-size_t getTrianglesAndIndices(
-	float* vbo, uint32_t* dIndices, float* dPoints,
-	float* dColors, float* dSizes, size_t size) {
-
-	dispatch << <1, size * 3 >> > (vbo, dPoints, dColors);
-	uint32_t indice[] = {
-		0, 1, 2,
-		0, 2, 3,
-		0, 3, 1,
-		1, 2, 3
-	};
-	cudaMemcpy(dIndices, indice, 12 * sizeof(uint32_t), cudaMemcpyHostToDevice);
-	return 12;
-}
-
-__global__ void scan(float* dOut, float* dIn, binary_func_t func)
-{
-	uint32_t size = blockDim.x;
-	uint32_t offset = blockIdx.x * size;
-	uint32_t idx = threadIdx.x;
+template<typename T, class F>
+__global__ void scan(T* out, const T* in, F func, size_t groupSize) {
+	size_t offset = blockIdx.x * groupSize + blockIdx.y * blockDim.x;
+	const T* pIn = in + offset;
+	T* pOut = out + offset;
+	__shared__ T result[1024];
+	size_t idx = threadIdx.x;
+	result[idx] = pIn[idx];
+	__syncthreads();
 	size_t step = 1;
-	float temp = func(dIn[idx + offset],
-		(idx >= step ? dIn[idx + offset - step] : 0));
+	T temp = 0;
+	if (idx >= step) {
+		temp = result[idx - step];
+	}
+	temp = func(result[idx], temp);
+	
 	__syncthreads();
-	dOut[idx + offset] = temp;
+	result[idx] = temp;
 	__syncthreads();
-	for (step*=2; step<size; step*=2){
-		float temp = func(dOut[idx + offset],
-				(idx >= step ?  dOut[idx + offset - step] : 0));
+	for (step *= 2; step < blockDim.x; step *= 2) {
+		T temp = func(result[idx],
+			(idx >= step ? result[idx - step] : 0));
 		__syncthreads();
-		dOut[idx + offset] = temp;
+		result[idx] = temp;
 		__syncthreads();
 	}
+	if (blockIdx.y * blockDim.x + idx < groupSize) {
+		pOut[idx] = result[idx];
+	}
+}
+
+template<typename T, class F>
+__global__ void scanGroup(
+		T* out, const T* in, F func, size_t groupSize, size_t stride) {
+	uint32_t offset = blockIdx.x * groupSize;
+	const T* pIn = in + offset;
+	T* pOut = out + blockIdx.x * blockDim.x;
+	__shared__ T result[1024];
+	uint32_t idx = threadIdx.x;
+	result[idx] = pIn[(idx + 1) * stride - 1];
+	__syncthreads();
+	size_t step = 1;
+	T temp = func(result[idx],
+		(idx >= step ? result[idx - step] : 0));
+	__syncthreads();
+	result[idx] = temp;
+	__syncthreads();
+	for (step *= 2; step < blockDim.x; step *= 2) {
+		T temp = func(result[idx],
+			(idx >= step ? result[idx - step] : 0));
+		__syncthreads();
+		result[idx] = temp;
+		__syncthreads();
+	}
+	pOut[idx] = result[idx];
+}
+
+template<typename T, class F>
+__global__ void groupResultToOut(T* out, const T* in, F f, size_t groupSize) {
+	uint32_t offset = blockIdx.x * groupSize + blockIdx.y * blockDim.x;
+	T* dOut = out + offset;
+	if (blockIdx.y > 0 && blockIdx.y * blockDim.x + threadIdx.x < groupSize) {
+		T temp = in[blockIdx.x * gridDim.y + blockIdx.y - 1];
+		dOut[threadIdx.x] = f(temp, dOut[threadIdx.x]);
+	}
+}
+template<typename T, class F>
+void callScanKernel(T* dOut, const T* dIn, size_t size, size_t nGroups, F f) {
+	size_t nBlockDim = kMmaxBlockDim;
+	if (size <= nBlockDim) {
+		scan << <nGroups, size >> > (dOut, dIn, f, size);
+	} else if (size <= nBlockDim * nBlockDim) {
+		size_t nSubGroups = ceilAlign(size, nBlockDim);
+		scan<<<dim3(nGroups, nSubGroups), nBlockDim>>>(dOut, dIn, f, size);
+		T* groupScanResults;
+		cudaMallocAlign(&groupScanResults, nGroups * nSubGroups * sizeof(T));
+		scanGroup << <nGroups, nSubGroups >> > (groupScanResults, dOut, f, size, nBlockDim);
+		groupResultToOut<<<dim3(nGroups, nSubGroups), nBlockDim >>>(dOut, groupScanResults, f, size);
+		CUDACHECK(cudaGetLastError());
+		CUDACHECK(cudaFree(groupScanResults));
+	} else {
+		throw std::runtime_error("Max size of each group is "
+			+std::to_string(nBlockDim * nBlockDim) + "in scan!");
+	}
+	CUDACHECK(cudaGetLastError());
+	cudaDeviceSynchronize();
 }
 
 // ================================
@@ -66,38 +112,18 @@ __device__ T add(T lhs, T rhs) {
 }
 
 __device__ binary_func_t add_float_d = add;
-void cuSum(float* dOut, float* dIn, size_t size, size_t numGroup) {
-	binary_func_t add;
+void cuSum(float* dOut, const float* dIn, size_t size, size_t numGroup) {
+	binary_func_t hAdd;
 	// 必须要将device的函数指针传到host上面，才可以回调
-	cudaMemcpyFromSymbol(&add, add_float_d, sizeof(binary_func_t));
-	scan << <numGroup, size >> > (dOut, dIn, add);
-	CUDACHECK(cudaGetLastError());
-	cudaDeviceSynchronize();
+	cudaMemcpyFromSymbol(&hAdd, add_float_d, sizeof(binary_func_t));
+	callScanKernel(dOut, dIn, size, numGroup, hAdd);
 }
 
-__global__ void cusum(size_t* dOut, const size_t* dIn)
-{
-	uint32_t size = blockDim.x;
-	uint32_t offset = blockIdx.x * size;
-	uint32_t idx = threadIdx.x;
-	size_t step = 1;
-	size_t sum = dIn[idx + offset] +
-		(idx >= step ? dIn[idx + offset - step] : 0);
-	__syncthreads();
-	dOut[idx + offset] = sum;
-	__syncthreads();
-	for (step *= 2; step < size; step *= 2) {
-		size_t sum = dOut[idx + offset] +
-			(idx >= step ? dOut[idx + offset - step] : 0);
-		__syncthreads();
-		dOut[idx + offset] = sum;
-		__syncthreads();
-	}
-	// printf("cusum: %llu, %llu\n", idx, dOut[idx]);
-}
-
+__device__ binary_func_size_t_t add_size_t_d = add;
 void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup) {
-	cusum << <numGroup, size >> > (dOut, dIn);
+	binary_func_size_t_t hAdd;
+	cudaMemcpyFromSymbol(&hAdd, add_size_t_d, sizeof(binary_func_size_t_t));
+	callScanKernel(dOut, dIn, size, numGroup, hAdd);
 }
 
 // ================================
@@ -112,9 +138,8 @@ __device__ T max(T lhs, T rhs) {
 }
 
 __device__ binary_func_t max_float_d = max;
-void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup) {
-	binary_func_t max;
-	cudaMemcpyFromSymbol(&max, max_float_d, sizeof(binary_func_t));
-	scan << <numGroup, size >> > (dOut, dIn, max);
-	cudaDeviceSynchronize();
+void cuMax(float* dOut, const float* dIn, size_t size, size_t numGroup) {
+	binary_func_t hMax;
+	cudaMemcpyFromSymbol(&hMax, max_float_d, sizeof(binary_func_t));
+	callScanKernel(dOut, dIn, size, numGroup, hMax);
 }

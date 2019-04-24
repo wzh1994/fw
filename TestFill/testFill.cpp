@@ -18,8 +18,18 @@ void testFill() {
 	showAndFree(arr2, 30, 3);
 }
 
+void testScale() {
+	float* dArray;
+	myCudaMalloc(dArray, 3000);
+	fill(dArray, 1, 3000);
+	scale(dArray, 0.1, 3000);
+	showAndFree(dArray, 3000);
+}
+
 int main() {
 	testFill<float>();
-	printSplitLine();
+	printSplitLine("size_t");
 	testFill<size_t>();
+	printSplitLine("scale");
+	testScale();
 }

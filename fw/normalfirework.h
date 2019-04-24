@@ -24,8 +24,9 @@ private:
 
 private:
 	NormalFirework(float* args) : FwBase(args) {
-		nFrames_ = 5;
+		nFrames_ = 49;
 		nInterpolation_ = 15;
+		scaleRate_ = 0.01f;
 		BeginGroup(1, 3);
 			AddColorGroup("初始颜色");
 		EndGroup();
@@ -49,29 +50,29 @@ private:
 		// 调用父类的初始化
 		FwBase::initialize();
 		genBuffer(5000000, 5000000);
-		CUDACHECK(cudaMalloc(&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dSizeMatrix_, nFrames_ * nFrames_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dSizeMatrix_, nFrames_ * nFrames_ * sizeof(float)));
 
 		// 在调用initDirections之后nParticleGroups_ 才有值
 		initDirections();
 
 		// 为初速度，初始位置等分配空间
-		CUDACHECK(cudaMalloc(&dSpeeds_, nParticleGroups_ * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dStartFrames_, nParticleGroups_ * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(&dSpeeds_, nParticleGroups_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dStartFrames_, nParticleGroups_ * sizeof(size_t)));
 
 		size_t maxSize = (nInterpolation_ + 1) * nParticleGroups_ * nFrames_;
-		CUDACHECK(cudaMalloc(&dPoints_, 3 * maxSize * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dColors_, 3 * maxSize * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dSizes_, maxSize * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dGroupStarts_, nParticleGroups_ * sizeof(size_t)));
-		CUDACHECK(cudaMalloc(&dGroupOffsets_, nParticleGroups_ * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(&dPoints_, 3 * maxSize * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dColors_, 3 * maxSize * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dSizes_, maxSize * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dGroupStarts_, nParticleGroups_ * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(&dGroupOffsets_, (nParticleGroups_ + 1) * sizeof(size_t)));
 
-		size_t shiftSize = (nParticleGroups_ + 1) * nFrames_;
+		size_t shiftSize = (nInterpolation_ + 1) * nFrames_;
 		shiftSize *= shiftSize;
 
-		CUDACHECK(cudaMalloc(&dShiftX_, shiftSize * sizeof(float)));
-		CUDACHECK(cudaMalloc(&dShiftY_, shiftSize * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dShiftX_, shiftSize * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dShiftY_, shiftSize * sizeof(float)));
 		
 		// 所有显存都被分配之后才可以调用prepare
 		prepare();
@@ -87,7 +88,7 @@ private:
 			1, 0, -1,
 			0, 1, 1
 		};
-		CUDACHECK(cudaMalloc(&dDirections_, 3 * nParticleGroups_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dDirections_, 3 * nParticleGroups_ * sizeof(float)));
 		CUDACHECK(cudaMemcpy(dDirections_, directions,
 			3 * nParticleGroups_ * sizeof(float), cudaMemcpyHostToDevice));
 		normalize(dDirections_, nParticleGroups_);
@@ -120,9 +121,23 @@ public:
 			args_[6 * nFrames_], args_[6 * nFrames_ + 1],
 			dColorMatrix_, dSizeMatrix_);
 
+		scale(dSizeMatrix_, scaleRate_, nFrames_ * nFrames_);
+
+		/*show(dColorMatrix_, 3 * nFrames_ * nFrames_, 3 * nFrames_);
+		printSplitLine();
+		show(dSizeMatrix_, nFrames_ * nFrames_, nFrames_);
+		printSplitLine();*/
+
 		// 获取粒子的速度， 加速度
-		fill(dSpeeds_, args_[6 * nFrames_ + 2], nParticleGroups_);
+		fill(dSpeeds_, args_[6 * nFrames_ + 2] * scaleRate_, nParticleGroups_);
+		//show(dSpeeds_, nParticleGroups_);
+		//printSplitLine();
+
 		fill(dStartPoses_, args_ + 6 * nFrames_ + 3, nParticleGroups_, 3);
+		scale(dStartPoses_, scaleRate_, 3 * nParticleGroups_);
+		/*show(dStartPoses_, 3 * nParticleGroups_);
+		printSplitLine();*/
+
 		fill(dStartFrames_, 0, nParticleGroups_);
 
 		CUDACHECK(cudaMemcpy(dShiftX_, args_ + 4 * nFrames_,
@@ -132,6 +147,14 @@ public:
 
 		calcShiftingByOutsideForce(dShiftX_, nFrames_, nInterpolation_);
 		calcShiftingByOutsideForce(dShiftY_, nFrames_, nInterpolation_);
+		size_t shiftSize = nInterpolation_ * (nFrames_ - 1) + nFrames_;
+		shiftSize *= shiftSize;
+
+		scale(dShiftX_, scaleRate_, shiftSize);
+		scale(dShiftY_, scaleRate_, shiftSize);
+
+		//show(dShiftX_, shiftSize, nInterpolation_ * (nFrames_ - 1) + nFrames_);
+		//show(dShiftY_, shiftSize, nInterpolation_ * (nFrames_ - 1) + nFrames_);
 	}
 
 	void GetParticles(int currFrame) override {
@@ -139,6 +162,14 @@ public:
 		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
 			dStartFrames_, nParticleGroups_, dDirections_, dSpeeds_, 
 			dStartPoses_, currFrame, nFrames_, dColorMatrix_, dSizeMatrix_);
+
+		/*show(dPoints_, 3 * nParticleGroups_ * nFrames_, 3 * nFrames_);
+		printSplitLine();
+		show(dColors_, 3 * nParticleGroups_ * nFrames_, 3 * nFrames_);
+		printSplitLine();
+		show(dSizes_, nParticleGroups_ * nFrames_, nFrames_);
+		printSplitLine();
+		show(dGroupStarts_, nParticleGroups_);*/
 
 		realNGroups_ = compress(dPoints_, dColors_, dSizes_,
 			nParticleGroups_, nFrames_, dGroupOffsets_, dGroupStarts_);

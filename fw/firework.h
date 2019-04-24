@@ -85,6 +85,7 @@ protected:
 	GLuint ebo = 0;
 	GLuint vao = 0;
 	size_t eboSize_ = 0;
+	float scaleRate_ = 0;
 	struct cudaGraphicsResource *cuda_vbo_resource_, *cuda_ebo_resource_;
 
 protected:

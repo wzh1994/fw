@@ -2,6 +2,7 @@
 #include "kernels.h"
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
+#include <stdexcept>
 #include "utils.h"
 #include "test.h"
 
@@ -45,6 +46,10 @@ void getColorAndSizeMatrix(
 	cudaMallocAndCopy(dStartSizes, startSizes, nFrames);
 	debugShow(dStartColors, 3 * nFrames);
 	debugShow(dStartSizes, nFrames);
+	if (nFrames > kMmaxBlockDim) {
+		throw std::runtime_error("Max nFrames allowed is "
+			+ std::to_string(kMmaxBlockDim) +"!");
+	}
 	getColorAndSizeMatrix<<<nFrames, nFrames>>>(dStartColors, dStartSizes,
 		colorDecay, sizeDecay, dColorMatrix, dSizeMatrix);
 	CUDACHECK(cudaGetLastError());
@@ -67,11 +72,11 @@ __global__ void particleSystemToPoints(
 	size_t mIdx = tid * blockDim.x + existFrame;
 	if (existFrame >= 0) {
 		points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
-			static_cast<float>(existFrame) * speeds[bid];
+			static_cast<float>(existFrame) * speeds[bid] * time;
 		points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *
-			static_cast<float>(existFrame) * speeds[bid];
+			static_cast<float>(existFrame) * speeds[bid] * time;
 		points[3 * idx + 2] = poses[bid * 3 + 2] + directions[bid * 3 + 2] *
-			static_cast<float>(existFrame) * speeds[bid];
+			static_cast<float>(existFrame) * speeds[bid] * time;
 		colors[3 * idx] = colorMatrix[3 * mIdx];
 		colors[3 * idx + 1] = colorMatrix[3 * mIdx + 1];
 		colors[3 * idx + 2] = colorMatrix[3 * mIdx + 2];

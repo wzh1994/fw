@@ -1,11 +1,13 @@
 #ifndef FW_KERNEL_UTILS_UTILS_HPP
 #define FW_KERNEL_UTILS_UTILS_HPP
 #include <cuda_runtime.h>
+#include "kernels.h"
+#define DEBUG_PRINT
 
 template<class T>
 void cudaMallocAndCopy(T* &target, const T* source,
 		size_t size_target, size_t size_copy) {
-	CUDACHECK(cudaMalloc(&target, size_target * sizeof(T)));
+	CUDACHECK(cudaMallocAlign(&target, size_target * sizeof(T)));
 	CUDACHECK(cudaMemcpy(target, source, size_copy * sizeof(T), cudaMemcpyHostToDevice));
 }
 
@@ -18,7 +20,7 @@ template<class T>
 void cudaMemcpyAndMallocIfNull(T*& target, T* source,
 		size_t size_target, size_t size_copy) {
 	if (!target) {
-		CUDACHECK(cudaMalloc(&target, size_target * sizeof(T)));
+		CUDACHECK(cudaMallocAlign(&target, size_target * sizeof(T)));
 	}
 	CUDACHECK(cudaMemcpy(
 		target, source, size_copy * sizeof(T), cudaMemcpyHostToDevice));
@@ -32,13 +34,13 @@ void cudaMemcpyAndMallocIfNull(T*& target, T* source, size_t size) {
 // 加上my防止不小心用混
 template<class T>
 void myCudaMalloc(T*& target, size_t size) {
-	CUDACHECK(cudaMalloc(&target, size * sizeof(T)));
+	CUDACHECK(cudaMallocAlign(&target, size * sizeof(T)));
 }
 
 template<class T>
 void cudaMallocIfNull(T*& target, size_t size) {
 	if (!target) {
-		CUDACHECK(cudaMalloc(&target, size * sizeof(T)));
+		CUDACHECK(cudaMallocAlign(&target, size * sizeof(T)));
 	}
 }
 

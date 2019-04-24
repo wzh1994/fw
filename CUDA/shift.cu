@@ -2,6 +2,7 @@
 #include "kernels.h"
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
+#include "utils.h"
 
 // 为了让__syncthreads()通过语法检查
 #ifndef __CUDACC__
@@ -32,14 +33,15 @@ __global__ void fillForceMatrix(float* dIn) {
 void calcShiftingByOutsideForce(float* dIn, size_t size, size_t count, float time) {
 	interpolation(dIn, 1, size, count);
 	size_t numPerRow = size + count * (size - 1);
-	rescale<<<1, numPerRow >>>(
-		dIn, time / static_cast<float>(count + 1));
+	scale(dIn, time / static_cast<float>(count + 1), numPerRow);
 	CUDACHECK(cudaGetLastError());
 	fillForceMatrix<<<numPerRow, numPerRow >>>(dIn);
 	CUDACHECK(cudaGetLastError());
-	cuSum(dIn, dIn, numPerRow, numPerRow);
-	cuSum(dIn, dIn, numPerRow, numPerRow);
-	rescale << <numPerRow, numPerRow >> > (
-		dIn, time / static_cast<float>((count + 1)));
+	float* tempWorkSpace;
+	cudaMallocAndCopy(tempWorkSpace, dIn, numPerRow * numPerRow);
+	cuSum(tempWorkSpace, dIn, numPerRow, numPerRow);
+	cuSum(dIn, tempWorkSpace, numPerRow, numPerRow);
+	CUDACHECK(cudaFree(tempWorkSpace));
+	scale(dIn, time / static_cast<float>((count + 1)), numPerRow * numPerRow);
 	CUDACHECK(cudaGetLastError());
 }

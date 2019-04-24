@@ -2,6 +2,9 @@
 #include "kernels.h"
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
+#include <stdexcept>
+#include <string>
+#include "utils.h"
 
 
 // 为了让__syncthreads()通过语法检查
@@ -36,6 +39,41 @@ __global__ void interpolationMatrix(float* array, size_t size, size_t count) {
 	__syncthreads();
 
 	array[idx_x * blockDim.y + idx_y] = temp;
+}
+
+__global__ void interpolationMatrixOut(
+		float* arrayOut, const float* arrayIn, size_t size, size_t count) {
+	size_t bid = blockIdx.x;
+	size_t tid = threadIdx.x;
+	const float* basePtr = arrayIn + bid * size;
+	size_t idx = tid / (count + 1);
+	size_t lOffset = tid % (count + 1);
+
+	if (lOffset == 0) {
+		arrayOut[bid * blockDim.x + tid] = basePtr[idx];
+	} else {
+		arrayOut[bid * blockDim.x + tid] = interpolationValue(
+			basePtr[idx], basePtr[idx + 1], lOffset, count + 1);
+	}
+}
+
+void interpolation(float* dArray, size_t nGroups, size_t size, size_t count) {
+	if (nGroups * (size + count * (size - 1)) < kMmaxBlockDim) {
+		dim3 dimBlock(nGroups, size + count * (size - 1));
+		interpolationMatrix << <1, dimBlock >> > (dArray, size, count);
+		CUDACHECK(cudaGetLastError());
+	} else {
+		if (size + count * (size - 1) > kMmaxBlockDim) {
+			throw std::runtime_error("Max result length allowed is "
+				+ std::to_string(kMmaxBlockDim) + "!");
+		}
+		float* tempArray;
+		cudaMallocAndCopy(tempArray, dArray, nGroups * size);
+		interpolationMatrixOut << <nGroups, size + count * (size - 1) >> > (
+			dArray, tempArray, size, count);
+		CUDACHECK(cudaGetLastError());
+		CUDACHECK(cudaFree(tempArray));
+	}
 }
 
 __global__ void interpolationPoints(float* dPoints, float* dColors, float* dSizes,
@@ -90,14 +128,10 @@ __global__ void interpolationPoints(float* dPoints, float* dColors, float* dSize
 	}
 }
 
-void interpolation(float* dArray, size_t nGroups, size_t size, size_t count) {
-	dim3 dimBlock(nGroups, size + count * (size - 1));
-	interpolationMatrix << <1, dimBlock >> > (dArray, size, count);
-}
-
 void interpolation(float* dPoints, float* dColors, float* dSizes,
 		size_t* dGroupOffsets, size_t nGroups, size_t maxSize, size_t count) {
 	dim3 dimBlock(nGroups, maxSize + count * (maxSize - 1));
 	interpolationPoints << <1, dimBlock >> > (
 		dPoints, dColors, dSizes, dGroupOffsets, count);
+	CUDACHECK(cudaGetLastError());
 }

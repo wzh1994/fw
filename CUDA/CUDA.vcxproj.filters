@@ -56,10 +56,13 @@
     <CudaCompile Include="finalpos.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
-    <CudaCompile Include="particleSystemToPoints.cu">
+    <CudaCompile Include="fill.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
-    <CudaCompile Include="fill.cu">
+    <CudaCompile Include="scale.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
+    <CudaCompile Include="particlesystemtopoints.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
   </ItemGroup>

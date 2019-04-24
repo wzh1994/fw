@@ -13,8 +13,8 @@
 
 __global__ void judge(float* dColors, float* dSizes, size_t* indices) {
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-	if (fminf(fmaxf(fmaxf(dColors[3 * idx], dColors[3 * idx + 1]),
-			dColors[3 * idx + 2]), dSizes[idx]) < 0.1f) {
+	if (fmaxf(fmaxf(dColors[3 * idx], dColors[3 * idx + 1]),
+			dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.005 ) {
 		indices[idx] = 0;
 	} else {
 		indices[idx] = 1;
@@ -105,19 +105,19 @@ size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
 		size_t size, size_t* dGroupOffsets, size_t* dGroupStarts) {
 	dim3 dimBlock(nGroups, size);
 	size_t *indices, *judgement, *groupFlag, *groupPos, *dNumGroup;
-	cudaMalloc(&judgement, nGroups * size * sizeof(size_t));
-	cudaMalloc(&indices, nGroups * size * sizeof(size_t));
-	cudaMalloc(&groupFlag, nGroups * sizeof(size_t));
-	cudaMalloc(&groupPos, nGroups * sizeof(size_t));
-	cudaMalloc(&dNumGroup, sizeof(size_t));
+	cudaMallocAlign(&judgement, nGroups * size * sizeof(size_t));
+	cudaMallocAlign(&indices, nGroups * size * sizeof(size_t));
+	cudaMallocAlign(&groupFlag, nGroups * sizeof(size_t));
+	cudaMallocAlign(&groupPos, nGroups * sizeof(size_t));
+	cudaMallocAlign(&dNumGroup, sizeof(size_t));
 
 	judge<<<nGroups, size >>>(dColors, dSizes, judgement);
 	getGroupFlag<<<nGroups, size>>>(judgement, groupFlag);
 	argFirstNoneZero(judgement, dGroupStarts, nGroups, size);
 	cuSum(indices, judgement, nGroups * size);
-	// printf("\n");
+
 	cuSum(groupPos, groupFlag, nGroups);
-	// printf("\n");
+
 	getOffsets<<<1, nGroups>>>(indices, size, dGroupOffsets);
 	compressData<<<1, dimBlock >>>(dPoints, dColors, dSizes, judgement, indices);
 	compressIndex<<<1, nGroups>>>(dGroupOffsets, dGroupStarts,
