@@ -489,22 +489,22 @@ size_t pointToLine(
 	const float* dSizesIn,
 	const float* dColorsIn,
 	size_t maxSizePerGroup,
-	size_t* const groupOffsets,
+	size_t* const dGroupOffsets,
 	size_t nGroups,
-	float* buffer,
+	float* dBuffer,
 	uint32_t* dIndicesOut) {
 	size_t *bufferOffsets, *indicesOffsets;
 	CUDACHECK(cudaMallocAlign(&bufferOffsets, (nGroups + 1) * sizeof(size_t)));
 	CUDACHECK(cudaMallocAlign(&indicesOffsets, (nGroups + 1) * sizeof(size_t)));
 
-	calcOffsets << <1, nGroups + 1 >> > (groupOffsets,
+	calcOffsets << <1, nGroups + 1 >> > (dGroupOffsets,
 		bufferOffsets, indicesOffsets);
 	CUDACHECK(cudaGetLastError());
-	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, groupOffsets,
-		nGroups, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
+	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut);
 	calcCircularTruncatedCone(
-		dPointsIn, dSizesIn, dColorsIn, groupOffsets, maxSizePerGroup,
-		nGroups, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
+		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut);
 
 	size_t totalIndices;
 	CUDACHECK(cudaMemcpy(&totalIndices, indicesOffsets + nGroups,

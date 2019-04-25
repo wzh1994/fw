@@ -23,59 +23,64 @@ __device__ float interpolationValue(
 	return l + static_cast<float>(lOffset) * (r - l) / static_cast<float>(totalNum);
 }
 
-__global__ void interpolationMatrix(float* array, size_t size, size_t count) {
+__global__ void interpolationMatrix(
+		float* array, size_t size, size_t nInterpolation) {
 	float temp;
 	size_t idx_x = threadIdx.x;
 	size_t idx_y = threadIdx.y;
 	float* basePtr = array + idx_x * size;
-	size_t idx = idx_y / (count + 1);
-	size_t lOffset = idx_y % (count + 1);
+	size_t idx = idx_y / (nInterpolation + 1);
+	size_t lOffset = idx_y % (nInterpolation + 1);
 
 	if (lOffset == 0) {
 		temp = basePtr[idx];
-	}
-	else {
+	} else {
 		temp = interpolationValue(
-			basePtr[idx], basePtr[idx + 1], lOffset, count + 1);
+			basePtr[idx], basePtr[idx + 1], lOffset, nInterpolation + 1);
 	}
-	// printf("%llu, %llu, %llu %llu, %f\n", idx_x, idx_y, idx_x * size, idx, temp);
+
+	deviceDebugPrint("%llu, %llu, %llu %llu, %f\n",
+		idx_x, idx_y, idx_x * size, idx, temp);
 	__syncthreads();
 
 	array[idx_x * blockDim.y + idx_y] = temp;
 }
 
-__global__ void interpolationMatrixOut(
-	float* arrayOut, const float* arrayIn, size_t size, size_t count) {
+__global__ void interpolationMatrixOut(float* arrayOut,
+		const float* arrayIn, size_t size, size_t nInterpolation) {
 	size_t bid = blockIdx.x;
 	size_t tid = threadIdx.x;
 	const float* basePtr = arrayIn + bid * size;
-	size_t idx = tid / (count + 1);
-	size_t lOffset = tid % (count + 1);
+	size_t idx = tid / (nInterpolation + 1);
+	size_t lOffset = tid % (nInterpolation + 1);
 
 	if (lOffset == 0) {
 		arrayOut[bid * blockDim.x + tid] = basePtr[idx];
 	}
 	else {
 		arrayOut[bid * blockDim.x + tid] = interpolationValue(
-			basePtr[idx], basePtr[idx + 1], lOffset, count + 1);
+			basePtr[idx], basePtr[idx + 1], lOffset, nInterpolation + 1);
 	}
 }
 
-void interpolation(float* dArray, size_t nGroups, size_t size, size_t count) {
-	if (nGroups * (size + count * (size - 1)) < kMmaxBlockDim) {
-		dim3 dimBlock(nGroups, size + count * (size - 1));
-		interpolationMatrix << <1, dimBlock >> > (dArray, size, count);
+void interpolation(
+		float* dArray, size_t nGroups, size_t size, size_t nInterpolation) {
+	if (nGroups * (size + nInterpolation * (size - 1)) < kMmaxBlockDim) {
+		dim3 dimBlock(nGroups, size + nInterpolation * (size - 1));
+		interpolationMatrix << <1, dimBlock >> > (
+			dArray, size, nInterpolation);
 		CUDACHECK(cudaGetLastError());
 	}
 	else {
-		if (size + count * (size - 1) > kMmaxBlockDim) {
+		if (size + nInterpolation * (size - 1) > kMmaxBlockDim) {
 			throw std::runtime_error("Max result length allowed is "
 				+ std::to_string(kMmaxBlockDim) + "!");
 		}
 		float* tempArray;
 		cudaMallocAndCopy(tempArray, dArray, nGroups * size);
-		interpolationMatrixOut << <nGroups, size + count * (size - 1) >> > (
-			dArray, tempArray, size, count);
+		size_t nBlockDim = size + nInterpolation * (size - 1);
+		interpolationMatrixOut <<<nGroups, nBlockDim >>> (
+			dArray, tempArray, size, nInterpolation);
 		CUDACHECK(cudaGetLastError());
 		CUDACHECK(cudaFree(tempArray));
 	}

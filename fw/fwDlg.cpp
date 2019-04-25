@@ -12,6 +12,7 @@
 #include "afxdialogex.h"
 #include <ctime>
 #include <thread>
+#include <iostream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,16 +61,18 @@ namespace {
 
 // CfwDlg 对话框
 
-extern "C" __declspec(dllexport) void ShowDialog(float* args)
+extern "C" __declspec(dllexport)
+void ShowDialog(float* args, const char* pMovieName, size_t len)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-	CfwDlg dlg(args);
+	std::string movieName(pMovieName, len);
+	CfwDlg dlg(args, movieName);
 	dlg.DoModal();
 }
 
 FwBase* getFirework(FireWorkType type, float* args);
-CfwDlg::CfwDlg(float* args, CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_FW_DIALOG, pParent)
+CfwDlg::CfwDlg(float* args, string_t movieName, CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_FW_DIALOG, pParent), movieName_(movieName)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -81,12 +84,7 @@ CfwDlg::CfwDlg(float* args, CWnd* pParent /*=nullptr*/)
 	 */
 	
 	fw.reset(getFirework(FireWorkType::Normal, args));
-
-	// temp
 	sliderLen_ = fw->getTotalFrame();
-	for (int i = 0; i < sliderLen_; ++i) {
-		pPhotos_.push_back(new cv::Mat(300, 300, CV_8UC3, cv::Scalar(i * 5, (sliderLen_ - i) * 5, 255)));
-	}
 }
 
 
@@ -172,6 +170,23 @@ void CfwDlg::myInitialize() {
 	::SetParent(hWnd, pPictureWnd->m_hWnd);
 	//ShowWindow指定窗口中显示
 	::ShowWindow(hParent, SW_HIDE);
+
+	/* -------------------------------
+	 * 为opencv的框设置内容
+	 * -------------------------------
+	 */
+	cv::VideoCapture cap;
+	cap.open(movieName_);
+	FW_ASSERT(cap.isOpened()) << "Error open movies given: " << movieName_;
+	size_t totalFrame = cap.get(cv::CAP_PROP_FRAME_COUNT);
+	for (size_t i = 0; i < std::min(totalFrame, fw->getTotalFrame()); ++i) {
+		cv::Mat frame;
+		cap >> frame;
+		FW_ASSERT(!frame.empty()) << sstr("Error get frames: ", i);
+		pPhotos_.push_back(new cv::Mat(subWindowWidth, subWindowWidth, CV_8UC3));
+		cv::resize(
+			frame, *pPhotos_.back(), cv::Size(subWindowWidth, subWindowHeight));
+	}
 
 	/* -------------------------------
 	 * combo

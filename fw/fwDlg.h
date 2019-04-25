@@ -14,10 +14,13 @@
 #include "resource.h"
 #include "OpenGLWindow.h"
 #include "firework.h"
+#include "exceptions.h"
+#include <string>
 
 // CfwDlg 对话框
 class CfwDlg : public CDialogEx
 {
+	using string_t = std::string;
 	OpenGLWindow *pOpenGLWindow = nullptr;
 	std::unique_ptr<FwBase> fw;
 	void myInitialize();
@@ -27,7 +30,7 @@ class CfwDlg : public CDialogEx
 	void onSliderChange();
 // 构造
 public:
-	CfwDlg(float* args, CWnd* pParent = nullptr);	// 标准构造函数
+	CfwDlg(float* args, string_t movieName, CWnd* pParent = nullptr);	// 标准构造函数
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -39,6 +42,7 @@ public:
 
 private:
 	int sliderLen_;
+	string_t movieName_;
 	float autoPlaySpeed_ = 1.0;
 
 // 实现

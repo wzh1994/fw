@@ -12,7 +12,7 @@
 #include <cstdio>
 namespace cudaKernel {
 
-__global__ void calcFinalPosition(float* points, size_t count,
+__global__ void calcFinalPosition(float* points, size_t nInterpolation,
 	size_t frame, const size_t* dGroupOffsets, const size_t* dGroupStarts,
 	const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize) {
 	size_t bid = blockIdx.x;
@@ -20,8 +20,8 @@ __global__ void calcFinalPosition(float* points, size_t count,
 	float* basePtr = points + dGroupOffsets[bid] * 3;
 	size_t numPointsThisGroup = dGroupOffsets[bid + 1] - dGroupOffsets[bid];
 	if (tid < numPointsThisGroup) {
-		size_t start = dGroupStarts[bid] * (count + 1) + tid;
-		size_t end = frame * (count + 1);
+		size_t start = dGroupStarts[bid] * (nInterpolation + 1) + tid;
+		size_t end = start + tid;
 		basePtr[3 * tid] += dXShiftMatrix[start * shiftsize + end];
 		basePtr[3 * tid + 1] += dYShiftMatrix[start * shiftsize + end];
 		/*if (bid == 0) {
@@ -34,11 +34,11 @@ __global__ void calcFinalPosition(float* points, size_t count,
 }
 
 void calcFinalPosition(
-	float* dPoints, size_t nGroups, size_t maxSize, size_t count,
+	float* dPoints, size_t nGroups, size_t maxSize, size_t nInterpolation,
 	size_t frame, const size_t* dGroupOffsets, const size_t* dGroupStarts,
 	const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize) {
 	calcFinalPosition << <nGroups, maxSize >> > (
-		dPoints, count, frame, dGroupOffsets, dGroupStarts,
+		dPoints, nInterpolation, frame, dGroupOffsets, dGroupStarts,
 		dXShiftMatrix, dYShiftMatrix, shiftsize);
 	CUDACHECK(cudaGetLastError());
 }

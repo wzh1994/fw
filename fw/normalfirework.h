@@ -129,20 +129,10 @@ public:
 
 		scale(dSizeMatrix_, scaleRate_, nFrames_ * nFrames_);
 
-		/*show(dColorMatrix_, 3 * nFrames_ * nFrames_, 3 * nFrames_);
-		printSplitLine();
-		show(dSizeMatrix_, nFrames_ * nFrames_, nFrames_);
-		printSplitLine();*/
-
 		// 获取粒子的速度， 加速度
 		fill(dSpeeds_, args_[6 * nFrames_ + 2] * scaleRate_, nParticleGroups_);
-		//show(dSpeeds_, nParticleGroups_);
-		//printSplitLine();
-
 		fill(dStartPoses_, args_ + 6 * nFrames_ + 3, nParticleGroups_, 3);
 		scale(dStartPoses_, scaleRate_, 3 * nParticleGroups_);
-		/*show(dStartPoses_, 3 * nParticleGroups_);
-		printSplitLine();*/
 
 		fill(dStartFrames_, 0, nParticleGroups_);
 
@@ -159,95 +149,32 @@ public:
 		scale(dShiftX_, scaleRate_, shiftSize);
 		scale(dShiftY_, scaleRate_, shiftSize);
 
-		//show(dShiftX_, shiftSize, nInterpolation_ * (nFrames_ - 1) + nFrames_);
-		//show(dShiftY_, shiftSize, nInterpolation_ * (nFrames_ - 1) + nFrames_);
 	}
 
 	void GetParticles(int currFrame) override {
-		static compare::Compare comp;
+
 		// 此处给dPoints_, dColors_, dSizes_, dGroupStarts_赋值
 		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
 			dStartFrames_, nParticleGroups_, dDirections_, dSpeeds_, 
 			dStartPoses_, currFrame, nFrames_, dColorMatrix_, dSizeMatrix_);
-
-		// 观察particleSystemToPoints操作 对于相同帧的输出结果是否一致
-		/*FW_ASSERT(comp.compare("points", currFrame, dPoints_, 3 * nFrames_ * nParticleGroups_));
-		FW_ASSERT(comp.compare("colors", currFrame, dColors_, 3 * nFrames_ * nParticleGroups_));
-		FW_ASSERT(comp.compare("point", currFrame, dSizes_, nFrames_ * nParticleGroups_));
-		FW_ASSERT(comp.compare("group_start", currFrame, dGroupStarts_, nParticleGroups_));*/
 		
-
 		CUDACHECK(cudaDeviceSynchronize());
-		/*show(dPoints_, 3 * nParticleGroups_ * nFrames_, 3 * nFrames_);
-		printSplitLine();
-		show(dColors_, 3 * nParticleGroups_ * nFrames_, 3 * nFrames_);
-		printSplitLine();
-		show(dSizes_, nParticleGroups_ * nFrames_, nFrames_);
-		printSplitLine();
-		show(dGroupStarts_, nParticleGroups_);*/
 
 		realNGroups_ = compress(dPoints_, dColors_, dSizes_,
 			nParticleGroups_, nFrames_, dGroupOffsets_, dGroupStarts_);
-		// 观察compress操作 对于相同帧的输出结果是否一致
-		/*{
-			size_t *dRealNGroup;
-			cudaMallocAndCopy(dRealNGroup, &realNGroups_, 1);
-			FW_ASSERT(comp.compare("realGroup", currFrame, dRealNGroup, 1));
-			FW_ASSERT(comp.compare("groupOffsets", currFrame, dGroupOffsets_, realNGroups_ + 1));
-			FW_ASSERT(comp.compare("groupStarts", currFrame, dGroupStarts_, realNGroups_));
-			size_t resultSize;
-			CUDACHECK(cudaMemcpy(&resultSize, dGroupOffsets_ + realNGroups_, sizeof(size_t), cudaMemcpyDeviceToHost));
-			FW_ASSERT(comp.compare("pointsAfterCompress", currFrame, dPoints_, 3 * resultSize));
-			FW_ASSERT(comp.compare("colorsAfterCompress", currFrame, dColors_, 3 * resultSize));
-			FW_ASSERT(comp.compare("pointAfterCompress", currFrame, dSizes_, resultSize));
-		}*/
 
 		CUDACHECK(cudaDeviceSynchronize());
 		if (realNGroups_ > 0) {
-			// 观察interpolation之前输入是否一致
-			/*{
-				show(dGroupOffsets_, realNGroups_ + 1);
-				size_t resultSize;
-				CUDACHECK(cudaMemcpy(&resultSize, dGroupOffsets_ + realNGroups_,
-					sizeof(size_t), cudaMemcpyDeviceToHost));
-				printf("input size %llu\n", resultSize);
-				FW_ASSERT(comp.compare("pointsBeforeInterpolation",
-					currFrame, dPoints_, 3 * resultSize));
-				FW_ASSERT(comp.compare("colorsBeforeInterpolation",
-					currFrame, dColors_, 3 * resultSize));
-				FW_ASSERT(comp.compare("pointBeforeInterpolation",
-					currFrame, dSizes_, resultSize));
-				show(dPoints_, dGroupOffsets_, realNGroups_, 3);
-			}*/
 			interpolation(dPoints_, dColors_, dSizes_, dGroupOffsets_,
 				realNGroups_, nFrames_, nInterpolation_);
-			// 观察interpolation操作 对于相同帧的输出结果是否一致
-			/*{
-				show(dGroupOffsets_, realNGroups_ + 1);
-				size_t resultSize;
-				CUDACHECK(cudaMemcpy(&resultSize, dGroupOffsets_ + realNGroups_,
-					sizeof(size_t), cudaMemcpyDeviceToHost));
-				printf("resultSize %llu\n", resultSize);
-				FW_ASSERT(comp.compare("pointsAfterInterpolation",
-					currFrame, dPoints_, 3 * resultSize));
-				FW_ASSERT(comp.compare("colorsAfterInterpolation",
-					currFrame, dColors_, 3 * resultSize));
-				FW_ASSERT(comp.compare("pointAfterInterpolation",
-					currFrame, dSizes_, resultSize));
-			}*/
+			
 			CUDACHECK(cudaDeviceSynchronize());
-			size_t shiftSize = nFrames_ * (nInterpolation_ + 1) - nInterpolation_;
-			calcFinalPosition(dPoints_, realNGroups_, nFrames_ * nInterpolation_,
-				nInterpolation_, currFrame, dGroupOffsets_, dGroupStarts_, dShiftX_,
-				dShiftY_, shiftSize);
-			// 观察finalPosition操作 对于相同帧的输出结果是否一致
-			/*{
-				size_t resultSize;
-				CUDACHECK(cudaMemcpy(&resultSize, dGroupOffsets_ + realNGroups_,
-					sizeof(size_t), cudaMemcpyDeviceToHost));
-				FW_ASSERT(comp.compare("pointsAfterInterpolation",
-					currFrame, dPoints_, 3 * resultSize));
-			}*/
+			size_t shiftSize =
+				nFrames_ * (nInterpolation_ + 1) - nInterpolation_;
+			calcFinalPosition(
+				dPoints_, realNGroups_, shiftSize, nInterpolation_, currFrame,
+				dGroupOffsets_, dGroupStarts_, dShiftX_, dShiftY_, shiftSize);
+			
 			CUDACHECK(cudaDeviceSynchronize());
 			// 映射buffer的内存指针
 			CUDACHECK(cudaGraphicsMapResources(1, &cuda_vbo_resource_, 0));
@@ -263,11 +190,7 @@ public:
 			eboSize_ = pointToLine(dPoints_, dSizes_, dColors_,
 				nFrames_ * (nInterpolation_ + 1), dGroupOffsets_, realNGroups_,
 				static_cast<float*>(pVboData), static_cast<GLuint*>(pEboData));
-			{
-				size_t *dEboSize;
-				cudaMallocAndCopy(dEboSize, &eboSize_, 1);
-				FW_ASSERT(comp.compare("eboSize", currFrame, dEboSize, 1));
-			}
+
 			CUDACHECK(cudaDeviceSynchronize());
 
 			// 释放对buffer的内存指针映射

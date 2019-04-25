@@ -33,10 +33,11 @@ __global__ void fillForceMatrix(float* dIn) {
 	}
 }
 
-void calcShiftingByOutsideForce(float* dIn, size_t size, size_t count, float time) {
-	interpolation(dIn, 1, size, count);
-	size_t numPerRow = size + count * (size - 1);
-	scale(dIn, time / static_cast<float>(count + 1), numPerRow);
+void calcShiftingByOutsideForce(
+		float* dIn, size_t size, size_t nInterpolation, float time) {
+	interpolation(dIn, 1, size, nInterpolation);
+	size_t numPerRow = size + nInterpolation * (size - 1);
+	scale(dIn, time / static_cast<float>(nInterpolation + 1), numPerRow);
 	CUDACHECK(cudaGetLastError());
 	fillForceMatrix << <numPerRow, numPerRow >> > (dIn);
 	CUDACHECK(cudaGetLastError());
@@ -45,7 +46,8 @@ void calcShiftingByOutsideForce(float* dIn, size_t size, size_t count, float tim
 	cuSum(tempWorkSpace, dIn, numPerRow, numPerRow);
 	cuSum(dIn, tempWorkSpace, numPerRow, numPerRow);
 	CUDACHECK(cudaFree(tempWorkSpace));
-	scale(dIn, time / static_cast<float>((count + 1)), numPerRow * numPerRow);
+	scale(dIn, time / static_cast<float>((nInterpolation + 1)),
+		numPerRow * numPerRow);
 	CUDACHECK(cudaGetLastError());
 }
 
