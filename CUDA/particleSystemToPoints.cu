@@ -14,13 +14,15 @@
 #include "device_functions.h"
 #include <cstdio>
 
+namespace cudaKernel {
+
 __global__ void getColorAndSizeMatrix(
-		const float* startColors, const float* startSizes, float colorDecay,
-		float sizeDecay, float* dColorMatrix, float* dSizeMatrix) {
+	const float* startColors, const float* startSizes, float colorDecay,
+	float sizeDecay, float* dColorMatrix, float* dSizeMatrix) {
 	size_t bidx = blockIdx.x;
 	size_t tidx = threadIdx.x;
 	size_t idx = bidx * blockDim.x + tidx;
-	
+
 	/*在没有找到更合适的下降函数之前，暂定为指数级别的下降*/
 	float colorRate = powf(colorDecay, tidx);
 	float sizeRate = powf(sizeDecay, tidx);
@@ -37,10 +39,10 @@ __global__ void getColorAndSizeMatrix(
 }
 
 void getColorAndSizeMatrix(
-		const float* startColors, const float* startSizes,
-		/*在没有找到更合适的下降函数之前，暂定为指数级别的下降*/
-		size_t nFrames, float colorDecay, float sizeDecay,
-		float* dColorMatrix, float* dSizeMatrix) {
+	const float* startColors, const float* startSizes,
+	/*在没有找到更合适的下降函数之前，暂定为指数级别的下降*/
+	size_t nFrames, float colorDecay, float sizeDecay,
+	float* dColorMatrix, float* dSizeMatrix) {
 	float *dStartColors, *dStartSizes;
 	cudaMallocAndCopy(dStartColors, startColors, 3 * nFrames);
 	cudaMallocAndCopy(dStartSizes, startSizes, nFrames);
@@ -48,19 +50,19 @@ void getColorAndSizeMatrix(
 	debugShow(dStartSizes, nFrames);
 	if (nFrames > kMmaxBlockDim) {
 		throw std::runtime_error("Max nFrames allowed is "
-			+ std::to_string(kMmaxBlockDim) +"!");
+			+ std::to_string(kMmaxBlockDim) + "!");
 	}
-	getColorAndSizeMatrix<<<nFrames, nFrames>>>(dStartColors, dStartSizes,
+	getColorAndSizeMatrix << <nFrames, nFrames >> > (dStartColors, dStartSizes,
 		colorDecay, sizeDecay, dColorMatrix, dSizeMatrix);
 	CUDACHECK(cudaGetLastError());
 	cudaFreeAll(dStartColors, dStartSizes);
 }
 
 __global__ void particleSystemToPoints(
-		float* points, float* colors, float* sizes, size_t* groupStarts,
-		const size_t* startFrames, const float* directions, 
-		const float* speeds, const float* poses, size_t currFrame,
-		const float* colorMatrix, const float* sizeMatrix, float time) {
+	float* points, float* colors, float* sizes, size_t* groupStarts,
+	const size_t* startFrames, const float* directions,
+	const float* speeds, const float* poses, size_t currFrame,
+	const float* colorMatrix, const float* sizeMatrix, float time) {
 	size_t bid = blockIdx.x;
 	size_t tid = threadIdx.x;
 	size_t idx = bid * blockDim.x + tid;
@@ -81,7 +83,8 @@ __global__ void particleSystemToPoints(
 		colors[3 * idx + 1] = colorMatrix[3 * mIdx + 1];
 		colors[3 * idx + 2] = colorMatrix[3 * mIdx + 2];
 		sizes[idx] = sizeMatrix[mIdx];
-	} else {
+	}
+	else {
 		points[3 * idx] = 0;
 		points[3 * idx + 1] = 0;
 		points[3 * idx + 2] = 0;
@@ -93,17 +96,18 @@ __global__ void particleSystemToPoints(
 }
 
 void particleSystemToPoints(
-		float* dPoints, float* dColors, float* dSizes, size_t* dGroupStarts,
-		const size_t* dStartFrames, size_t nGroups, const float* dDirections,
-		const float* dSpeeds, const float* dStartPoses, size_t currFrame,
-		size_t nFrames, const float* dColorMatrix,
-		const float* dSizeMatrix, float time) {
+	float* dPoints, float* dColors, float* dSizes, size_t* dGroupStarts,
+	const size_t* dStartFrames, size_t nGroups, const float* dDirections,
+	const float* dSpeeds, const float* dStartPoses, size_t currFrame,
+	size_t nFrames, const float* dColorMatrix,
+	const float* dSizeMatrix, float time) {
 	if (nFrames > kMmaxBlockDim) {
 		throw std::runtime_error("Max nFrames allowed is "
 			+ std::to_string(kMmaxBlockDim) + "!");
 	}
-	particleSystemToPoints<<<nGroups, nFrames>>>(
+	particleSystemToPoints << <nGroups, nFrames >> > (
 		dPoints, dColors, dSizes, dGroupStarts, dStartFrames, dDirections,
 		dSpeeds, dStartPoses, currFrame, dColorMatrix, dSizeMatrix, time);
 	CUDACHECK(cudaGetLastError());
+}
 }

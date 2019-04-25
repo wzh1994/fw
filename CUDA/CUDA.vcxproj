@@ -90,6 +90,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="allclose.cu" />
     <CudaCompile Include="argfirstnonezero.cu" />
     <CudaCompile Include="fill.cu" />
     <CudaCompile Include="finalpos.cu" />

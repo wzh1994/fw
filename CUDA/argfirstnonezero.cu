@@ -11,6 +11,8 @@
 #include "device_functions.h"
 #include <cstdio>
 
+namespace cudaKernel {
+
 __global__ void argFirstNoneZero(size_t* matrix, size_t* result) {
 	size_t tid = threadIdx.x;
 	size_t bid = blockIdx.x;
@@ -31,8 +33,10 @@ __global__ void argFirstNoneZero(size_t* matrix, size_t* result) {
 }
 
 void argFirstNoneZero(size_t* dMatrix, size_t* result,
-		size_t nGroups, size_t size){
-	argFirstNoneZero << <nGroups, size, size * sizeof(size_t)>> > (
+	size_t nGroups, size_t size) {
+	argFirstNoneZero << <nGroups, size, size * sizeof(size_t) >> > (
 		dMatrix, result);
 	CUDACHECK(cudaGetLastError());
+}
+
 }

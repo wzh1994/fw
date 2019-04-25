@@ -110,7 +110,7 @@ void testFiveGroupsWithTwoEmpty() {
 		0, 0, 0, 0, 0,
 		0, 0.15, 0.4, 0.07, 1,
 		0, 0, 0, 0, 0, 
-		0, 0.07, 0.4, 0.17, 1,
+		0, 0.004, 0.4, 0.17, 1,
 		0, 0, 0, 0, 0
 	};
 	cudaMallocAlign(&dPoints, 3 * nGroups * size * sizeof(float));

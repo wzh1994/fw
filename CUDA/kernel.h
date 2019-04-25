@@ -8,6 +8,7 @@
  * 定义一些公共的命名空间和宏定义
  */
 
+namespace cudaKernel{
 using uint32_t = unsigned int;
 using unary_func_t = float(*)(float);
 using binary_func_t = float(*)(float, float);
@@ -22,6 +23,8 @@ constexpr size_t kernelAlign = kMmaxBlockDim * sizeof(size_t);
 
 inline size_t ceilAlign(size_t size, size_t align = kMmaxBlockDim) {
 	return (size + align - 1ull) / align;
+}
+
 }
 
 #define CUDACHECK(cmd) do {                         \

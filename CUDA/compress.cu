@@ -12,13 +12,15 @@
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 #include <cstdio>
+namespace cudaKernel {
 
 __global__ void judge(float* dColors, float* dSizes, size_t* indices) {
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (fmaxf(fmaxf(dColors[3 * idx], dColors[3 * idx + 1]),
-			dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.005f ) {
+		dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.005f) {
 		indices[idx] = 0;
-	} else {
+	}
+	else {
 		indices[idx] = 1;
 	}
 	deviceDebugPrint("judging: %llu, %llu\n",
@@ -26,7 +28,7 @@ __global__ void judge(float* dColors, float* dSizes, size_t* indices) {
 }
 
 __global__ void getOffsets(
-		const size_t *indices, size_t size, size_t* dGroupOffsets) {
+	const size_t *indices, size_t size, size_t* dGroupOffsets) {
 	size_t idx = threadIdx.x;
 	if (idx == 0) {
 		dGroupOffsets[0] = 0;
@@ -57,8 +59,8 @@ __global__ void getGroupFlag(size_t *judgement, size_t* groupFlag) {
 		idx, groupFlag[bidx], judgement[idx]);
 }
 __global__ void compressData(float* points, float* colors, float* sizes,
-		const float* pointsIn, const float* colorsIn, const float* sizesIn,
-		size_t* judgement, size_t* indices) {
+	const float* pointsIn, const float* colorsIn, const float* sizesIn,
+	size_t* judgement, size_t* indices) {
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (judgement[idx]) {
 		deviceDebugPrint("compressData: %llu, %u, %u\n",
@@ -74,7 +76,7 @@ __global__ void compressData(float* points, float* colors, float* sizes,
 	}
 }
 __global__ void compressIndex(size_t* dGroupOffsets, size_t* dGroupStarts,
-		const size_t* groupFlag, const size_t* groupPos, size_t* dNumGroup) {
+	const size_t* groupFlag, const size_t* groupPos, size_t* dNumGroup) {
 	size_t idx = threadIdx.x;
 	size_t offset = dGroupOffsets[idx + 1];
 	size_t start = dGroupStarts[idx];
@@ -103,7 +105,7 @@ __global__ void compressIndex(size_t* dGroupOffsets, size_t* dGroupStarts,
 }
 
 size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
-		size_t size, size_t* dGroupOffsets, size_t* dGroupStarts) {
+	size_t size, size_t* dGroupOffsets, size_t* dGroupStarts) {
 	size_t *indices, *judgement, *groupFlag, *groupPos, *dNumGroup;
 	cudaMallocAlign(&judgement, nGroups * size * sizeof(size_t));
 	cudaMallocAlign(&indices, nGroups * size * sizeof(size_t));
@@ -115,20 +117,20 @@ size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
 	cudaMallocAndCopy(dColorsTemp, dColors, 3 * nGroups * size);
 	cudaMallocAndCopy(dSizesTemp, dSizes, nGroups * size);
 
-	judge<<<nGroups, size >>>(dColors, dSizes, judgement);
+	judge << <nGroups, size >> > (dColors, dSizes, judgement);
 	CUDACHECK(cudaGetLastError());
-	getGroupFlag<<<nGroups, size>>>(judgement, groupFlag);
+	getGroupFlag << <nGroups, size >> > (judgement, groupFlag);
 	CUDACHECK(cudaGetLastError());
 	argFirstNoneZero(judgement, dGroupStarts, nGroups, size);
 
 	cuSum(indices, judgement, size * nGroups);
 	cuSum(groupPos, groupFlag, nGroups);
-	getOffsets<<<1, nGroups>>>(indices, size, dGroupOffsets);
+	getOffsets << <1, nGroups >> > (indices, size, dGroupOffsets);
 	CUDACHECK(cudaGetLastError());
-	compressData<<<nGroups, size >>>(dPoints, dColors, dSizes,
+	compressData << <nGroups, size >> > (dPoints, dColors, dSizes,
 		dPointsTemp, dColorsTemp, dSizesTemp, judgement, indices);
 	CUDACHECK(cudaGetLastError());
-	compressIndex<<<1, nGroups>>>(dGroupOffsets, dGroupStarts,
+	compressIndex << <1, nGroups >> > (dGroupOffsets, dGroupStarts,
 		groupFlag, groupPos, dNumGroup);
 	CUDACHECK(cudaGetLastError());
 	// printSplitLine();
@@ -145,4 +147,5 @@ size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
 	CUDACHECK(cudaFree(groupPos));
 	CUDACHECK(cudaFree(dNumGroup));
 	return numGroup;
+}
 }

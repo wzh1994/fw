@@ -12,6 +12,8 @@
 #include <cstdio>
 #include "test.h"
 
+namespace cudaKernel {
+
 template<typename T, class F>
 __global__ void scan(T* out, const T* in, F func, size_t groupSize) {
 	size_t offset = blockIdx.x * groupSize + blockIdx.y * blockDim.x;
@@ -27,7 +29,7 @@ __global__ void scan(T* out, const T* in, F func, size_t groupSize) {
 		temp = result[idx - step];
 	}
 	temp = func(result[idx], temp);
-	
+
 	__syncthreads();
 	result[idx] = temp;
 	__syncthreads();
@@ -45,7 +47,7 @@ __global__ void scan(T* out, const T* in, F func, size_t groupSize) {
 
 template<typename T, class F>
 __global__ void scanGroup(
-		T* out, const T* in, F func, size_t groupSize, size_t stride) {
+	T* out, const T* in, F func, size_t groupSize, size_t stride) {
 	uint32_t offset = blockIdx.x * groupSize;
 	const T* pIn = in + offset;
 	T* pOut = out + blockIdx.x * blockDim.x;
@@ -84,22 +86,24 @@ void callScanKernel(T* dOut, const T* dIn, size_t size, size_t nGroups, F f) {
 	if (size <= nBlockDim) {
 		scan << <nGroups, size >> > (dOut, dIn, f, size);
 		CUDACHECK(cudaGetLastError());
-	} else if (size <= nBlockDim * nBlockDim) {
+	}
+	else if (size <= nBlockDim * nBlockDim) {
 		size_t nSubGroups = ceilAlign(size, nBlockDim);
-		scan<<<dim3(nGroups, nSubGroups), nBlockDim>>>(dOut, dIn, f, size);
+		scan << <dim3(nGroups, nSubGroups), nBlockDim >> > (dOut, dIn, f, size);
 		CUDACHECK(cudaGetLastError());
 		T* groupScanResults;
 		cudaMallocAlign(&groupScanResults, nGroups * nSubGroups * sizeof(T));
 		scanGroup << <nGroups, nSubGroups >> > (
 			groupScanResults, dOut, f, size, nBlockDim);
 		CUDACHECK(cudaGetLastError());
-		groupResultToOut<<<dim3(nGroups, nSubGroups), nBlockDim >>>(
+		groupResultToOut << <dim3(nGroups, nSubGroups), nBlockDim >> > (
 			dOut, groupScanResults, f, size);
 		CUDACHECK(cudaGetLastError());
 		CUDACHECK(cudaFree(groupScanResults));
-	} else {
+	}
+	else {
 		throw std::runtime_error("Max size of each group is "
-			+std::to_string(nBlockDim * nBlockDim) + "in scan!");
+			+ std::to_string(nBlockDim * nBlockDim) + "in scan!");
 	}
 	CUDACHECK(cudaGetLastError());
 	cudaDeviceSynchronize();
@@ -147,4 +151,6 @@ void cuMax(float* dOut, const float* dIn, size_t size, size_t numGroup) {
 	binary_func_t hMax;
 	cudaMemcpyFromSymbol(&hMax, max_float_d, sizeof(binary_func_t));
 	callScanKernel(dOut, dIn, size, numGroup, hMax);
+}
+
 }

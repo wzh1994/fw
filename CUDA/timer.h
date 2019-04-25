@@ -4,8 +4,9 @@
 #include<chrono>
 #include <iostream>
 using namespace std::chrono;
+namespace cudaKernel {
 class Timer {
-	
+
 private:
 	time_point<system_clock> start_time;
 public:
@@ -15,7 +16,7 @@ public:
 
 	double stop() {
 		return duration_cast<milliseconds>(
-			 system_clock::now() - start_time).count();
+			system_clock::now() - start_time).count();
 	}
 
 	void pstop(std::string s) {
@@ -24,5 +25,5 @@ public:
 		printf("%s cost: %f ms\n", s.c_str(), r);
 	}
 };
-
+}
 #endif

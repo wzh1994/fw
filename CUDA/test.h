@@ -8,6 +8,8 @@
 using std::cout;
 using std::endl;
 
+namespace cudaKernel {
+
 inline void printSplitLine() {
 	cout << "-------------------------" << endl
 		<< "--------- split ---------" << endl
@@ -102,4 +104,5 @@ void showAndFree(T* source, size_t* dSteps, size_t nGroups, size_t times) {
 	CUDACHECK(cudaFree(source));
 }
 
+}
 #endif

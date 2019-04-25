@@ -12,6 +12,8 @@
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 
+namespace cudaKernel {
+
 __global__ void scale(float* array, float rate) {
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	array[idx] *= rate;
@@ -19,6 +21,8 @@ __global__ void scale(float* array, float rate) {
 
 void scale(float* dArray, float rate, size_t size) {
 	size_t nBlockDims = ceilAlign(size, 256);
-	scale<<<nBlockDims, 256 >>>(dArray, rate);
+	scale << <nBlockDims, 256 >> > (dArray, rate);
 	CUDACHECK(cudaGetLastError());
+}
+
 }

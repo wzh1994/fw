@@ -5,10 +5,10 @@
 using std::cout;
 using std::endl;
 
-bool allClose(float a, float b) {
+bool scanClose(float a, float b) {
 	return abs(a - b) < 1e-5;
 }
-bool allClose(size_t a, size_t b) {
+bool scanClose(size_t a, size_t b) {
 	return a == b;
 }
 
@@ -29,7 +29,7 @@ bool testCase(int n) {
 	cuSum(dOut, dIn, n, 3);
 	cudaMemcpy(gpuResult, dOut, 3 * n * sizeof(T), cudaMemcpyDeviceToHost);
 	for (int i = 0; i < 3 * n; ++i) {
-		if (!allClose(gpuResult[i], cpuResult[i]))
+		if (!scanClose(gpuResult[i], cpuResult[i]))
 			cout << "(" << n << ", "<< i << "): " <<
 				gpuResult[i] << "!=" << cpuResult[i] << endl;
 		result = false;

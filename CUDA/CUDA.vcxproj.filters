@@ -65,5 +65,8 @@
     <CudaCompile Include="particlesystemtopoints.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
+    <CudaCompile Include="allclose.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

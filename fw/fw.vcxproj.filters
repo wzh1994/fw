@@ -25,6 +25,9 @@
     <Filter Include="头文件\base">
       <UniqueIdentifier>{f4fa8469-a9c1-41f3-90e5-ec7f2ccf237f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\debug">
+      <UniqueIdentifier>{16a79bc4-5768-42d0-a827-5aa735c7928c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="format.h">
       <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="compare.h">
+      <Filter>头文件\debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,8 @@
 #include "device_functions.h"
 #include <cstdio>
 
+namespace cudaKernel {
+
 __global__ void rescale(float* dIn, float alpha) {
 	size_t bIdx = blockIdx.x;
 	size_t tIdx = threadIdx.x;
@@ -25,7 +27,8 @@ __global__ void fillForceMatrix(float* dIn) {
 	size_t idx = bIdx * blockDim.x + tIdx;
 	if (bIdx > tIdx) {
 		dIn[idx] = 0;
-	} else {
+	}
+	else {
 		dIn[idx] = dIn[tIdx];
 	}
 }
@@ -35,7 +38,7 @@ void calcShiftingByOutsideForce(float* dIn, size_t size, size_t count, float tim
 	size_t numPerRow = size + count * (size - 1);
 	scale(dIn, time / static_cast<float>(count + 1), numPerRow);
 	CUDACHECK(cudaGetLastError());
-	fillForceMatrix<<<numPerRow, numPerRow >>>(dIn);
+	fillForceMatrix << <numPerRow, numPerRow >> > (dIn);
 	CUDACHECK(cudaGetLastError());
 	float* tempWorkSpace;
 	cudaMallocAndCopy(tempWorkSpace, dIn, numPerRow * numPerRow);
@@ -44,4 +47,6 @@ void calcShiftingByOutsideForce(float* dIn, size_t size, size_t count, float tim
 	CUDACHECK(cudaFree(tempWorkSpace));
 	scale(dIn, time / static_cast<float>((count + 1)), numPerRow * numPerRow);
 	CUDACHECK(cudaGetLastError());
+}
+
 }

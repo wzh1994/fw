@@ -3,10 +3,10 @@
 #include <cuda_runtime.h>
 #include "kernels.h"
 #undef DEBUG_PRINT
-
+namespace cudaKernel {
 template<class T>
 void cudaMallocAndCopy(T* &target, const T* source,
-		size_t size_target, size_t size_copy) {
+	size_t size_target, size_t size_copy) {
 	CUDACHECK(cudaMallocAlign(&target, size_target * sizeof(T)));
 	CUDACHECK(cudaMemcpy(target, source, size_copy * sizeof(T), cudaMemcpyHostToDevice));
 }
@@ -18,7 +18,7 @@ void cudaMallocAndCopy(T*& target, const T* source, size_t size) {
 
 template<class T>
 void cudaMemcpyAndMallocIfNull(T*& target, T* source,
-		size_t size_target, size_t size_copy) {
+	size_t size_target, size_t size_copy) {
 	if (!target) {
 		CUDACHECK(cudaMallocAlign(&target, size_target * sizeof(T)));
 	}
@@ -66,5 +66,5 @@ void debugPrint(Args... args) {
 	printf(std::forward<Args>(args)...);
 #endif
 }
-
+}
 #endif

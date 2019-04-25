@@ -10,6 +10,7 @@
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 #include "utils.h"
+namespace cudaKernel {
 
 template <class T>
 __global__ void fillSmall(T* array, const T* data, size_t step) {
@@ -32,9 +33,11 @@ void fillImpl(T* dArray, const T* data, size_t size, size_t step) {
 	if (step < 16) {
 		size_t nBlockDims = ceilAlign(size, 64);
 		fillSmall << <nBlockDims, 64 >> > (dArray, dData, step);
-	} else if (step <= kMmaxBlockDim){
+	}
+	else if (step <= kMmaxBlockDim) {
 		fillLarge << <size, step >> > (dArray, dData);
-	} else {
+	}
+	else {
 		throw std::runtime_error("Max step supported is 1024");
 	}
 	CUDACHECK(cudaGetLastError());
@@ -68,4 +71,5 @@ void fill(size_t* dArray, size_t data, size_t size) {
 
 void fill(float* dArray, float data, size_t size) {
 	fillImpl(dArray, data, size);
+}
 }

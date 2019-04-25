@@ -14,6 +14,7 @@
 /*
  * 分配cuda上面的显存，以ALIGN对其
  */
+namespace cudaKernel {
 
 template <class T>
 cudaError_t cudaMallocAlign(T** ptr, size_t size) {
@@ -22,9 +23,9 @@ cudaError_t cudaMallocAlign(T** ptr, size_t size) {
 };
 
 /*
- * 基础通用数学方法
- */
-// 填充操作
+	* 基础通用数学方法
+	*/
+	// 填充操作
 void fill(float* dArray, float data, size_t size);
 void fill(size_t* dArray, size_t data, size_t size);
 void fill(float* dArray, const float* data, size_t size, size_t step);
@@ -60,11 +61,11 @@ void argFirstNoneZero(size_t* dMatrix, size_t* result,
 	size_t nGroups, size_t size);
 
 /*
- * 烟花相关方法
- */
+	* 烟花相关方法
+	*/
 
-// 给定某一方向上每一时刻的力，求出任一时刻生成的粒子在的在该力作用下的位移
-// size表示时刻的数量，count表示插值的数量, time表示时间间隔。
+	// 给定某一方向上每一时刻的力，求出任一时刻生成的粒子在的在该力作用下的位移
+	// size表示时刻的数量，count表示插值的数量, time表示时间间隔。
 void calcShiftingByOutsideForce(
 	float* dIn, size_t size, size_t count, float time = 0.08333333333f);
 
@@ -92,14 +93,15 @@ size_t compress(float* dPoints, float* dColors, float* dSizes,
 // 对N组相同长度的数组做插值，每组插值的结果长度不能超过kMmaxBlockDim
 // 例如 有49帧的粒子， 每组插值15个， 则共有48 * 15 + 49个粒子
 void interpolation(float* dArray, size_t nGroups, size_t size, size_t count);
-void interpolation(float* dPoints, float* dColors, float* dSizes,
-	size_t* dGroupOffsets, size_t nGroups, size_t maxSize, size_t count);
+void interpolation(
+	float* dPoints, float* dColors, float* dSizes, size_t* dGroupOffsets,
+	size_t nGroups, size_t maxSize, size_t nInterpolation);
 
 // 计算最终每个点的位置
 void calcFinalPosition(
 	float* dPoints, size_t nGroups, size_t maxSize, size_t count,
-	size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
-	float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize);
+	size_t frame, const size_t* dGroupOffsets, const size_t* dGroupStarts,
+	const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize);
 
 // 把点连成线，生成这一条线上面的三角形面片
 // 输入要求： 每条线上面的点为奇数；
@@ -108,10 +110,5 @@ size_t pointToLine(
 	const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
 	size_t maxSizePerGroup, size_t* const groupOffsets, size_t nGroups,
 	float* buffer, uint32_t* dIndicesOut);
-
-// 通过一个粒子系统中粒子的尺寸和大小，生成这一个粒子系统的面片 
-size_t getTrianglesAndIndices(
-	float* vbo, uint32_t* dIndices, float* dPoints,
-	float* dColors, float* dSizes, size_t size);
-
+}
 #endif

@@ -9,6 +9,8 @@
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 
+namespace cudaKernel {
+
 template<typename T, class Func>
 __global__ void reduce(T *matrix, T* result, Func f) {
 	extern __shared__ float mem[];
@@ -59,7 +61,7 @@ void reduce(float *dMatrix, float* dResult,
 __device__ binary_func_size_t_t sum_size_t_d = sum;
 __device__ binary_func_size_t_t min_size_t_d = min;
 void reduce(size_t *dMatrix, size_t* dResult,
-		size_t nGroups, size_t size, ReduceOption op) {
+	size_t nGroups, size_t size, ReduceOption op) {
 	binary_func_size_t_t f;
 	switch (op) {
 	case ReduceOption::min:
@@ -83,3 +85,4 @@ void reduceMin(size_t *dMatrix, size_t* dResult, size_t nGroups, size_t size) {
 	reduce(dMatrix, dResult, nGroups, size, ReduceOption::min);
 }
 
+}

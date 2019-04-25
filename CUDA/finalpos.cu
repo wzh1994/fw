@@ -10,10 +10,11 @@
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 #include <cstdio>
+namespace cudaKernel {
 
-__global__ void calcFinalPosition(float* points, size_t count, 
-		size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
-		float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize) {
+__global__ void calcFinalPosition(float* points, size_t count,
+	size_t frame, const size_t* dGroupOffsets, const size_t* dGroupStarts,
+	const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize) {
 	size_t bid = blockIdx.x;
 	size_t tid = threadIdx.x;
 	float* basePtr = points + dGroupOffsets[bid] * 3;
@@ -33,11 +34,12 @@ __global__ void calcFinalPosition(float* points, size_t count,
 }
 
 void calcFinalPosition(
-		float* dPoints, size_t nGroups, size_t maxSize, size_t count,
-		size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
-		float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize) {
-	calcFinalPosition<<<nGroups, maxSize>>>(
+	float* dPoints, size_t nGroups, size_t maxSize, size_t count,
+	size_t frame, const size_t* dGroupOffsets, const size_t* dGroupStarts,
+	const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize) {
+	calcFinalPosition << <nGroups, maxSize >> > (
 		dPoints, count, frame, dGroupOffsets, dGroupStarts,
 		dXShiftMatrix, dYShiftMatrix, shiftsize);
 	CUDACHECK(cudaGetLastError());
+}
 }
