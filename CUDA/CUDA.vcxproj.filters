@@ -71,5 +71,8 @@
     <CudaCompile Include="directions.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
+    <CudaCompile Include="subfireworkpos.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

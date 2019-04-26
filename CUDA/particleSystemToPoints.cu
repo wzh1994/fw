@@ -3,6 +3,8 @@
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
 #include <stdexcept>
+#include <memory>
+#include <mutex>
 #include "utils.h"
 #include "test.h"
 
@@ -59,10 +61,11 @@ void getColorAndSizeMatrix(
 }
 
 __global__ void particleSystemToPoints(
-	float* points, float* colors, float* sizes, size_t* groupStarts,
-	const size_t* startFrames, const float* directions,
-	const float* speeds, const float* poses, size_t currFrame,
-	const float* colorMatrix, const float* sizeMatrix, float time) {
+		float* points, float* colors, float* sizes, size_t* groupStarts,
+		const size_t* startFrames, const size_t *lifeTime,
+		const float* directions, const float* speeds, const float* poses,
+		size_t currFrame, const size_t* colorAndSizeStarts,
+		const float* colorMatrix, const float* sizeMatrix, float time) {
 	size_t bid = blockIdx.x;
 	size_t tid = threadIdx.x;
 	size_t idx = bid * blockDim.x + tid;
@@ -71,8 +74,8 @@ __global__ void particleSystemToPoints(
 	}
 	ll startFrame = static_cast<ll>(startFrames[bid]) + static_cast<ll>(tid);
 	ll existFrame = static_cast<ll>(currFrame) - startFrame;
-	size_t mIdx = tid * blockDim.x + existFrame;
-	if (existFrame >= 0) {
+	size_t mIdx = (tid + colorAndSizeStarts[bid]) * blockDim.x + existFrame;
+	if (existFrame >= 0 && currFrame <= lifeTime[bid]) {
 		points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
 			static_cast<float>(tid) * speeds[bid] * time;
 		points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *
@@ -95,19 +98,50 @@ __global__ void particleSystemToPoints(
 	}
 }
 
-void particleSystemToPoints(
-	float* dPoints, float* dColors, float* dSizes, size_t* dGroupStarts,
-	const size_t* dStartFrames, size_t nGroups, const float* dDirections,
+void particleSystemToPoints(float* dPoints, float* dColors, float* dSizes,
+	size_t* dGroupStarts, const size_t* dStartFrames,
+	const size_t* dLifeTime, size_t nGroups, const float* dDirections,
 	const float* dSpeeds, const float* dStartPoses, size_t currFrame,
-	size_t nFrames, const float* dColorMatrix,
-	const float* dSizeMatrix, float time) {
+	size_t nFrames, const size_t* dColorAndSizeStarts,
+	const float* dColorMatrix, const float* dSizeMatrix, float time) {
 	if (nFrames > kMmaxBlockDim) {
 		throw std::runtime_error("Max nFrames allowed is "
 			+ std::to_string(kMmaxBlockDim) + "!");
 	}
-	particleSystemToPoints << <nGroups, nFrames >> > (
-		dPoints, dColors, dSizes, dGroupStarts, dStartFrames, dDirections,
-		dSpeeds, dStartPoses, currFrame, dColorMatrix, dSizeMatrix, time);
+	particleSystemToPoints << <nGroups, nFrames >> > (dPoints, dColors,
+		dSizes, dGroupStarts, dStartFrames, dLifeTime, 
+		dDirections, dSpeeds, dStartPoses,
+		currFrame, dColorAndSizeStarts, dColorMatrix, dSizeMatrix, time);
 	CUDACHECK(cudaGetLastError());
 }
+
+namespace {
+struct CUDAPointerDeleter{
+	template <typename T>
+	bool operator()(T* p) {
+		CUDACHECK(cudaFree(p));
+	}
+};
+}
+
+void particleSystemToPoints(
+		float* dPoints, float* dColors, float* dSizes,
+		size_t* dGroupStarts, const size_t* dStartFrames,
+		const size_t* dLifeTime, size_t nGroups,
+		const float* dDirections, const float* dSpeeds,
+		const float* dStartPoses, size_t currFrame, size_t nFrames, 
+		const float* dColorMatrix, const float* dSizeMatrix, float time) {
+	static std::unique_ptr<size_t, CUDAPointerDeleter> zero;
+	static std::once_flag inited;
+	std::call_once(inited, [] {
+		size_t* pZeros;
+		cudaMallocAlign(&pZeros, 2000 * sizeof(size_t));
+		CUDACHECK(cudaMemset(pZeros, 0, 2000*sizeof(size_t)));
+		zero.reset(pZeros);
+	});
+	particleSystemToPoints(dPoints, dColors, dSizes, dGroupStarts, dStartFrames,
+		dLifeTime, nGroups, dDirections, dSpeeds, dStartPoses, currFrame,
+		nFrames, zero.get(), dColorMatrix, dSizeMatrix, time);
+}
+
 }

@@ -103,6 +103,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile Include="interpolation.cu" />
     <CudaCompile Include="pointtoline.cu" />
     <CudaCompile Include="scan.cu" />
+    <CudaCompile Include="subfireworkpos.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kernel.h" />

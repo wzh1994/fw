@@ -66,15 +66,16 @@ using firework::ArgType;
 // CfwDlg 对话框
 
 extern "C" __declspec(dllexport)
-void ShowDialog(float* args, const char* pMovieName, size_t len)
-{
+void ShowDialog(
+		FireWorkType type, float* args, const char* pMovieName, size_t len) {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 	std::string movieName(pMovieName, len);
-	CfwDlg dlg(args, movieName);
+	CfwDlg dlg(type, args, movieName);
 	dlg.DoModal();
 }
 
-CfwDlg::CfwDlg(float* args, string_t movieName, CWnd* pParent /*=nullptr*/)
+CfwDlg::CfwDlg(FireWorkType type, float* args,
+		string_t movieName, CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FW_DIALOG, pParent), movieName_(movieName)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -86,7 +87,7 @@ CfwDlg::CfwDlg(float* args, string_t movieName, CWnd* pParent /*=nullptr*/)
 	 * -------------------------------
 	 */
 	
-	fw.reset(firework::getFirework(FireWorkType::Normal, args));
+	fw.reset(firework::getFirework(type, args));
 	sliderLen_ = fw->getTotalFrame();
 }
 

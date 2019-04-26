@@ -6,6 +6,7 @@
 #include "stdafx.h"
 #include "firework.h"
 #include "normalfirework.h"
+#include "multiexplosionfirework.hpp"
 
 namespace firework {
 	size_t FwBase::Attr::idx = 0;
@@ -19,6 +20,13 @@ FwBase* getFirework(FireWorkType type, float* args) {
 	switch (type) {
 	case FireWorkType::Normal:
 		return new NormalFirework(args);
+		break;
+	case FireWorkType::Mixture:
+		cout << "get Mixture";
+		return new NormalFirework(args);
+		break;
+	case FireWorkType::MultiExplosion:
+		return new MultiExplosionFirework(args);
 		break;
 	default:
 		return nullptr;

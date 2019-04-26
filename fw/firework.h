@@ -106,7 +106,7 @@ protected:
 	// 粒子系统相关
 	size_t nParticleGroups_, maxNParticleGroups_;
 	float *dDirections_, *dSpeeds_, *dStartPoses_;
-	size_t *dStartFrames_, *dGroupStarts_, *dGroupOffsets_;
+	size_t *dStartFrames_, *dGroupStarts_, *dGroupOffsets_, *dLifeTime_;
 	size_t realNGroups_;
 
 	// 外力相关
@@ -116,7 +116,7 @@ protected:
 	FwBase(float* args) : args_(args) {}
 
 /* ==========================================
- * 子类需实现以下两个方法
+ * 子类需实现以下两个接口方法
  * ==========================================
  */
 public:
@@ -129,8 +129,20 @@ public:
 		isInited = true;
 	}
 
+
+
 	// 每次参数改变之后，需要调用本方法
 	virtual void prepare() = 0;
+
+/* ==========================================
+ * 子类需实现以下三个内部方法
+ * ==========================================
+ */
+private:
+	virtual void getPoints(int currFrame) = 0;
+	//额外的内存分配和释放
+	virtual void allocAppendixResource() = 0;
+	virtual void releaseAppendixResource() = 0;
 
 protected:
 	void allocStaticResources() {
@@ -164,16 +176,25 @@ protected:
 	void allocDynamicResources() {
 
 		// 为初速度，初始位置等分配空间
-		CUDACHECK(cudaMallocAlign(&dSpeeds_, nParticleGroups_ * sizeof(float)));
-		CUDACHECK(cudaMallocAlign(&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
-		CUDACHECK(cudaMallocAlign(&dStartFrames_, nParticleGroups_ * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(
+			&dSpeeds_, nParticleGroups_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(
+			&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(
+			&dStartFrames_, nParticleGroups_ * sizeof(size_t)));
 
 		size_t maxSize = (nInterpolation_ + 1) * nParticleGroups_ * nFrames_;
 		CUDACHECK(cudaMallocAlign(&dPoints_, 3 * maxSize * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(&dColors_, 3 * maxSize * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(&dSizes_, maxSize * sizeof(float)));
-		CUDACHECK(cudaMallocAlign(&dGroupStarts_, nParticleGroups_ * sizeof(size_t)));
-		CUDACHECK(cudaMallocAlign(&dGroupOffsets_, (nParticleGroups_ + 1) * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(
+			&dGroupStarts_, nParticleGroups_ * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(
+			&dGroupOffsets_, (nParticleGroups_ + 1) * sizeof(size_t)));
+		CUDACHECK(cudaMallocAlign(
+			&dLifeTime_, nParticleGroups_ * sizeof(size_t)));
+
+		allocAppendixResource();
 	}
 
 	void releaseDynamicResources() {
@@ -186,7 +207,11 @@ protected:
 		CUDACHECK(cudaFree(dSizes_));
 		CUDACHECK(cudaFree(dGroupStarts_));
 		CUDACHECK(cudaFree(dGroupOffsets_));
+		CUDACHECK(cudaFree(dLifeTime_));
+
+		releaseAppendixResource();
 	}
+
 
 protected:
 	void genBuffer(size_t vboSize, size_t eboSize) {
@@ -223,9 +248,8 @@ public:
 	void GetParticles(int currFrame) {
 
 		// 此处给dPoints_, dColors_, dSizes_, dGroupStarts_赋值
-		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
-			dStartFrames_, nParticleGroups_, dDirections_, dSpeeds_,
-			dStartPoses_, currFrame, nFrames_, dColorMatrix_, dSizeMatrix_);
+		getPoints(currFrame);
+
 
 		CUDACHECK(cudaDeviceSynchronize());
 
@@ -315,7 +339,9 @@ public:
 };
 
 enum class FireWorkType {
-	Normal = 0
+	Normal = 0,
+	Mixture,
+	MultiExplosion
 };
 
 

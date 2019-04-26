@@ -29,7 +29,8 @@ class CfwDlg : public CDialogEx
 	void onSliderChange();
 // 构造
 public:
-	CfwDlg(float* args, string_t movieName, CWnd* pParent = nullptr);	// 标准构造函数
+	CfwDlg(firework::FireWorkType type, float* args,
+		string_t movieName, CWnd* pParent = nullptr);
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME

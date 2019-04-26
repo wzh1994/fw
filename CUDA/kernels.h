@@ -11,11 +11,14 @@
  * 仅本文件中的函数作为整个库的对外接口
  */
 
+namespace cudaKernel {
+
+static const float kFrameTime = 0.08333333333f;
+
+
 /*
  * 分配cuda上面的显存，以ALIGN对其
  */
-namespace cudaKernel {
-
 template <class T>
 cudaError_t cudaMallocAlign(T** ptr, size_t size) {
 	size = ceilAlign(size) * kernelAlign;
@@ -78,20 +81,24 @@ void argFirstNoneZero(size_t* dMatrix, size_t* result,
 	size_t nGroups, size_t size);
 
 /* ==================================
- * 烟花生成相关方法
+ * 通用烟花生成相关方法
  * ==================================
  */
 
-// 给定某一方向上每一时刻的力，求出任一时刻生成的粒子在的在该力作用下的位移
+ /*
+  * 给定某一方向上每一时刻的力，求出任一时刻生成的粒子在的在该力作用下的位移
+  */
 // 要求： size * nInterpolation 不能超过kMmaxBlockDim
 void calcShiftingByOutsideForce(
 	float* dIn,
 	size_t size, // 外力的数量，每一帧对应一个外力，因此等同于帧数
 	size_t nInterpolation, // 插值的数量
-	float time = 0.08333333333f // 两帧间隔的时间
+	float time = kFrameTime // 两帧间隔的时间
 );
 
-// 获取颜色和尺寸变化的矩阵
+/*
+ * 获取颜色和尺寸变化的矩阵
+ */
 // 要求：nFrames不能超过kMmaxBlockDim
 void getColorAndSizeMatrix(
 	const float* startColors, // 输入 起始颜色
@@ -103,14 +110,27 @@ void getColorAndSizeMatrix(
 	float* dSizeMatrix // 输出，尺寸随帧数变化矩阵
 );
 
-// 由N个粒子系统生成N组点，求出每个点对应的位置，颜色，尺寸
+/*
+ * 由N个粒子系统生成N组点，求出每个点对应的位置，颜色，尺寸
+ */ 
 // 要求：nFrames不能大于kMmaxBlockDim
+
+// 此方法用在有着多级爆炸的烟花上面
+void particleSystemToPoints(float* dPoints, float* dColors, float* dSizes,
+	size_t* dGroupStarts, const size_t* dStartFrames, const size_t* dLifeTime,
+	size_t nGroups, const float* dDirections, const float* dSpeeds,
+	const float* dStartPoses, size_t currFrame, size_t nFrames,
+	const size_t* dColorAndSizeStarts, const float* dColorMatrix,
+	const float* dSizeMatrix, float time = kFrameTime);
+
+// 此方法用在没有多级爆炸的烟花上面，此时dColorAndSizeStarts默认为0
 void particleSystemToPoints(
 	float* dPoints, // 输出 起始位置 
 	float* dColors, // 输出 起始颜色
 	float* dSizes, // 输出 起始尺寸
 	size_t* dGroupStarts, // 输出 此方法将dStartFrames拷贝过来
 	const size_t* dStartFrames, // 每一组粒子的起始帧
+	const size_t* dLifeTime, // 每一组粒子的寿命
 	size_t nGroups, // 总计的粒子组数
 	const float* dDirections, // 每一组粒子的方向
 	const float* dSpeeds, // 每一组粒子的初始速度
@@ -119,10 +139,12 @@ void particleSystemToPoints(
 	size_t nFrames, // 总帧数
 	const float* dColorMatrix, // 颜色随帧数变化的矩阵
 	const float* dSizeMatrix, // 尺寸随帧数变化的矩阵
-	float time = 0.08333333333f // 两帧间隔的时间
+	float time = kFrameTime // 两帧间隔的时间
 );
 
-// 对烟花的粒子进行空间压缩，除去其中的不可见粒子,
+/*
+ * 对烟花的粒子进行空间压缩，除去其中的不可见粒子
+ */
 // 要求：nGroups和size不能超过kMmaxBlockDim
 // 返回值：压缩后实际生效的粒子组数
 size_t compress(
@@ -135,11 +157,17 @@ size_t compress(
 	size_t* dGroupStarts // 输出 压缩后的每组粒子的起始帧
 );
 
-// 插值算法 对N组相同长度的数组做插值
+/*
+ * 插值算法 对N组相同长度的数组做插值
+ */
 // 要求：每组插值的结果长度不能超过kMmaxBlockDim
 // 例如 有49帧的粒子， 每组插值15个， 则共有48 * 15 + 49个粒子
+
+// 此方法用于插值N组，每组的数量都一致的情况
 void interpolation(
 	float* dArray, size_t nGroups, size_t size, size_t nInterpolation);
+
+// 此方法用于对点的位置，颜色，尺寸进行插值，每组的数量允许不一致
 void interpolation(
 	float* dPoints, // 输入&输出 粒子的位置
 	float* dColors, // 输入&输出 粒子的颜色
@@ -150,7 +178,9 @@ void interpolation(
 	size_t nInterpolation // 每两个粒子之间插入的粒子数量
 );
 
-// 计算最终每个点的位置
+/*
+ * 计算最终每个点的位置
+ */
 // 要求： 每组粒子的最大数量不能超过kMmaxBlockDim
 void calcFinalPosition(
 	float* dPoints, // 输入&输出 粒子的位置
@@ -166,7 +196,9 @@ void calcFinalPosition(
 	size_t shiftsize // shiftMatrix每一行的尺寸
 );
 
-// 把点连成线，生成这一条线上面的三角形面片
+/*
+ * 把点连成线，生成这一条线上面的三角形面片
+ */
 // 输入要求： 每组粒子的最大数量不能超过kMmaxBlockDim， 每组粒子的点为奇数；
 // 应用场景： 生成的每两个点之间插入奇数（15）个点，以保证总数为奇数
 // 返回值： indices的尺寸，反应要绘制的点的数量
@@ -181,11 +213,25 @@ size_t pointToLine(
 	uint32_t* dIndicesOut // 顶点序列缓存 ebo
 );
 
+/* ==================================
+ * NormalFirework相关方法
+ * ==================================
+ */
+
 // 获取normalFirework类型烟花的初始方向，返回其方向的数量，即粒子的组数
 size_t normalFireworkDirections(
 	float* dDirections, // 输出，获取的每组粒子的方向
 	size_t nIntersectingSurfaceParticle // 横截面粒子数量
 );
 
+/* ==================================
+ * MultiExplosionFirework相关方法
+ * ==================================
+ */
+// 获取二次爆炸的粒子的初位置
+void getSubFireworkPositions(
+	float* dStartPoses, float* dDirections, size_t nDirs,
+	size_t nSubGroups, float speed, size_t startFrame, size_t kShift,
+	const float* dShiftX_, const float* dShiftY_, float time = kFrameTime);
 }// end namespace cudaKernel
 #endif
