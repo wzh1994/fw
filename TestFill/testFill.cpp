@@ -4,6 +4,8 @@
 #include <windows.h>
 #include "test.h"
 
+namespace cudaKernel{
+
 template <class T>
 void testFill() {
 	T* arr1;
@@ -25,6 +27,10 @@ void testScale() {
 	scale(dArray, 0.1, 3000);
 	showAndFree(dArray, 3000);
 }
+
+}
+
+using namespace cudaKernel;
 
 int main() {
 	testFill<float>();

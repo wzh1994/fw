@@ -5,6 +5,7 @@
 #include "test.h"
 
 // void calcshiftingByOutsideForce(float* dIn, size_t size, size_t count, float time)
+namespace cudaKernel{
 
 void testShift() {
 	float* in = new float[500000];
@@ -20,6 +21,10 @@ void testShift() {
 	showAndFree(dIn, 2000, 605);
 	delete[] in;
 }
+
+}
+
+using namespace cudaKernel;
 
 int main() {
 	testShift();

@@ -6,6 +6,7 @@
 
 // size_t compress(float* dPoints, float* dColors, float* dSizes,
 //     size_t nGroups, size_t size, size_t* dGroupOffsets);
+namespace cudaKernel {
 
 void testOneGroup(){
 	float *dPoints, *dColors, *dSizes;
@@ -153,6 +154,10 @@ void testFiveGroupsWithTwoEmpty() {
 	cudaFreeAll(dPoints, dColors, dSizes, dGroupOffsets);
 	showAndFree(dGroupStarts, res);
 }
+
+}
+
+using namespace cudaKernel;
 
 int main() {
 	testOneGroup();

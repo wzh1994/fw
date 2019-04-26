@@ -21,7 +21,7 @@ void init() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-	window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", nullptr, nullptr);
+	window = glfwCreateWindow(screenWidth, screenHeight, "Firework", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Options

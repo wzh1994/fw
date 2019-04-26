@@ -15,6 +15,8 @@
 //	   size_t currFrame, size_t nFrames, float* dColorMatrix,
 //	   float* dSizeMatrix, float time = 0.0416666666f);
 
+namespace cudaKernel {
+
 int testParticleSystemToPoints() {
 	constexpr size_t nParticles = 3;
 	constexpr size_t nFrames = 5;
@@ -84,6 +86,10 @@ int testParticleSystemToPoints() {
 	cudaFreeAll(dStartFrames, dGroupStarts, dDirections, dSpeeds,
 		dStartPoses, dColorMatrix, dSizeMatrix);
 }
+
+}
+
+using namespace cudaKernel;
 
 void main() {
 	testParticleSystemToPoints();

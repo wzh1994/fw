@@ -4,6 +4,8 @@
 #include <windows.h>
 #include "test.h"
 
+namespace cudaKernel {
+
 void testReduce(ReduceOption op) {
 	size_t matrix[25]{
 		3, 2, 3, 4, 5,
@@ -59,6 +61,10 @@ void testReduceMin() {
 	reduceMin(dMatrix, dResult, 5, 5);
 	showAndFree(dResult, 5);
 }
+
+}
+
+using namespace cudaKernel;
 
 void main() {
 	testReduce(ReduceOption::sum);

@@ -159,7 +159,8 @@ void calcFinalPosition(
 	size_t nInterpolation, // 每两个粒子之间插入的粒子数量
 	size_t frame, // 当前帧
 	const size_t* dGroupOffsets, // 每组粒子位置相对于起始位置的偏移
-	const size_t* dGroupStarts, // 每组粒子的起始帧
+	const size_t* dGroupStarts, // 每组粒子压缩后的起始帧
+	const size_t* dStartFrames, // 每组粒子压缩之前的起始帧
 	const float* dXShiftMatrix, // 颜色随帧数变化的矩阵
 	const float* dYShiftMatrix, // 尺寸随帧数变化的矩阵
 	size_t shiftsize // shiftMatrix每一行的尺寸
@@ -180,5 +181,11 @@ size_t pointToLine(
 	uint32_t* dIndicesOut // 顶点序列缓存 ebo
 );
 
-}  // end namespace cudaKernel
+// 获取normalFirework类型烟花的初始方向，返回其方向的数量，即粒子的组数
+size_t normalFireworkDirections(
+	float* dDirections, // 输出，获取的每组粒子的方向
+	size_t nIntersectingSurfaceParticle // 横截面粒子数量
+);
+
+}// end namespace cudaKernel
 #endif

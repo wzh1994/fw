@@ -4,6 +4,8 @@
 #include <windows.h>
 #include "test.h"
 
+namespace cudaKernel {
+
 void testLowerBound() {
 	size_t judgement[25]{
 		0, 0, 1, 0, 1,
@@ -18,6 +20,10 @@ void testLowerBound() {
 	argFirstNoneZero(dJudgement, dResult, nGroups, 5);
 	showAndFree(dResult, 5);
 }
+
+}
+
+using namespace cudaKernel;
 
 void main() {
 	testLowerBound();

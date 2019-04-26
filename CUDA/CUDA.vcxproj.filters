@@ -68,5 +68,8 @@
     <CudaCompile Include="allclose.cu">
       <Filter>kernels</Filter>
     </CudaCompile>
+    <CudaCompile Include="directions.cu">
+      <Filter>kernels</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

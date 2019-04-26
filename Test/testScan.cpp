@@ -5,11 +5,15 @@
 using std::cout;
 using std::endl;
 
+namespace cudaKernel{
+
+namespace {
 bool scanClose(float a, float b) {
 	return abs(a - b) < 1e-5;
 }
 bool scanClose(size_t a, size_t b) {
 	return a == b;
+}
 }
 
 template<class T>
@@ -44,6 +48,10 @@ bool testCase(int n) {
 	delete gpuResult;
 	return true;
 }
+
+}
+
+using namespace cudaKernel;
 
 int main() {
 	for (int i = 10; i < 22; ++i) {

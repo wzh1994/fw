@@ -9,6 +9,8 @@
 //  	size_t frame, size_t* dGroupOffsets, size_t* dGroupStarts,
 //  	float* dXShiftMatrix, float* dYShiftMatrix, size_t shiftsize);
 
+namespace cudaKernel {
+
 void testFinalPos() {
 	constexpr size_t nGroups = 1;
 	constexpr size_t size = 4;
@@ -109,6 +111,10 @@ void testFinalPosMultiGroups() {
 	showAndFree(dPoints, dGroupOffsets, realNGroups, 3);
 	cudaFreeAll(dColors, dSizes, dGroupOffsets, dGroupStarts, dForceX, dForceY);
 }
+
+}
+
+using namespace cudaKernel;
 
 int main() {
 	testFinalPos();

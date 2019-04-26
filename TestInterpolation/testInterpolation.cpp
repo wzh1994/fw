@@ -4,6 +4,7 @@
 #include <windows.h>
 
 // void interpolation(float* dArray, size_t nGroups, size_t size, size_t count)
+namespace cudaKernel {
 
 void testInterpolationMatrix() {
 	float array[100]{1, 2, 3, 4, 5};
@@ -87,6 +88,10 @@ void testInterpolationPointMultiGroups() {
 	cudaFree(dSizes);
 	cudaFree(dOffsets);
 }
+
+}
+
+using namespace cudaKernel;
 
 int main() {
 	testInterpolationMatrix();

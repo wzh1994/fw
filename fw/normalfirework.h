@@ -10,6 +10,8 @@ using namespace cudaKernel;
 #else
 using namespace hostFunction;
 #endif
+
+constexpr size_t kMaxIntersectingSurfaceParticle = 50;
 class NormalFirework : public FwBase {
 	friend FwBase* getFirework(FireWorkType type, float* args);
 
@@ -19,7 +21,7 @@ private:
 	size_t nInterpolation_ = 15;
 	
 	// 粒子系统相关
-	size_t nParticleGroups_;
+	size_t nParticleGroups_, maxNParticleGroups_;
 	float *dDirections_, *dSpeeds_, *dStartPoses_;
 	size_t *dStartFrames_, *dGroupStarts_, *dGroupOffsets_;
 	size_t realNGroups_;
@@ -48,21 +50,55 @@ private:
 		AddValue("尺寸衰减率");
 		AddValue("初始速度");
 		AddVec3("初始位置");
+		AddValue("横截面粒子数量");
 	}
 
 	// 仅被调用一次
 	void initialize() override {
 		// 调用父类的初始化
 		FwBase::initialize();
-		CUDACHECK(cudaMallocAlign(&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
-		CUDACHECK(cudaMallocAlign(&dSizeMatrix_, nFrames_ * nFrames_ * sizeof(float)));
+		allocStaticResources();
+
+		maxNParticleGroups_ = initDirections();
 
 		// 在调用initDirections之后nParticleGroups_ 才有值
-		initDirections();
+		allocDynamicResources();
 		
+		// 所有显存都被分配之后才可以调用prepare
+		prepare();
+	}
+
+	void allocStaticResources() {
 		// 给vbo和ebo都预先分配一个较大点的空间，以后反复使用
 		// 目前每个buffer被分配了80MB显存（内部有一个sizeof(float)）
 		genBuffer(20000000, 20000000);
+		CUDACHECK(cudaMallocAlign(
+			&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(
+			&dSizeMatrix_, nFrames_ * nFrames_ * sizeof(float)));
+
+		CUDACHECK(cudaMallocAlign(
+			&dDirections_, 3 * kMaxIntersectingSurfaceParticle *
+			kMaxIntersectingSurfaceParticle * sizeof(float)));
+
+		size_t shiftSize = (nInterpolation_ + 1) * nFrames_;
+		shiftSize *= shiftSize;
+
+		CUDACHECK(cudaMallocAlign(&dShiftX_, shiftSize * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(&dShiftY_, shiftSize * sizeof(float)));
+	}
+
+	void releaseStaticResources() {
+		deleteBuffer();
+		CUDACHECK(cudaFree(dColorMatrix_));
+		CUDACHECK(cudaFree(dSizeMatrix_));
+		CUDACHECK(cudaFree(dDirections_));
+		CUDACHECK(cudaFree(dShiftX_));
+		CUDACHECK(cudaFree(dShiftY_));
+	}
+
+	void allocDynamicResources() {
+
 		// 为初速度，初始位置等分配空间
 		CUDACHECK(cudaMallocAlign(&dSpeeds_, nParticleGroups_ * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
@@ -74,38 +110,16 @@ private:
 		CUDACHECK(cudaMallocAlign(&dSizes_, maxSize * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(&dGroupStarts_, nParticleGroups_ * sizeof(size_t)));
 		CUDACHECK(cudaMallocAlign(&dGroupOffsets_, (nParticleGroups_ + 1) * sizeof(size_t)));
-
-		size_t shiftSize = (nInterpolation_ + 1) * nFrames_;
-		shiftSize *= shiftSize;
-
-		CUDACHECK(cudaMallocAlign(&dShiftX_, shiftSize * sizeof(float)));
-		CUDACHECK(cudaMallocAlign(&dShiftY_, shiftSize * sizeof(float)));
-		
-		// 所有显存都被分配之后才可以调用prepare
-		prepare();
 	}
 	
-	void initDirections() {
+	size_t initDirections() {
 		// 先获取所有的方向, 给dDirections_赋值
-		nParticleGroups_ = 100;
-		float* directions = new float[3 * nParticleGroups_] {};
-		for (int i = 0; i < nParticleGroups_; ++i) {
-			directions[3 * i] = 1 - 0.02 * i;
-			directions[3 * i + 1] = 0.02 * i;
-			directions[3 * i + 2] = sin(i);
-		}
-		CUDACHECK(cudaMallocAlign(&dDirections_, 3 * nParticleGroups_ * sizeof(float)));
-		CUDACHECK(cudaMemcpy(dDirections_, directions,
-			3 * nParticleGroups_ * sizeof(float), cudaMemcpyHostToDevice));
-		normalize(dDirections_, nParticleGroups_);
-		delete directions;
+		size_t n = static_cast<size_t>(args_[6 * nFrames_ + 6]);
+		nParticleGroups_ = normalFireworkDirections(dDirections_, n);
+		return nParticleGroups_;
 	}
 
-	void releaseResources() {
-		CUDACHECK(cudaFree(dColorMatrix_));
-		CUDACHECK(cudaFree(dSizeMatrix_));
-
-		CUDACHECK(cudaFree(dDirections_));
+	void releaseDynamicResources() {
 		CUDACHECK(cudaFree(dSpeeds_));
 		CUDACHECK(cudaFree(dStartPoses_));
 		CUDACHECK(cudaFree(dStartFrames_));
@@ -122,6 +136,12 @@ public:
 	// 本方法会给dColorMatrix_, dSizeMatrix_, dSpeeds_, dStartPoses_和
 	// dStartFrames_赋予初值
 	void prepare() final {
+		if (initDirections() > maxNParticleGroups_) {
+			maxNParticleGroups_ = nParticleGroups_;
+			releaseDynamicResources();
+			allocDynamicResources();
+			maxNParticleGroups_ = nParticleGroups_;
+		}
 		// 获取颜色和尺寸变化情况矩阵
 		getColorAndSizeMatrix(args_, args_ + 3 * nFrames_, nFrames_,
 			args_[6 * nFrames_], args_[6 * nFrames_ + 1],
@@ -171,9 +191,9 @@ public:
 			CUDACHECK(cudaDeviceSynchronize());
 			size_t shiftSize =
 				nFrames_ * (nInterpolation_ + 1) - nInterpolation_;
-			calcFinalPosition(
-				dPoints_, realNGroups_, shiftSize, nInterpolation_, currFrame,
-				dGroupOffsets_, dGroupStarts_, dShiftX_, dShiftY_, shiftSize);
+			calcFinalPosition(dPoints_, realNGroups_,
+				shiftSize, nInterpolation_, currFrame, dGroupOffsets_,
+				dGroupStarts_, dStartFrames_, dShiftX_, dShiftY_, shiftSize);
 			
 			CUDACHECK(cudaDeviceSynchronize());
 			// 映射buffer的内存指针
@@ -218,7 +238,7 @@ public:
 
 public:
 	~NormalFirework() {
-		deleteBuffer();
-		releaseResources();
+		releaseStaticResources();
+		releaseDynamicResources();
 	}
 };

@@ -10,6 +10,8 @@
  *	   float* buffer, uint32_t* dIndicesOut);
  */
 
+namespace cudaKernel {
+
 void testOneGroupWithHorizenLine() {
 	constexpr size_t kPoints = 4ull;
 	float pointsIn[kPoints * 3]{
@@ -168,6 +170,10 @@ void testThreeneGroupWithHorizenLine() {
 	cudaFree(dIndicesOut);
 	system("pause");
 }
+
+}
+
+using namespace cudaKernel;
 
 void main() {
 	testThreeneGroupWithHorizenLine();
