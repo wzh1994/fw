@@ -13,6 +13,7 @@
 #include <ctime>
 #include <thread>
 #include <iostream>
+#include "firework.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -59,6 +60,9 @@ namespace {
 	const UINT_PTR autoPlayId = 0; // MFC计时器id
 }
 
+using firework::FireWorkType;
+using firework::ArgType;
+
 // CfwDlg 对话框
 
 extern "C" __declspec(dllexport)
@@ -70,7 +74,6 @@ void ShowDialog(float* args, const char* pMovieName, size_t len)
 	dlg.DoModal();
 }
 
-FwBase* getFirework(FireWorkType type, float* args);
 CfwDlg::CfwDlg(float* args, string_t movieName, CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FW_DIALOG, pParent), movieName_(movieName)
 {
@@ -83,7 +86,7 @@ CfwDlg::CfwDlg(float* args, string_t movieName, CWnd* pParent /*=nullptr*/)
 	 * -------------------------------
 	 */
 	
-	fw.reset(getFirework(FireWorkType::Normal, args));
+	fw.reset(firework::getFirework(FireWorkType::Normal, args));
 	sliderLen_ = fw->getTotalFrame();
 }
 
@@ -198,7 +201,7 @@ void CfwDlg::myInitialize() {
 		topMargin + subWindowHeight + rowMargin,
 		comboWidth, widgetHeight, SWP_NOZORDER);
 	// 将fw的所有attr放在选择框里面
-	for (auto it = fw->attrs_.begin(); it != fw->attrs_.end(); ++it) {
+	for (auto it = fw->attrs().begin(); it != fw->attrs().end(); ++it) {
 		m_combo.AddString(it->name.c_str());
 	}
 
@@ -445,7 +448,7 @@ void CfwDlg::resetArgValue(){
 		return;
 	}
 	size_t idx = r;
-	switch (fw->attrs_[idx].type) {
+	switch (fw->attrs()[idx].type) {
 	case ArgType::Scalar:
 	case ArgType::ScalarGroup:
 		m_edit_value1 = *fw->getArgs(idx, pos);
@@ -498,7 +501,7 @@ void CfwDlg::OnBnClickedConform(){
 	int r = m_combo.GetCurSel();
 	int pos = m_sliderc.GetPos();
 	size_t idx = r;
-	switch (fw->attrs_[idx].type) {
+	switch (fw->attrs()[idx].type) {
 	case ArgType::Scalar:
 	case ArgType::ScalarGroup:
 		UpdateData(true);

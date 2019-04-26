@@ -5,7 +5,7 @@
 
 class OpenGLWindow : public OpenGLWidget {
 private:
-	FwBase& fw_;
+	firework::FwBase& fw_;
 	std::unique_ptr<Camera> camera_;
 	struct StartPoint {
 		bool valid;
@@ -27,7 +27,7 @@ private:
 		}
 	} startPoint_;
 public:
-	OpenGLWindow(FwBase& fw, int width, int height)
+	OpenGLWindow(firework::FwBase& fw, int width, int height)
 		: fw_(fw)
 		, camera_(new Camera(width, height)) {}
 	~OpenGLWindow() = default;

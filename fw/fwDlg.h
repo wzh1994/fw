@@ -13,7 +13,6 @@
 #include <memory>
 #include "resource.h"
 #include "OpenGLWindow.h"
-#include "firework.h"
 #include "exceptions.h"
 #include <string>
 
@@ -22,7 +21,7 @@ class CfwDlg : public CDialogEx
 {
 	using string_t = std::string;
 	OpenGLWindow *pOpenGLWindow = nullptr;
-	std::unique_ptr<FwBase> fw;
+	std::unique_ptr<firework::FwBase> fw;
 	void myInitialize();
 	
 	// slider change
