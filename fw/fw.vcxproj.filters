@@ -81,6 +81,12 @@
     <ClInclude Include="multiexplosionfirework.hpp">
       <Filter>include\Firework</Filter>
     </ClInclude>
+    <ClInclude Include="mixturefirework.h">
+      <Filter>include\Firework</Filter>
+    </ClInclude>
+    <ClInclude Include="fireworkrenderbase.h">
+      <Filter>include\Firework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fwDlg.cpp">

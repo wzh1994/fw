@@ -1,36 +1,39 @@
 #pragma once
 #include "firework.h"
+#include "fireworkrenderbase.h"
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include "test.h"
 #include "compare.h"
 
 namespace firework{
-class NormalFirework final : public FwBase {
-	friend FwBase* getFirework(FireWorkType type, float* args);
+class NormalFirework final : public FwRenderBase {
+	friend FwBase* getFirework(FireWorkType type, float* args, bool initAttr);
 
 private:
-	NormalFirework(float* args) : FwBase(args) {
+	NormalFirework(float* args, bool initAttr = true) : FwRenderBase(args) {
 		nFrames_ = 49;
 		nInterpolation_ = 15;
 		scaleRate_ = 0.0025f;
-		BeginGroup(1, 3);
-			AddColorGroup("初始颜色");
-		EndGroup();
-		BeginGroup(1, 1);
-			AddScalarGroup("初始尺寸");
-		EndGroup();
-		BeginGroup(1, 1);
-			AddScalarGroup("X方向加速度");
-		EndGroup();
-		BeginGroup(1, 1);
-			AddScalarGroup("Y方向加速度");
-		EndGroup();
-		AddValue("颜色衰减率");
-		AddValue("尺寸衰减率");
-		AddValue("初始速度");
-		AddVec3("初始位置");
-		AddValue("横截面粒子数量");
+		if (initAttr) {
+			BeginGroup(1, 3);
+				AddColorGroup("初始颜色");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("初始尺寸");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("X方向加速度");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("Y方向加速度");
+			EndGroup();
+			AddValue("颜色衰减率");
+			AddValue("尺寸衰减率");
+			AddValue("初始速度");
+			AddVec3("初始位置");
+			AddValue("横截面粒子数量");
+		}
 	}
 	
 	size_t initDirections() {
@@ -91,7 +94,7 @@ public:
 	// 仅被调用一次
 	void initialize() override {
 		// 调用父类的初始化
-		FwBase::initialize();
+		FwRenderBase::initialize();
 		allocStaticResources();
 
 		maxNParticleGroups_ = initDirections();

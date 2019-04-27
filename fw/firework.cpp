@@ -7,6 +7,7 @@
 #include "firework.h"
 #include "normalfirework.h"
 #include "multiexplosionfirework.hpp"
+#include "mixturefirework.h"
 
 namespace firework {
 	size_t FwBase::Attr::idx = 0;
@@ -16,17 +17,16 @@ namespace firework {
 	size_t FwBase::Attr::nFrames = 0;
 
 
-FwBase* getFirework(FireWorkType type, float* args) {
+FwBase* getFirework(FireWorkType type, float* args, bool initAttr) {
 	switch (type) {
 	case FireWorkType::Normal:
-		return new NormalFirework(args);
+		return new NormalFirework(args, initAttr);
 		break;
 	case FireWorkType::Mixture:
-		cout << "get Mixture";
-		return new NormalFirework(args);
+		return new MixtureFirework(args, 2, initAttr);
 		break;
 	case FireWorkType::MultiExplosion:
-		return new MultiExplosionFirework(args);
+		return new MultiExplosionFirework(args, initAttr);
 		break;
 	default:
 		return nullptr;

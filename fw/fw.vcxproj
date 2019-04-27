@@ -204,9 +204,11 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <ClInclude Include="compare.h" />
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="firework.h" />
+    <ClInclude Include="fireworkrenderbase.h" />
     <ClInclude Include="format.h" />
     <ClInclude Include="fwDlg.h" />
     <ClInclude Include="mesh.h" />
+    <ClInclude Include="mixturefirework.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="multiexplosionfirework.hpp" />
     <ClInclude Include="normalfirework.h" />

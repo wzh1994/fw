@@ -1,5 +1,6 @@
 #pragma once
 #include "firework.h"
+#include "fireworkrenderbase.h"
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include "test.h"
@@ -7,8 +8,8 @@
 
 namespace firework {
 
-class MultiExplosionFirework final : public FwBase {
-	friend FwBase* getFirework(FireWorkType type, float* args);
+class MultiExplosionFirework final : public FwRenderBase {
+	friend FwBase* getFirework(FireWorkType type, float* args, bool initAttr);
 
 private:
 	size_t nDirs_;
@@ -16,31 +17,35 @@ private:
 	size_t* dColorAndSizeStarts_;
 
 private:
-	MultiExplosionFirework(float* args) : FwBase(args) {
+	MultiExplosionFirework(float* args, bool initAttr = true)
+		: FwRenderBase(args) {
 		nFrames_ = 49;
 		nInterpolation_ = 15;
 		scaleRate_ = 0.0025f;
-		BeginGroup(1, 3);
-		AddColorGroup("初始颜色");
-		EndGroup();
-		BeginGroup(1, 1);
-		AddScalarGroup("初始尺寸");
-		EndGroup();
-		BeginGroup(1, 1);
-		AddScalarGroup("X方向加速度");
-		EndGroup();
-		BeginGroup(1, 1);
-		AddScalarGroup("Y方向加速度");
-		EndGroup();
-		AddValue("颜色衰减率");
-		AddValue("尺寸衰减率");
-		AddValue("初始速度");
-		AddVec3("初始位置");
-		AddValue("横截面粒子数量");
-		AddValue("二次爆炸时间");
-		AddValue("二次爆炸比率");
+		if (initAttr) {
+			BeginGroup(1, 3);
+				AddColorGroup("初始颜色");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("初始尺寸");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("X方向加速度");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("Y方向加速度");
+			EndGroup();
+			AddValue("颜色衰减率");
+			AddValue("尺寸衰减率");
+			AddValue("初始速度");
+			AddVec3("初始位置");
+			AddValue("横截面粒子数量");
+			AddValue("二次爆炸时间");
+			AddValue("二次爆炸比率");
+		}
 	}
 
+private:
 	void allocAppendixResource() override {
 		CUDACHECK(cudaMallocAlign(
 			&dColorAndSizeStarts_, nParticleGroups_ * sizeof(size_t)));
@@ -63,6 +68,14 @@ private:
 		return nParticleGroups_;
 	}
 
+	void getPoints(int currFrame) override {
+		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
+			dStartFrames_, dLifeTime_, nParticleGroups_, dDirections_,
+			dSpeeds_, dStartPoses_, currFrame, nFrames_,
+			dColorAndSizeStarts_, dColorMatrix_, dSizeMatrix_);
+	}
+
+public:
 	// 本方法会给dColorMatrix_, dSizeMatrix_, dSpeeds_, dStartPoses_和
 	// dStartFrames_赋予初值
 	void prepare() override {
@@ -114,25 +127,15 @@ private:
 		//show(dStartPoses_, 3 * nParticleGroups_, 3 * nDirs_);
 	}
 
-	void getPoints(int currFrame) override {
-		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
-			dStartFrames_, dLifeTime_, nParticleGroups_, dDirections_,
-			dSpeeds_, dStartPoses_, currFrame, nFrames_,
-			dColorAndSizeStarts_, dColorMatrix_, dSizeMatrix_);
-	}
-
 public:
 	// 仅被调用一次
 	void initialize() override {
 		// 调用父类的初始化
-		FwBase::initialize();
+		FwRenderBase::initialize();
 		allocStaticResources();
-
 		maxNParticleGroups_ = initDirections();
-
 		// 在调用initDirections之后nParticleGroups_ 才有值
 		allocDynamicResources();
-
 		// 所有显存都被分配之后才可以调用prepare
 		prepare();
 	}
