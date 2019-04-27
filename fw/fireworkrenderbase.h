@@ -128,7 +128,6 @@ protected:
 		releaseAppendixResource();
 	}
 
-
 protected:
 	void genBuffer(size_t vboSize, size_t eboSize) {
 		glGenBuffers(1, &vbo);

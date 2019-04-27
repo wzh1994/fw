@@ -106,12 +106,13 @@ void opencv_mouse_callback(int event, int x, int y, int flags, void* ustc) {
 	CfwDlg* dlg = static_cast<CfwDlg*>(ustc);
 	if (dlg->bColorSelecting_) {
 		if (flags == 2) {
-			dlg->changeGetColorStatus();;
+			dlg->changeGetColorStatus();
 			dlg->resetArgValue();
 		} else {
 			int pos = dlg->m_sliderc.GetPos();
 			cv::Mat& m = *(dlg->pPhotos_[pos]);
-			auto re = m.at<cv::Vec3b>(x, y);
+			// 横纵坐标分别对应列和行
+			auto re = m.at<cv::Vec3b>(y, x);
 			// opencv 的颜色是BGR，而opengl的颜色是RGB
 			auto color = RGB(re[2], re[1], re[0]);
 			if (flags == 1) {
