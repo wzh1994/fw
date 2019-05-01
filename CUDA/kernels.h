@@ -15,7 +15,6 @@ namespace cudaKernel {
 
 static const float kFrameTime = 0.08333333333f;
 
-
 /*
  * 分配cuda上面的显存，以ALIGN对其
  */
@@ -69,6 +68,8 @@ enum class ReduceOption {
 void reduce(size_t *dMatrix, size_t* dResult,
 	size_t nGroups, size_t size, ReduceOption op = ReduceOption::sum);
 void reduce(float *dMatrix, float* dResult,
+	size_t nGroups, size_t size, ReduceOption op = ReduceOption::sum);
+void reduce2(float *dMatrix, float* dResult,
 	size_t nGroups, size_t size, ReduceOption op = ReduceOption::sum);
 // 求最小值
 void reduceMin(float *dMatrix, float* dResult, size_t nGroups, size_t size);

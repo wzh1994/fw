@@ -1,5 +1,9 @@
 #pragma once
 #include "firework.h"
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
+#include "kernels.h"
+#include "Shader.h"
 
 #ifdef USE_CUDA_KERNEL //定义在vs工程的预处理器中
 using namespace cudaKernel;

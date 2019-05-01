@@ -2,12 +2,8 @@
 #include <vector>
 #include <glm.hpp>
 #include <memory>
-#include "particle.h"
-#include "Shader.h"
+#include "exceptions.h"
 #include "Camera.h" 
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include "kernels.h"
 
 namespace firework{
 

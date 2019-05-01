@@ -19,8 +19,8 @@
 namespace cudaKernel {
 
 __global__ void getColorAndSizeMatrix(
-	const float* startColors, const float* startSizes, float colorDecay,
-	float sizeDecay, float* dColorMatrix, float* dSizeMatrix) {
+		const float* startColors, const float* startSizes, float colorDecay,
+		float sizeDecay, float* dColorMatrix, float* dSizeMatrix) {
 	size_t bidx = blockIdx.x;
 	size_t tidx = threadIdx.x;
 	size_t idx = bidx * blockDim.x + tidx;
@@ -41,10 +41,10 @@ __global__ void getColorAndSizeMatrix(
 }
 
 void getColorAndSizeMatrix(
-	const float* startColors, const float* startSizes,
-	/*在没有找到更合适的下降函数之前，暂定为指数级别的下降*/
-	size_t nFrames, float colorDecay, float sizeDecay,
-	float* dColorMatrix, float* dSizeMatrix) {
+		const float* startColors, const float* startSizes,
+		/*在没有找到更合适的下降函数之前，暂定为指数级别的下降*/
+		size_t nFrames, float colorDecay, float sizeDecay,
+		float* dColorMatrix, float* dSizeMatrix) {
 	float *dStartColors, *dStartSizes;
 	cudaMallocAndCopy(dStartColors, startColors, 3 * nFrames);
 	cudaMallocAndCopy(dStartSizes, startSizes, nFrames);
