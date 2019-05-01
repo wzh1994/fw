@@ -75,7 +75,7 @@ __global__ void particleSystemToPoints(
 	ll startFrame = static_cast<ll>(startFrames[bid]) + static_cast<ll>(tid);
 	ll existFrame = static_cast<ll>(currFrame) - startFrame;
 	size_t mIdx = (tid + colorAndSizeStarts[bid]) * blockDim.x + existFrame;
-	if (existFrame >= 0 && currFrame <= lifeTime[bid]) {
+	if (existFrame >= 0 && startFrame <= lifeTime[bid]) {
 		points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
 			static_cast<float>(tid) * speeds[bid] * time;
 		points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *

@@ -39,9 +39,9 @@ void testOneGroupWithHorizenLine() {
 	cudaMalloc(&dPointsIn, kPoints * 3 * sizeof(float));
 	cudaMalloc(&dSizesIn, kPoints * sizeof(float));
 	cudaMalloc(&dColorsIn, kPoints * 3 * sizeof(float));
-	cudaMalloc(&buffer, 1000 * sizeof(float));
+	cudaMalloc(&buffer, 10000 * sizeof(float));
 	cudaMalloc(&dGroupOffsets, 2 * sizeof(size_t));
-	cudaMalloc(&dIndicesOut, 1000 * sizeof(uint32_t));
+	cudaMalloc(&dIndicesOut, 10000 * sizeof(uint32_t));
 
 	cudaMemcpy(dPointsIn, pointsIn, kPoints * 3 * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizesIn, sizesIn, kPoints * sizeof(float), cudaMemcpyHostToDevice);
@@ -64,7 +64,7 @@ void testOneGroupWithHorizenLine() {
 	float* hBuffer = new float[288];
 	cudaMemcpy(hBuffer, buffer, 288 * sizeof(float), cudaMemcpyDeviceToHost);
 	for (size_t i = 0; i < 288; ++i) {
-		if (i > 0 && i % 6 == 0) printf("\n");
+		if (i > 0 && i % 7 == 0) printf("\n");
 		printf("%f ", hBuffer[i]);
 	}
 	delete[] hBuffer;
@@ -176,5 +176,6 @@ void testThreeneGroupWithHorizenLine() {
 using namespace cudaKernel;
 
 void main() {
+	testOneGroupWithHorizenLine();
 	testThreeneGroupWithHorizenLine();
 }

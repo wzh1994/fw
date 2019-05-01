@@ -260,40 +260,42 @@ __device__ void crossAndAngle(float& r1, float& r2, float& r3, float& cos_theta,
 
 __device__ void calcHalfBallItem(float* pBufferBase, float* halfBall,
 	float x, float y, float z, float size, float r, float g, float b,
-	float normX, float normY, float normZ) {
+	float normX, float normY, float normZ, float alpha, float colorScale) {
 	float axisX, axisY, axisZ, cos_theta;
 	crossAndAngle(axisX, axisY, axisZ, cos_theta, normX, normY, normZ);
 	float sin_theta = sqrtf(1 - cos_theta * cos_theta);
 	for (size_t i = 0; i < kHalfBallPoints; ++i) {
-		pBufferBase[6 * i] = halfBall[3 * i];
-		pBufferBase[6 * i + 1] = halfBall[3 * i + 1];
-		pBufferBase[6 * i + 2] = halfBall[3 * i + 2];
-		pBufferBase[6 * i + 3] = r;
-		pBufferBase[6 * i + 4] = g;
-		pBufferBase[6 * i + 5] = b;
+		pBufferBase[7 * i] = halfBall[3 * i];
+		pBufferBase[7 * i + 1] = halfBall[3 * i + 1];
+		pBufferBase[7 * i + 2] = halfBall[3 * i + 2];
+		pBufferBase[7 * i + 3] = r * colorScale;
+		pBufferBase[7 * i + 4] = g * colorScale;
+		pBufferBase[7 * i + 5] = b * colorScale;
+		pBufferBase[7 * i + 6] = alpha;
 		rotate(axisX, axisY, axisZ, cos_theta, sin_theta,
-			pBufferBase[6 * i], pBufferBase[6 * i + 1], pBufferBase[6 * i + 2]);
+			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2]);
 		resizeAndTrans(
-			pBufferBase[6 * i], pBufferBase[6 * i + 1], pBufferBase[6 * i + 2],
+			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2],
 			size, x, y, z);
 	}
 }
 
-__device__ void fillHalfBallIndices(
-	size_t indexOffset, uint32_t* pIndexBase, uint32_t* indices) {
+__device__ void fillHalfBallIndices(size_t indexOffset,
+		uint32_t* pIndexBase, uint32_t* indices, uint32_t bufferStart) {
 	for (int i = 0; i < kHalfBallIndices; ++i) {
-		pIndexBase[i] = indices[i] + indexOffset;
+		pIndexBase[i] = indices[i] + indexOffset + bufferStart;
 	}
 }
 
 __global__ void calcLeftHalfBall(
-	const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
-	const size_t* groupOffsets, const size_t* bufferOffsets,
-	const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut) {
+		const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
+		const size_t* groupOffsets, const size_t* bufferOffsets,
+		const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut, 
+		float alpha, float colorScale, float sizeScale, uint32_t bufferStart) {
 	size_t idx = threadIdx.x;
 	float* pBufferBase = buffer + bufferOffsets[idx];
 	uint32_t* pIndicesBase = dIndicesOut + indicesOffsets[idx];
-	size_t indexOffset = bufferOffsets[idx] / 6;
+	size_t indexOffset = bufferOffsets[idx] / 7;
 	float size = dSizesIn[groupOffsets[idx]];
 	const float* color = dColorsIn + (groupOffsets[idx]) * 3;
 	const float* pos = dPointsIn + (groupOffsets[idx]) * 3;
@@ -302,22 +304,24 @@ __global__ void calcLeftHalfBall(
 	float normY = *(pos + 4) - *(pos + 1);
 	float normZ = *(pos + 5) - *(pos + 2);
 
-	calcHalfBallItem(pBufferBase, halfBallLeft, pos[0], pos[1], pos[2], size,
-		color[0], color[1], color[2], normX, normY, normZ);
-	fillHalfBallIndices(indexOffset, pIndicesBase, halfBallIndicesLeft);
+	calcHalfBallItem(
+		pBufferBase, halfBallLeft, pos[0], pos[1], pos[2], size * sizeScale,
+		color[0], color[1], color[2], normX, normY, normZ, alpha, colorScale);
+	fillHalfBallIndices(indexOffset, pIndicesBase, halfBallIndicesLeft, bufferStart);
 }
 
 __global__ void calcRightHalfBall(
-	const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
-	const size_t* groupOffsets, const size_t* bufferOffsets,
-	const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut) {
+		const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
+		const size_t* groupOffsets, const size_t* bufferOffsets,
+		const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut,
+		float alpha, float colorScale, float sizeScale, uint32_t bufferStart) {
 	size_t idx = threadIdx.x;
 	size_t num_circles = groupOffsets[idx + 1] - groupOffsets[idx] - 2;
 	float* pBufferBase = buffer + bufferOffsets[idx] +
-		(kCirclePoints * num_circles + kHalfBallPoints) * 6;
+		(kCirclePoints * num_circles + kHalfBallPoints) * 7;
 	uint32_t* pIndicesBase = dIndicesOut + indicesOffsets[idx] +
 		kHalfBallIndices + (num_circles + 1) * kCircleIndices;
-	size_t indexOffset = bufferOffsets[idx] / 6 +
+	size_t indexOffset = bufferOffsets[idx] / 7 +
 		kHalfBallPoints + num_circles * kCirclePoints;
 	float size = dSizesIn[groupOffsets[idx + 1] - 1];
 	const float* color = dColorsIn + (groupOffsets[idx + 1] - 1) * 3;
@@ -326,51 +330,56 @@ __global__ void calcRightHalfBall(
 	float normY = *(pos + 1) - *(pos - 2);
 	float normZ = *(pos + 2) - *(pos - 1);
 
-	calcHalfBallItem(pBufferBase, halfBallRight, pos[0], pos[1], pos[2], size,
-		color[0], color[1], color[2], normX, normY, normZ);
-	fillHalfBallIndices(indexOffset, pIndicesBase, halfBallIndicesRight);
+	calcHalfBallItem(
+		pBufferBase, halfBallRight, pos[0], pos[1], pos[2], size * sizeScale,
+		color[0], color[1], color[2], normX, normY, normZ, alpha, colorScale);
+	fillHalfBallIndices(
+		indexOffset, pIndicesBase, halfBallIndicesRight, bufferStart);
 }
 
 void calcHalfBall(
-	const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
-	const size_t* groupOffsets, size_t nGroups,
-	const size_t* bufferOffsets, const size_t* indicesOffsets,
-	float* buffer, uint32_t* dIndicesOut) {
+		const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
+		const size_t* groupOffsets, size_t nGroups, const size_t* bufferOffsets,
+		const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut,
+		float alpha, float colorScale, float sizeScale, uint32_t bufferStart) {
 
 	// leftBall
 	calcLeftHalfBall << <1, nGroups >> > (dPointsIn, dSizesIn, dColorsIn,
-		groupOffsets, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
+		groupOffsets, bufferOffsets, indicesOffsets, buffer, dIndicesOut,
+		alpha, colorScale, sizeScale, bufferStart);
 	CUDACHECK(cudaGetLastError());
 
 	// rightBall
 	calcRightHalfBall << <1, nGroups >> > (dPointsIn, dSizesIn, dColorsIn,
-		groupOffsets, bufferOffsets, indicesOffsets, buffer, dIndicesOut);
+		groupOffsets, bufferOffsets, indicesOffsets, buffer, dIndicesOut,
+		alpha, colorScale, sizeScale, bufferStart);
 	CUDACHECK(cudaGetLastError());
 }
 
-__device__ void calcCircularTruncatedConeItem(
-	float* pBufferBase, size_t bufferOffset, uint32_t* pIndexBase,
-	const float* circle, const uint32_t* indices,
-	float x, float y, float z, float size, float r, float g, float b,
-	float normX, float normY, float normZ) {
+__device__ void calcCircularTruncatedConeItem(float* pBufferBase,
+		size_t bufferOffset, uint32_t* pIndexBase, const float* circle,
+		const uint32_t* indices, float x, float y, float z, float size,
+		float r, float g, float b, float normX, float normY, float normZ,
+		float alpha, float colorScale, uint32_t bufferStart) {
 	float axisX, axisY, axisZ, cos_theta;
 	crossAndAngle(axisX, axisY, axisZ, cos_theta, normX, normY, normZ);
 	float sin_theta = sqrtf(1 - cos_theta * cos_theta);
 	deviceDebugPrint("|||--- %f, %f, %f, %f, %f ---|||\n",
 		axisX, axisY, axisZ, cos_theta, sin_theta);
 	for (size_t i = 0; i < kCirclePoints; ++i) {
-		pBufferBase[6 * i] = circle[3 * i];
-		pBufferBase[6 * i + 1] = circle[3 * i + 1];
-		pBufferBase[6 * i + 2] = circle[3 * i + 2];
-		pBufferBase[6 * i + 3] = r;
-		pBufferBase[6 * i + 4] = g;
-		pBufferBase[6 * i + 5] = b;
+		pBufferBase[7 * i] = circle[3 * i];
+		pBufferBase[7 * i + 1] = circle[3 * i + 1];
+		pBufferBase[7 * i + 2] = circle[3 * i + 2];
+		pBufferBase[7 * i + 3] = r * colorScale;
+		pBufferBase[7 * i + 4] = g * colorScale;
+		pBufferBase[7 * i + 5] = b * colorScale;
+		pBufferBase[7 * i + 6] = alpha;
 		rotate(axisX, axisY, axisZ, cos_theta, sin_theta,
-			pBufferBase[6 * i], pBufferBase[6 * i + 1], pBufferBase[6 * i + 2]);
+			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2]);
 		resizeAndTrans(
-			pBufferBase[6 * i], pBufferBase[6 * i + 1], pBufferBase[6 * i + 2],
+			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2],
 			size, x, y, z);
-		uint32_t baseIndex = bufferOffset - kCirclePoints;
+		uint32_t baseIndex = bufferOffset - kCirclePoints + bufferStart;
 		pIndexBase[6 * i] = baseIndex + indices[6 * i];
 		pIndexBase[6 * i + 1] = baseIndex + indices[6 * i + 1];
 		pIndexBase[6 * i + 2] = baseIndex + indices[6 * i + 2];
@@ -383,10 +392,11 @@ __device__ void calcCircularTruncatedConeItem(
 using trans_func_t = size_t(*)(size_t);
 
 __global__ void calcCircularTruncatedConeGroup(
-	const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
-	const size_t* groupOffsets, const size_t* bufferOffsets,
-	const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut,
-	const float* circle, const uint32_t* indices, trans_func_t trans) {
+		const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
+		const size_t* groupOffsets, const size_t* bufferOffsets,
+		const size_t* indicesOffsets, float* buffer, uint32_t* dIndicesOut,
+		const float* circle, const uint32_t* indices, trans_func_t trans,
+		float alpha, float colorScale, float sizeScale, uint32_t bufferStart) {
 	deviceDebugPrint("in : %u, %u\n", blockIdx.x, threadIdx.x);
 	size_t idx = trans(threadIdx.x);
 	size_t bidx = blockIdx.x;
@@ -394,9 +404,9 @@ __global__ void calcCircularTruncatedConeGroup(
 	deviceDebugPrint("here~~ : %llu, %llu\n", idx, totalNum);
 	if ((idx + 1) < totalNum) {
 		deviceDebugPrint("idx less than totalNum : %llu, %llu\n", idx, totalNum);
-		size_t bufferOffset = bufferOffsets[bidx] / 6 +
+		size_t bufferOffset = bufferOffsets[bidx] / 7 +
 			(kHalfBallPoints + kCirclePoints * (idx - 1));
-		float* pBufferBase = buffer + bufferOffset * 6;
+		float* pBufferBase = buffer + bufferOffset * 7;
 		uint32_t* pIndicesBase = dIndicesOut + indicesOffsets[bidx] +
 			kHalfBallIndices + kCircleIndices * (idx - 1);
 		float size = dSizesIn[groupOffsets[bidx] + idx];
@@ -407,20 +417,22 @@ __global__ void calcCircularTruncatedConeGroup(
 		float normZ = *(pos + 5) - *(pos - 1);
 		calcCircularTruncatedConeItem(
 			pBufferBase, bufferOffset, pIndicesBase, circle, indices,
-			*pos, *(pos + 1), *(pos + 2), size,
-			*color, *(color + 1), *(color + 2), normX, normY, normZ);
+			*pos, *(pos + 1), *(pos + 2), size * sizeScale, *color,
+			*(color + 1), *(color + 2), normX, normY, normZ, alpha,
+			colorScale, bufferStart);
 	}
 }
 
 __global__ void calcFinalIndices(
-	const size_t* groupOffsets, const size_t* indicesOffsets,
-	const size_t* bufferOffsets, uint32_t* dIndicesOut) {
+		const size_t* groupOffsets, const size_t* indicesOffsets,
+		const size_t* bufferOffsets, uint32_t* dIndicesOut,
+		uint32_t bufferStart) {
 	size_t idx = threadIdx.x;
 	size_t offset = groupOffsets[idx + 1] - groupOffsets[idx] - 2;
 	uint32_t* pIndicesBase = dIndicesOut + indicesOffsets[idx] +
 		kHalfBallIndices + kCircleIndices * offset;
-	uint32_t baseIndex = bufferOffsets[idx] / 6 +
-		kHalfBallPoints + kCirclePoints * (offset - 1);
+	uint32_t baseIndex = bufferOffsets[idx] / 7 +
+		kHalfBallPoints + kCirclePoints * (offset - 1) + bufferStart;
 	deviceDebugPrint("fill final : %llu, offset: %llu, off: %llu\n",
 		idx, offset, baseIndex);
 	for (int i = 0; i < kCircleIndices; ++i) {
@@ -439,10 +451,11 @@ __device__ size_t evenTrans(size_t x) {
 __device__ trans_func_t d_even = evenTrans;
 
 void calcCircularTruncatedCone(
-	const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
-	const size_t* groupOffsets, size_t maxSize, size_t nGroups,
-	const size_t* bufferOffsets, const size_t* indicesOffsets,
-	float* buffer, uint32_t* dIndicesOut) {
+		const float* dPointsIn, const float* dSizesIn, const float* dColorsIn,
+		const size_t* groupOffsets, size_t maxSize, size_t nGroups,
+		const size_t* bufferOffsets, const size_t* indicesOffsets,
+		float* buffer, uint32_t* dIndicesOut, float alpha,
+		float colorScale, float sizeScale, uint32_t bufferStart) {
 	float *circle = nullptr;
 	uint32_t *indices = nullptr;
 	trans_func_t odd;
@@ -455,7 +468,7 @@ void calcCircularTruncatedCone(
 	calcCircularTruncatedConeGroup << <nGroups, maxSize >> > (
 		dPointsIn, dSizesIn, dColorsIn, groupOffsets,
 		bufferOffsets, indicesOffsets, buffer, dIndicesOut,
-		circle, indices, odd);
+		circle, indices, odd, alpha, colorScale, sizeScale, bufferStart);
 	CUDACHECK(cudaGetLastError());
 
 	trans_func_t even;
@@ -465,19 +478,19 @@ void calcCircularTruncatedCone(
 	calcCircularTruncatedConeGroup << <nGroups, maxSize >> > (
 		dPointsIn, dSizesIn, dColorsIn, groupOffsets,
 		bufferOffsets, indicesOffsets, buffer, dIndicesOut,
-		circle, indices, even);
+		circle, indices, even, alpha, colorScale, sizeScale, bufferStart);
 	CUDACHECK(cudaGetLastError());
 	// 填充最后一个indices
 	calcFinalIndices << <1, nGroups >> > (
-		groupOffsets, indicesOffsets, bufferOffsets, dIndicesOut);
+		groupOffsets, indicesOffsets, bufferOffsets, dIndicesOut, bufferStart);
 	CUDACHECK(cudaGetLastError());
 }
 
 __global__ void calcOffsets(const size_t* groupOffsets,
-	size_t* bufferOffsets, size_t* indicesOffsets) {
+		size_t* bufferOffsets, size_t* indicesOffsets) {
 	size_t idx = threadIdx.x;
-	bufferOffsets[idx] = groupOffsets[idx] * kCirclePoints * 6 +
-		12 * idx * (kHalfBallPoints - kCirclePoints);
+	bufferOffsets[idx] = groupOffsets[idx] * kCirclePoints * 7 +
+		14 * idx * (kHalfBallPoints - kCirclePoints);
 	indicesOffsets[idx] = (groupOffsets[idx] - idx) * kCircleIndices +
 		2 * idx * kHalfBallIndices;
 	deviceDebugPrint("%llu - %llu : %llu, %llu\n", idx, groupOffsets[idx],
@@ -485,33 +498,47 @@ __global__ void calcOffsets(const size_t* groupOffsets,
 }
 
 size_t pointToLine(
-	const float* dPointsIn,
-	const float* dSizesIn,
-	const float* dColorsIn,
-	size_t maxSizePerGroup,
-	size_t* const dGroupOffsets,
-	size_t nGroups,
-	float* dBuffer,
-	uint32_t* dIndicesOut) {
+		const float* dPointsIn,
+		const float* dSizesIn,
+		const float* dColorsIn,
+		size_t maxSizePerGroup,
+		size_t* const dGroupOffsets,
+		size_t nGroups,
+		float* dBuffer,
+		uint32_t* dIndicesOut) {
 	size_t *bufferOffsets, *indicesOffsets;
 	CUDACHECK(cudaMallocAlign(&bufferOffsets, (nGroups + 1) * sizeof(size_t)));
 	CUDACHECK(cudaMallocAlign(&indicesOffsets, (nGroups + 1) * sizeof(size_t)));
 
 	calcOffsets << <1, nGroups + 1 >> > (dGroupOffsets,
 		bufferOffsets, indicesOffsets);
+	show(bufferOffsets, nGroups + 1);
+	show(indicesOffsets, nGroups + 1);
 	CUDACHECK(cudaGetLastError());
 	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
-		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut);
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 0.8f, 5.0f, 0.3f, 0);
 	calcCircularTruncatedCone(
 		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
-		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut);
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 0.8f, 5.0f, 0.3f, 0);
 
-	size_t totalIndices;
+	size_t totalBuffers, totalIndices;
+	CUDACHECK(cudaMemcpy(&totalBuffers, bufferOffsets + nGroups,
+		sizeof(size_t), cudaMemcpyDeviceToHost));
 	CUDACHECK(cudaMemcpy(&totalIndices, indicesOffsets + nGroups,
 		sizeof(size_t), cudaMemcpyDeviceToHost));
+
+	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
+		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
+		dIndicesOut + totalIndices, 0.2f, 1.0f, 1.0f, totalBuffers / 7);
+	calcCircularTruncatedCone(
+		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
+		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
+		dIndicesOut + totalIndices, 0.2f, 1.0f, 1.0f, totalBuffers / 7);
+
 	CUDACHECK(cudaFree(bufferOffsets));
 	CUDACHECK(cudaFree(indicesOffsets));
-	return totalIndices;
+
+	return 2 * totalIndices;
 }
 
 }

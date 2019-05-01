@@ -65,7 +65,7 @@ struct FwException : public FwExceptionBase
 		str_ += " " + s;
 		return *this;
 	}
-	~FwException() {
+	~FwException() override{
 		std::cout << str_ << std::endl;
 		terminate();
 	}
