@@ -42,6 +42,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestDirections", "TestDirec
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReduceBenchmark", "ReduceBenchmark\ReduceBenchmark.vcxproj", "{58587DDF-989A-4873-827C-6EAABF978318}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VideoProc", "VideoProc\VideoProc.vcxproj", "{576723D5-3747-4111-B6F7-52AA959AC815}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -176,6 +178,14 @@ Global
 		{58587DDF-989A-4873-827C-6EAABF978318}.Release|x64.Build.0 = Release|x64
 		{58587DDF-989A-4873-827C-6EAABF978318}.Release|x86.ActiveCfg = Release|Win32
 		{58587DDF-989A-4873-827C-6EAABF978318}.Release|x86.Build.0 = Release|Win32
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Debug|x64.ActiveCfg = Debug|x64
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Debug|x64.Build.0 = Debug|x64
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Debug|x86.ActiveCfg = Debug|Win32
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Debug|x86.Build.0 = Debug|Win32
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Release|x64.ActiveCfg = Release|x64
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Release|x64.Build.0 = Release|x64
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Release|x86.ActiveCfg = Release|Win32
+		{576723D5-3747-4111-B6F7-52AA959AC815}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

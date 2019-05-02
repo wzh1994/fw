@@ -59,7 +59,7 @@ protected:
 public:
 	bool bColorSelecting_ = false;
 	CColorDialog colorDlg;
-	std::vector<cv::Mat*> pPhotos_;
+	std::vector<cv::Mat> pPhotos_;
 
 	/*控件成员变量*/
 public:

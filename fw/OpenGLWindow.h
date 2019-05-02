@@ -71,7 +71,8 @@ public:
 	}
 
 	void RenderScene() override {
-		glClearColor(1, 0.2, 1.0, 1.0);
+		glClearColor(0, 0, 0, 1.0);
+		glEnable(GL_MULTISAMPLE);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		fw_.RenderScene(*camera_);
 	}

@@ -211,7 +211,10 @@ size_t pointToLine(
 	size_t* const dGroupOffsets, // 每组粒子位置相对于起始位置的偏移
 	size_t nGroups, // 粒子组数
 	float* dBuffer, // 顶点数据缓存 vbo
-	uint32_t* dIndicesOut // 顶点序列缓存 ebo
+	uint32_t* dIndicesOut, // 顶点序列缓存 ebo
+	float outterAlpha = 0.5, // 外圈的不透明度
+	float innerSize = 0.3, // 内圈的尺寸
+	float innerColorScale = 3
 );
 
 /* ==================================

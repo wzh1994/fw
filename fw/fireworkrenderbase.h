@@ -237,7 +237,13 @@ public:
 		if (eboSize_ > 0) {
 			glBindVertexArray(vao);
 			// draw points 0-3 from the currently bound VAO with current in-use shader;
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
+			glBlendEquation(GL_MAX);
+			glDepthMask(GL_FALSE);
 			glDrawElements(GL_TRIANGLES, eboSize_, GL_UNSIGNED_INT, 0);
+			glDepthMask(GL_TRUE);
+			glDisable(GL_BLEND);
 			glBindVertexArray(0);
 		}
 	}

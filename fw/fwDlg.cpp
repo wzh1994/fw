@@ -110,11 +110,12 @@ void opencv_mouse_callback(int event, int x, int y, int flags, void* ustc) {
 			dlg->resetArgValue();
 		} else {
 			int pos = dlg->m_sliderc.GetPos();
-			cv::Mat& m = *(dlg->pPhotos_[pos]);
+			cv::Mat& m = dlg->pPhotos_[pos];
 			// 横纵坐标分别对应列和行
 			auto re = m.at<cv::Vec3b>(y, x);
 			// opencv 的颜色是BGR，而opengl的颜色是RGB
 			auto color = RGB(re[2], re[1], re[0]);
+			cout << "(" << ((float)re[2]) / 255.0 << ", " << ((float)re[1])/255.0 << ", " << ((float)re[0])/255.0 << ")" << endl;
 			if (flags == 1) {
 				dlg->colorDlg.m_cc.rgbResult = color;
 				dlg->changeGetColorStatus();
@@ -188,9 +189,9 @@ void CfwDlg::myInitialize() {
 		cv::Mat frame;
 		cap >> frame;
 		FW_ASSERT(!frame.empty()) << sstr("Error get frames: ", i);
-		pPhotos_.push_back(new cv::Mat(subWindowWidth, subWindowWidth, CV_8UC3));
+		pPhotos_.emplace_back(subWindowWidth, subWindowWidth, CV_8UC3);
 		cv::resize(
-			frame, *pPhotos_.back(), cv::Size(subWindowWidth, subWindowHeight));
+			frame, pPhotos_.back(), cv::Size(subWindowWidth, subWindowHeight));
 	}
 
 	/* -------------------------------
@@ -419,7 +420,7 @@ void CfwDlg::onSliderChange() {
 	static std::mutex mtx;
 	std::unique_lock<std::mutex> l(mtx);
 	int pos = m_sliderc.GetPos();
-	cv::imshow(opencvWindow, *pPhotos_[pos]);
+	cv::imshow(opencvWindow, pPhotos_[pos]);
 	resetArgValue();
 	fw->GetParticles(pos);
 	pOpenGLWindow->RedrawWindow();

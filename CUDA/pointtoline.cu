@@ -505,21 +505,22 @@ size_t pointToLine(
 		size_t* const dGroupOffsets,
 		size_t nGroups,
 		float* dBuffer,
-		uint32_t* dIndicesOut) {
+		uint32_t* dIndicesOut,
+		float outterAlpha,
+		float innerSize,
+	    float innerColorScale) {
 	size_t *bufferOffsets, *indicesOffsets;
 	CUDACHECK(cudaMallocAlign(&bufferOffsets, (nGroups + 1) * sizeof(size_t)));
 	CUDACHECK(cudaMallocAlign(&indicesOffsets, (nGroups + 1) * sizeof(size_t)));
 
 	calcOffsets << <1, nGroups + 1 >> > (dGroupOffsets,
 		bufferOffsets, indicesOffsets);
-	show(bufferOffsets, nGroups + 1);
-	show(indicesOffsets, nGroups + 1);
 	CUDACHECK(cudaGetLastError());
 	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
-		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 0.8f, 5.0f, 0.3f, 0);
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 1.0f, innerColorScale, innerSize, 0);
 	calcCircularTruncatedCone(
 		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
-		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 0.8f, 5.0f, 0.3f, 0);
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 1.0f, innerColorScale, innerSize, 0);
 
 	size_t totalBuffers, totalIndices;
 	CUDACHECK(cudaMemcpy(&totalBuffers, bufferOffsets + nGroups,
@@ -529,11 +530,11 @@ size_t pointToLine(
 
 	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
 		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
-		dIndicesOut + totalIndices, 0.2f, 1.0f, 1.0f, totalBuffers / 7);
+		dIndicesOut + totalIndices, outterAlpha, 1.0f, 1.0f, totalBuffers / 7);
 	calcCircularTruncatedCone(
 		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
 		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
-		dIndicesOut + totalIndices, 0.2f, 1.0f, 1.0f, totalBuffers / 7);
+		dIndicesOut + totalIndices, outterAlpha, 1.0f, 1.0f, totalBuffers / 7);
 
 	CUDACHECK(cudaFree(bufferOffsets));
 	CUDACHECK(cudaFree(indicesOffsets));
