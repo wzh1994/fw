@@ -6,6 +6,7 @@
 #include "test.h"
 #include <corecrt_math_defines.h>
 #include <chrono>
+#include <mutex>
 
 // 为了让__syncthreads()通过语法检查
 #ifndef __CUDACC__
@@ -59,7 +60,9 @@ __global__ void getDirections(float *directions, const float* angles,
 }
 
 void initRand(curandState *dev_states, size_t size) {
-	clock_t seed = clock();
+	static clock_t seed;
+	std::once_flag inited;
+	std::call_once(inited, [] { seed = clock(); });
 	size_t blockDim = 256;
 	size_t gridDim = ceilAlign(size, blockDim);
 	kernel_set_random<<<gridDim, blockDim>>>(dev_states, seed);

@@ -1,6 +1,6 @@
 #include "VideoProc.h"
 
 int main() {
-	VideoProc vp("1");
-	vp.save(4);
+	VideoProc vp("2");
+	vp.save(3);
 }
