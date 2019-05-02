@@ -268,9 +268,9 @@ __device__ void calcHalfBallItem(float* pBufferBase, float* halfBall,
 		pBufferBase[7 * i] = halfBall[3 * i];
 		pBufferBase[7 * i + 1] = halfBall[3 * i + 1];
 		pBufferBase[7 * i + 2] = halfBall[3 * i + 2];
-		pBufferBase[7 * i + 3] = r * colorScale;
-		pBufferBase[7 * i + 4] = g * colorScale;
-		pBufferBase[7 * i + 5] = b * colorScale;
+		pBufferBase[7 * i + 3] = r + colorScale;
+		pBufferBase[7 * i + 4] = g + colorScale;
+		pBufferBase[7 * i + 5] = b + colorScale;
 		pBufferBase[7 * i + 6] = alpha;
 		rotate(axisX, axisY, axisZ, cos_theta, sin_theta,
 			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2]);
@@ -370,9 +370,9 @@ __device__ void calcCircularTruncatedConeItem(float* pBufferBase,
 		pBufferBase[7 * i] = circle[3 * i];
 		pBufferBase[7 * i + 1] = circle[3 * i + 1];
 		pBufferBase[7 * i + 2] = circle[3 * i + 2];
-		pBufferBase[7 * i + 3] = r * colorScale;
-		pBufferBase[7 * i + 4] = g * colorScale;
-		pBufferBase[7 * i + 5] = b * colorScale;
+		pBufferBase[7 * i + 3] = r + colorScale;
+		pBufferBase[7 * i + 4] = g + colorScale;
+		pBufferBase[7 * i + 5] = b + colorScale;
 		pBufferBase[7 * i + 6] = alpha;
 		rotate(axisX, axisY, axisZ, cos_theta, sin_theta,
 			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2]);
@@ -530,11 +530,11 @@ size_t pointToLine(
 
 	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
 		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
-		dIndicesOut + totalIndices, outterAlpha, 1.0f, 1.0f, totalBuffers / 7);
+		dIndicesOut + totalIndices, outterAlpha, 0.0f, 1.0f, totalBuffers / 7);
 	calcCircularTruncatedCone(
 		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
 		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
-		dIndicesOut + totalIndices, outterAlpha, 1.0f, 1.0f, totalBuffers / 7);
+		dIndicesOut + totalIndices, outterAlpha, 0.0f, 1.0f, totalBuffers / 7);
 
 	CUDACHECK(cudaFree(bufferOffsets));
 	CUDACHECK(cudaFree(indicesOffsets));

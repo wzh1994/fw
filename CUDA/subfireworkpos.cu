@@ -32,10 +32,10 @@ __global__ void getSubFireworkPositions(float* startPoses,
 
 void getSubFireworkPositions(
 		float* dStartPoses, float* dDirections, size_t nDirs,
-		size_t nSubGroups, float speed, size_t startFrame, size_t kShift, 
-		const float* dShiftX_, const float* dShiftY_, float time) {
+		size_t nSubGroups, const float* dCentrifugalPos_, size_t startFrame, size_t kShift,
+		const float* dShiftX_, const float* dShiftY_) {
 	size_t stride = nDirs / nSubGroups;
-	float relativePos = speed * static_cast<float>(startFrame) * time;
+	float relativePos = dCentrifugalPos_[startFrame];
 	getSubFireworkPositions << <nSubGroups, nDirs >> > (dStartPoses,
 		dDirections, stride, relativePos, kShift, dShiftX_, dShiftY_);
 }

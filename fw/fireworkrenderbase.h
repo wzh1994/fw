@@ -32,7 +32,7 @@ protected:
 
 	// 粒子系统相关
 	size_t nParticleGroups_, maxNParticleGroups_;
-	float *dDirections_, *dSpeeds_, *dStartPoses_;
+	float *dDirections_, *dSpeed_, *dCentrifugalPos_, *dStartPoses_;
 	size_t *dStartFrames_, *dGroupStarts_, *dGroupOffsets_, *dLifeTime_;
 	size_t realNGroups_;
 
@@ -97,7 +97,9 @@ protected:
 
 		// 为初速度，初始位置等分配空间
 		CUDACHECK(cudaMallocAlign(
-			&dSpeeds_, nParticleGroups_ * sizeof(float)));
+			&dSpeed_, (nFrames_ + 1) * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(
+			&dCentrifugalPos_, (nFrames_ + 1) * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(
 			&dStartPoses_, 3 * nParticleGroups_ * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(
@@ -118,7 +120,8 @@ protected:
 	}
 
 	void releaseDynamicResources() {
-		CUDACHECK(cudaFree(dSpeeds_));
+		CUDACHECK(cudaFree(dSpeed_));
+		CUDACHECK(cudaFree(dCentrifugalPos_));
 		CUDACHECK(cudaFree(dStartPoses_));
 		CUDACHECK(cudaFree(dStartFrames_));
 

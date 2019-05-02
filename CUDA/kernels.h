@@ -119,7 +119,7 @@ void getColorAndSizeMatrix(
 // 此方法用在有着多级爆炸的烟花上面
 void particleSystemToPoints(float* dPoints, float* dColors, float* dSizes,
 	size_t* dGroupStarts, const size_t* dStartFrames, const size_t* dLifeTime,
-	size_t nGroups, const float* dDirections, const float* dSpeeds,
+	size_t nGroups, const float* dDirections, const float* dCentrifugalPos,
 	const float* dStartPoses, size_t currFrame, size_t nFrames,
 	const size_t* dColorAndSizeStarts, const float* dColorMatrix,
 	const float* dSizeMatrix, float time = kFrameTime);
@@ -134,8 +134,8 @@ void particleSystemToPoints(
 	const size_t* dLifeTime, // 每一组粒子的寿命
 	size_t nGroups, // 总计的粒子组数
 	const float* dDirections, // 每一组粒子的方向
-	const float* dSpeeds, // 每一组粒子的初始速度
-	const float* dStartPoses, // 每一组粒子的起始位置
+	const float* dCentrifugalPos, // 每一组粒子的初始速度
+	const float* dStartPoses, // 每一帧粒子生成时候的离心位置
 	size_t currFrame, // 当前帧数
 	size_t nFrames, // 总帧数
 	const float* dColorMatrix, // 颜色随帧数变化的矩阵
@@ -213,8 +213,8 @@ size_t pointToLine(
 	float* dBuffer, // 顶点数据缓存 vbo
 	uint32_t* dIndicesOut, // 顶点序列缓存 ebo
 	float outterAlpha = 0.5, // 外圈的不透明度
-	float innerSize = 0.3, // 内圈的尺寸
-	float innerColorScale = 3
+	float innerSize = 0.25, // 内圈的尺寸
+	float innerColorScale = 0.7
 );
 
 /* ==================================
@@ -225,7 +225,10 @@ size_t pointToLine(
 // 获取normalFirework类型烟花的初始方向，返回其方向的数量，即粒子的组数
 size_t normalFireworkDirections(
 	float* dDirections, // 输出，获取的每组粒子的方向
-	size_t nIntersectingSurfaceParticle // 横截面粒子数量
+	size_t nIntersectingSurfaceParticle, // 横截面粒子数量
+	float xStretch = 1, float xRate = 0.1,
+	float yStretch = 1, float yRate = 0.1,
+	float zStretch = 1, float zRate = 0.1
 );
 
 /* ==================================
@@ -235,7 +238,7 @@ size_t normalFireworkDirections(
 // 获取二次爆炸的粒子的初位置
 void getSubFireworkPositions(
 	float* dStartPoses, float* dDirections, size_t nDirs,
-	size_t nSubGroups, float speed, size_t startFrame, size_t kShift,
-	const float* dShiftX_, const float* dShiftY_, float time = kFrameTime);
+	size_t nSubGroups, const float* dCentrifugalPos_, size_t startFrame,
+	size_t kShift, const float* dShiftX_, const float* dShiftY_);
 }// end namespace cudaKernel
 #endif
