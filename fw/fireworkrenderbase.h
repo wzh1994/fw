@@ -35,6 +35,7 @@ protected:
 	float *dDirections_, *dSpeed_, *dCentrifugalPos_, *dStartPoses_;
 	size_t *dStartFrames_, *dGroupStarts_, *dGroupOffsets_, *dLifeTime_;
 	size_t realNGroups_;
+	float innerSize_;
 
 	// 外力相关
 	float *dShiftX_, *dShiftY_;
@@ -205,7 +206,8 @@ public:
 
 			eboSize_ = pointToLine(dPoints_, dSizes_, dColors_,
 				nFrames_ * (nInterpolation_ + 1), dGroupOffsets_, realNGroups_,
-				static_cast<float*>(pVboData), static_cast<GLuint*>(pEboData));
+				static_cast<float*>(pVboData), static_cast<GLuint*>(pEboData),
+				0.5, innerSize_);
 
 			CUDACHECK(cudaDeviceSynchronize());
 

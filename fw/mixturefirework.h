@@ -20,29 +20,34 @@ namespace firework {
 			: nSubFw_(nSubFw)
 			, FwBase(args) {
 			nFrames_ = 49;
+			size_t nArgsPerSubFw = nFrames_ * 7 + 8;
 			for (size_t i = 0; i < nSubFw_; ++i) {
 				fws.emplace_back(getFirework(FireWorkType::Normal,
-					args + (nFrames_ * 6 + 7) * i, false));
+					args + nArgsPerSubFw * i, false));
 			}
 			if (initAttr) {
 				for (size_t i = 0; i < nSubFw_; ++i) {
 					BeginGroup(1, 3);
-						AddColorGroup("初始颜色" + std::to_wstring(i));
+						AddColorGroup("初始颜色" + std::to_wstring(i + 1));
 					EndGroup();
 					BeginGroup(1, 1);
-						AddScalarGroup("初始尺寸" + std::to_wstring(i));
+						AddScalarGroup("初始尺寸" + std::to_wstring(i + 1));
 					EndGroup();
 					BeginGroup(1, 1);
-						AddScalarGroup("X方向加速度" + std::to_wstring(i));
+						AddScalarGroup("X方向加速度" + std::to_wstring(i + 1));
 					EndGroup();
 					BeginGroup(1, 1);
-						AddScalarGroup("Y方向加速度" + std::to_wstring(i));
+						AddScalarGroup("Y方向加速度" + std::to_wstring(i + 1));
 					EndGroup();
-					AddValue("颜色衰减率" + std::to_wstring(i));
-					AddValue("尺寸衰减率" + std::to_wstring(i));
-					AddValue("初始速度" + std::to_wstring(i));
-					AddVec3("初始位置" + std::to_wstring(i));
-					AddValue("横截面粒子数量" + std::to_wstring(i));
+					BeginGroup(1, 1);
+						AddScalarGroup("离心速度" + std::to_wstring(i + 1));
+					EndGroup();
+					AddValue("颜色衰减率" + std::to_wstring(i + 1));
+					AddValue("尺寸衰减率" + std::to_wstring(i + 1));
+					AddVec3("初始位置" + std::to_wstring(i + 1));
+					AddValue("横截面粒子数量" + std::to_wstring(i + 1));
+					AddValue("内圈比例" + std::to_wstring(i + 1));
+					AddValue("寿命" + std::to_wstring(i + 1));
 				}
 			}
 		}

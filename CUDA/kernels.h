@@ -214,7 +214,7 @@ size_t pointToLine(
 	uint32_t* dIndicesOut, // 顶点序列缓存 ebo
 	float outterAlpha = 0.5, // 外圈的不透明度
 	float innerSize = 0.25, // 内圈的尺寸
-	float innerColorScale = 0.7
+	float innerColorScale = 0.8
 );
 
 /* ==================================

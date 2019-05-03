@@ -7,6 +7,15 @@
 // void calcshiftingByOutsideForce(float* dIn, size_t size, size_t count, float time)
 namespace cudaKernel{
 
+void testShift1() {
+	float* in = new float[3]{1, 0, -1};
+	float* dIn;
+	cudaMallocAndCopy(dIn, in, 50, 3);
+	calcShiftingByOutsideForce(dIn, 3, 1, 1);
+	showAndFree(dIn, 15, 5);
+	delete[] in;
+}
+
 void testShift() {
 	float* in = new float[500000];
 	// 用initiallist初始化会造成编译时候卡死，可能是编译器优化不好
@@ -27,6 +36,6 @@ void testShift() {
 using namespace cudaKernel;
 
 int main() {
-	testShift();
-	system("pause");
+	testShift1();
+	//system("pause");
 }

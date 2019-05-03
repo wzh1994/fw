@@ -69,6 +69,8 @@ extern "C" __declspec(dllexport)
 void ShowDialog(
 		FireWorkType type, float* args, const char* pMovieName, size_t len) {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+	FW_ASSERT(args) << "invalid args!";
+	FW_ASSERT(pMovieName) << "invalid movie name!";
 	std::string movieName(pMovieName, len);
 	CfwDlg dlg(type, args, movieName);
 	dlg.DoModal();

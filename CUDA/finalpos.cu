@@ -2,6 +2,7 @@
 #include "kernels.h"
 #include "cuda_runtime.h"
 #include "corecrt_math.h"
+#include "utils.h"
 
 // 为了让__syncthreads()通过语法检查
 #ifndef __CUDACC__
@@ -26,12 +27,12 @@ __global__ void calcFinalPosition(
 		size_t end = groupStarts[bid] * (nInterpolation + 1) + tid;
 		basePtr[3 * tid] += xShiftMatrix[start * shiftsize + end];
 		basePtr[3 * tid + 1] += yShiftMatrix[start * shiftsize + end];
-		/*if (bid == 0) {
-			printf("FinalPos: (%llu, %llu, %llu) : %llu, %llu, %f, %f\n",
+		if (bid == 0) {
+			deviceDebugPrint("FinalPos: (%llu, %llu, %llu) : %llu, %llu, %f, %f\n",
 				bid, tid, numPointsThisGroup, start, end,
-				dXShiftMatrix[start * shiftsize + end],
-				dXShiftMatrix[start * shiftsize + end]);
-		}*/
+				xShiftMatrix[start * shiftsize + end],
+				yShiftMatrix[start * shiftsize + end]);
+		}
 	}
 }
 

@@ -20,48 +20,48 @@ private:
 	float* pSizeDecay_;
 	float* pStartPos_;
 	float* pCrossSectionNum_;
+	float* pInnerSize_;
+	float* pMaxLifeTime_;
 private:
-	NormalFirework(float* args, bool initAttr = true) : FwRenderBase(args) {
+	NormalFirework(float* args, bool initAttr = true, size_t lifeTime = 50)
+		: FwRenderBase(args) {
 		nFrames_ = 49;
 		nInterpolation_ = 15;
 		scaleRate_ = 0.025f;
+		pStartColors_ = args_;
+		pStartSizes_ = pStartColors_ + 3 * nFrames_;
+		pXAcc_ = pStartSizes_ + nFrames_;
+		pYAcc_ = pXAcc_ + nFrames_;
+		pSpeed_ = pYAcc_ + nFrames_;
+		pColorDecay_ = pSpeed_ + nFrames_;
+		pSizeDecay_ = pColorDecay_ + 1;
+		pStartPos_ = pSizeDecay_ + 1;
+		pCrossSectionNum_ = pStartPos_ + 3;
+		pInnerSize_ = pCrossSectionNum_ + 1;
+		pMaxLifeTime_ = pInnerSize_ + 1;
+		
 		if (initAttr) {
-			pStartColors_ = args_;
 			BeginGroup(1, 3);
 				AddColorGroup("初始颜色");
 			EndGroup();
-
-			pStartSizes_ = pStartColors_ + 3 * nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("初始尺寸");
 			EndGroup();
-			
-			pXAcc_ = pStartSizes_ + nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("X方向加速度");
 			EndGroup();
-			
-			pYAcc_ = pXAcc_ + nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("Y方向加速度");
 			EndGroup();
-			
-			pSpeed_ = pYAcc_ + nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("离心速度");
 			EndGroup();
-			
-			pColorDecay_ = pSpeed_ + nFrames_;
 			AddValue("颜色衰减率");
-			
-			pSizeDecay_ = pColorDecay_ + 1;
 			AddValue("尺寸衰减率");
-
-			pStartPos_ = pSizeDecay_ + 1;
 			AddVec3("初始位置");
-
-			pCrossSectionNum_ = pStartPos_ + 3;
 			AddValue("横截面粒子数量");
+			AddValue("内环尺寸")
+			AddValue("寿命");
 		}
 	}
 	
@@ -97,7 +97,7 @@ private:
 		scale(dStartPoses_, scaleRate_, 3 * nParticleGroups_);
 
 		fill(dStartFrames_, 0, nParticleGroups_);
-		fill(dLifeTime_, nFrames_, nParticleGroups_);
+		fill(dLifeTime_, *pMaxLifeTime_, nParticleGroups_);
 
 		CUDACHECK(cudaMemcpy(dShiftX_, pXAcc_,
 			nFrames_ * sizeof(float), cudaMemcpyHostToDevice));
@@ -111,6 +111,8 @@ private:
 
 		scale(dShiftX_, scaleRate_, shiftSize);
 		scale(dShiftY_, scaleRate_, shiftSize);
+		
+		innerSize_ = *pInnerSize_;
 	}
 
 	void getPoints(int currFrame) override {

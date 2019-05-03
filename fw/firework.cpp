@@ -29,6 +29,7 @@ FwBase* getFirework(FireWorkType type, float* args, bool initAttr) {
 		return new MultiExplosionFirework(args, initAttr);
 		break;
 	default:
+		FW_NOTSUPPORTED << "Invalid firework type!";
 		return nullptr;
 	}
 }
