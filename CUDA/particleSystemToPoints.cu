@@ -118,8 +118,8 @@ void particleSystemToPoints(float* dPoints, float* dColors, float* dSizes,
 namespace {
 struct CUDAPointerDeleter{
 	template <typename T>
-	bool operator()(T* p) {
-		CUDACHECK(cudaFree(p));
+	void operator()(T* p) {
+		// CUDACHECK(cudaFree(p));
 	}
 };
 }

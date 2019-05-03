@@ -70,6 +70,7 @@ protected:
 		// 给vbo和ebo都预先分配一个较大点的空间，以后反复使用
 		// 目前每个buffer被分配了800MB显存（内部有一个sizeof(float)）
 		genBuffer(200000000, 200000000);
+		CUDACHECK(cudaDeviceSynchronize());
 		CUDACHECK(cudaMallocAlign(
 			&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
 		CUDACHECK(cudaMallocAlign(
