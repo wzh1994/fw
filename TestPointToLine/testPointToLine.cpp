@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cuda_runtime.h>
 #include <windows.h>
+#include "test.h"
 
 /*
  * size_t pointToLine(
@@ -11,6 +12,37 @@
  */
 
 namespace cudaKernel {
+
+void testOnePoint() {
+	constexpr size_t kPoints = 1ull;
+	float pointsIn[kPoints * 3]{
+		0, 0, 0,
+	};
+	float sizesIn[kPoints]{
+		1
+	};
+	float colorIn[kPoints * 3]{
+		0.1, 0.2, 0.3
+	};
+	size_t maxSizePerGroup = 5;
+	size_t groupOffsers[2]{ 0, kPoints };
+	size_t nGroups = 1;
+	float *dPointsIn, *dSizesIn, *dColorsIn, *buffer;
+	size_t *dGroupOffsets;
+	uint32_t *dIndicesOut;
+	cudaMallocAndCopy(dPointsIn, pointsIn, kPoints * 3 );
+	cudaMallocAndCopy(dSizesIn, sizesIn, kPoints );
+	cudaMallocAndCopy(dColorsIn, colorIn, kPoints * 3);
+	cudaMallocAndCopy(dGroupOffsets, groupOffsers, 2);
+	cudaMalloc(&buffer, 10000 * sizeof(float));
+	cudaMalloc(&dIndicesOut, 10000 * sizeof(uint32_t));
+	size_t r = pointToLine(dPointsIn, dSizesIn, dColorsIn,
+		maxSizePerGroup, dGroupOffsets, nGroups, buffer, dIndicesOut);
+	printSplitLine();
+	show(buffer, 1000, 7);
+	printSplitLine();
+	show(dIndicesOut, 1000, 3);
+}
 
 void testOneGroupWithHorizenLine() {
 	constexpr size_t kPoints = 4ull;
@@ -176,6 +208,7 @@ void testThreeneGroupWithHorizenLine() {
 using namespace cudaKernel;
 
 void main() {
-	testOneGroupWithHorizenLine();
-	testThreeneGroupWithHorizenLine();
+	testOnePoint();
+	//testOneGroupWithHorizenLine();
+	//testThreeneGroupWithHorizenLine();
 }

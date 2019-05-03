@@ -50,7 +50,7 @@ __global__ void getGroupFlag(size_t *judgement, size_t* groupFlag) {
 		}
 		__syncthreads();
 	}
-	size_t flag = sum[0] > 1 ? 1 : 0;
+	size_t flag = sum[0] > 0 ? 1 : 0;
 	if (tidx == 0) {
 		groupFlag[bidx] = flag;
 	}
