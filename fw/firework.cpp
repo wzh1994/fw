@@ -17,10 +17,10 @@ namespace firework {
 	size_t FwBase::Attr::nFrames = 0;
 
 
-FwBase* getFirework(FireWorkType type, float* args, bool initAttr) {
+FwBase* getFirework(FireWorkType type, float* args, bool initAttr, size_t bufferSize) {
 	switch (type) {
 	case FireWorkType::Normal:
-		return new NormalFirework(args, initAttr);
+		return new NormalFirework(args, initAttr, bufferSize);
 		break;
 	case FireWorkType::Mixture:
 		return new MixtureFirework(args, 2, initAttr);

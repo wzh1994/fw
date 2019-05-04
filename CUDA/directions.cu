@@ -70,9 +70,8 @@ void initRand(curandState *dev_states, size_t size) {
 
 size_t normalFireworkDirections(float* dDirections,
 		size_t nIntersectingSurfaceParticle,
-		float xStretch, float xRate,
-		float yStretch, float yRate,
-		float zStretch, float zRate) {
+		float xRate, float yRate, float zRate,
+		float xStretch, float yStretch, float zStretch) {
 	size_t nGroups = nIntersectingSurfaceParticle / 2 + 1;
 	size_t *dSizes, *dOffsets;
 	float* dAngles;

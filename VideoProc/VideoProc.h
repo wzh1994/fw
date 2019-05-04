@@ -19,7 +19,7 @@ public:
 
 	template <class T>
 	void saveIter(T start,T end) {
-		cv::VideoWriter video("1.avi", cv::CAP_ANY, 24.0, cv::Size(width_, height_));
+		cv::VideoWriter video(fname_ + ".avi", cv::CAP_ANY, 24.0, cv::Size(width_, height_));
 		for (T s = start; s != end; ++s) {
 			video << *s;
 		}

@@ -23,6 +23,8 @@ protected:
 	size_t eboSize_ = 0;
 	float scaleRate_ = 0;
 	struct cudaGraphicsResource *cuda_vbo_resource_, *cuda_ebo_resource_;
+	size_t nVboToInit_;
+	size_t nEboToInit_;
 
 protected:
 	// 子类在生成烟花粒子时候所使用的指针和变量
@@ -35,7 +37,7 @@ protected:
 	float *dDirections_, *dSpeed_, *dCentrifugalPos_, *dStartPoses_;
 	size_t *dStartFrames_, *dGroupStarts_, *dGroupOffsets_, *dLifeTime_;
 	size_t realNGroups_;
-	float innerSize_;
+	float innerSize_, innerColor_;
 
 	// 外力相关
 	float *dShiftX_, *dShiftY_;
@@ -69,7 +71,7 @@ protected:
 	void allocStaticResources() {
 		// 给vbo和ebo都预先分配一个较大点的空间，以后反复使用
 		// 目前每个buffer被分配了800MB显存（内部有一个sizeof(float)）
-		genBuffer(200000000, 200000000);
+		genBuffer(nVboToInit_, nEboToInit_);
 		CUDACHECK(cudaDeviceSynchronize());
 		CUDACHECK(cudaMallocAlign(
 			&dColorMatrix_, 3 * nFrames_ * nFrames_ * sizeof(float)));
@@ -208,7 +210,7 @@ public:
 			eboSize_ = pointToLine(dPoints_, dSizes_, dColors_,
 				nFrames_ * (nInterpolation_ + 1), dGroupOffsets_, realNGroups_,
 				static_cast<float*>(pVboData), static_cast<GLuint*>(pEboData),
-				0.5, innerSize_);
+				0.5, innerSize_, innerColor_);
 
 			CUDACHECK(cudaDeviceSynchronize());
 

@@ -8,7 +8,7 @@
 
 namespace firework{
 class NormalFirework final : public FwRenderBase {
-	friend FwBase* getFirework(FireWorkType type, float* args, bool initAttr);
+	friend FwBase* getFirework(FireWorkType, float*, bool, size_t);
 
 private:
 	float* pStartColors_;
@@ -16,15 +16,21 @@ private:
 	float* pXAcc_;
 	float* pYAcc_;
 	float* pSpeed_;
+	float* pInnerSize_;
+	float* pInnerColor_;
 	float* pColorDecay_;
 	float* pSizeDecay_;
 	float* pStartPos_;
 	float* pCrossSectionNum_;
-	float* pInnerSize_;
+	float* pRandomRate_;
 	float* pMaxLifeTime_;
+	
 private:
-	NormalFirework(float* args, bool initAttr = true, size_t lifeTime = 50)
+	NormalFirework(float* args, bool initAttr = true,
+				   size_t bufferSize = 200000000)
 		: FwRenderBase(args) {
+		nEboToInit_ = bufferSize;
+		nVboToInit_ = bufferSize;
 		nFrames_ = 49;
 		nInterpolation_ = 15;
 		scaleRate_ = 0.025f;
@@ -33,12 +39,14 @@ private:
 		pXAcc_ = pStartSizes_ + nFrames_;
 		pYAcc_ = pXAcc_ + nFrames_;
 		pSpeed_ = pYAcc_ + nFrames_;
-		pColorDecay_ = pSpeed_ + nFrames_;
+		pInnerSize_ = pSpeed_ + nFrames_;
+		pInnerColor_ = pInnerSize_ + nFrames_;
+		pColorDecay_ = pInnerColor_ + nFrames_;
 		pSizeDecay_ = pColorDecay_ + 1;
 		pStartPos_ = pSizeDecay_ + 1;
 		pCrossSectionNum_ = pStartPos_ + 3;
-		pInnerSize_ = pCrossSectionNum_ + 1;
-		pMaxLifeTime_ = pInnerSize_ + 1;
+		pRandomRate_ = pCrossSectionNum_ + 1;
+		pMaxLifeTime_ = pRandomRate_ + 1;
 		
 		if (initAttr) {
 			BeginGroup(1, 3);
@@ -56,11 +64,17 @@ private:
 			BeginGroup(1, 1);
 				AddScalarGroup("离心速度");
 			EndGroup();
+			BeginGroup(1, 1);
+				AddValue("内环尺寸");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddValue("内环色彩增强");
+			EndGroup();
 			AddValue("颜色衰减率");
 			AddValue("尺寸衰减率");
 			AddVec3("初始位置");
 			AddValue("横截面粒子数量");
-			AddValue("内环尺寸")
+			AddValue("随机比率");
 			AddValue("寿命");
 		}
 	}
@@ -68,7 +82,8 @@ private:
 	size_t initDirections() {
 		// 先获取所有的方向, 给dDirections_赋值
 		size_t n = static_cast<size_t>(*pCrossSectionNum_);
-		nParticleGroups_ = normalFireworkDirections(dDirections_, n);
+		nParticleGroups_ = normalFireworkDirections(dDirections_, n,
+			*pRandomRate_, *pRandomRate_, *pRandomRate_);
 		return nParticleGroups_;
 	}
 
@@ -111,11 +126,11 @@ private:
 
 		scale(dShiftX_, scaleRate_, shiftSize);
 		scale(dShiftY_, scaleRate_, shiftSize);
-		
-		innerSize_ = *pInnerSize_;
 	}
 
 	void getPoints(int currFrame) override {
+		innerSize_ = pInnerSize_[currFrame];
+		innerColor_ = pInnerColor_[currFrame];
 		particleSystemToPoints(
 			dPoints_, dColors_, dSizes_, dGroupStarts_, dStartFrames_,
 			dLifeTime_, nParticleGroups_, dDirections_, dCentrifugalPos_,

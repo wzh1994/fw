@@ -153,4 +153,22 @@ void cuMax(float* dOut, const float* dIn, size_t size, size_t numGroup) {
 	callScanKernel(dOut, dIn, size, numGroup, hMax);
 }
 
+// ================================
+//
+//    求开始到当前节点的乘积
+//
+// ================================
+
+template<typename T>
+__device__ T mul(T lhs, T rhs) {
+	return lhs > rhs ? lhs : rhs;
+}
+
+__device__ binary_func_t mul_float_d = mul;
+void cuMul(float* dOut, const float* dIn, size_t size, size_t numGroup) {
+	binary_func_t hMul;
+	cudaMemcpyFromSymbol(&hMul, mul_float_d, sizeof(binary_func_t));
+	callScanKernel(dOut, dIn, size, numGroup, hMul);
+}
+
 }

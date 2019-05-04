@@ -116,7 +116,7 @@ enum class FireWorkType {
 
 // 构造所有FireWork类的唯一入口函数
 __declspec(dllexport)
-FwBase* getFirework(FireWorkType type, float* args, bool initAttr = true);
+FwBase* getFirework(FireWorkType, float*, bool initAttr = true, size_t bufferSize = 200000000);
 
 }
 

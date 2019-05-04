@@ -17,7 +17,7 @@ namespace cudaKernel {
 __global__ void judge(float* dColors, float* dSizes, size_t* indices) {
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (fmaxf(fmaxf(dColors[3 * idx], dColors[3 * idx + 1]),
-		dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.005f) {
+		dColors[3 * idx + 2]) < 0.1f || dSizes[idx] < 0.002f) {
 		indices[idx] = 0;
 	}
 	else {

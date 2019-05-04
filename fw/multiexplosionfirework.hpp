@@ -9,7 +9,7 @@
 namespace firework {
 
 class MultiExplosionFirework final : public FwRenderBase {
-	friend FwBase* getFirework(FireWorkType type, float* args, bool initAttr);
+	friend FwBase* getFirework(FireWorkType, float*, bool, size_t);
 
 private:
 	size_t nDirs_;

@@ -1,6 +1,7 @@
 #include "VideoProc.h"
 
 int main() {
-	VideoProc vp("2");
-	vp.save(3);
+	VideoProc vp("xhssf");
+	// vp.toPics();
+	vp.save(25);
 }
