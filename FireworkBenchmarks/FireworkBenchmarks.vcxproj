@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{A33188A2-32E3-4451-9F5F-D6D60D811C68}</ProjectGuid>
-    <RootNamespace>play</RootNamespace>
+    <ProjectGuid>{2058501E-E4A3-475E-9453-0FEC39C0A79C}</ProjectGuid>
+    <RootNamespace>FireworkBenchmarks</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -45,15 +45,14 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.0.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -68,12 +67,11 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\props\GLRelease64.props" />
-    <Import Project="..\..\..\props\opencv4_release64.props" />
+    <Import Project="..\..\..\props\cuda10.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>D:\GraduationProject\firework\fw\x64\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>../CUDA;../HostMethods;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -87,14 +85,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fw.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy /y "D:\GraduationProject\firework\fw\fw\fw.vs" "D:\GraduationProject\firework\fw\play\"
-copy /y "D:\GraduationProject\firework\fw\fw\fw.fs"  "D:\GraduationProject\firework\fw\play\"
-copy /y "D:\GraduationProject\firework\fw\x64\Release\play.dll" "D:\GraduationProject\firework\fw\python"
-</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -127,18 +118,17 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\play.dll" "D:\GraduationPr
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\fw\play.cpp" />
+    <ClCompile Include="allBenchmark.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CUDA\CUDA.vcxproj">
       <Project>{89982815-5f0f-489c-8314-83a5e6614230}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\fw\fw.vcxproj">
-      <Project>{880a7bf4-1c9a-42f5-a421-7325094400e7}</Project>
+    <ProjectReference Include="..\HostMethods\HostMethods.vcxproj">
+      <Project>{a948741b-78c0-4f32-b47e-8610124d4658}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.0.targets" />
   </ImportGroup>
 </Project>

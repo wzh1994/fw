@@ -67,4 +67,9 @@ void debugPrint(Args... args) {
 #endif
 }
 }
+
+#define FOREACH(n, x) \
+for (size_t _i = 0; _i < n; ++_i) {\
+	x;\
+}
 #endif

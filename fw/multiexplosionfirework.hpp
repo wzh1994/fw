@@ -22,61 +22,70 @@ private:
 	float* pXAcc_;
 	float* pYAcc_;
 	float* pSpeed_;
+	float* pInnerSize_;
+	float* pInnerColor_;
 	float* pColorDecay_;
 	float* pSizeDecay_;
 	float* pStartPos_;
 	float* pCrossSectionNum_;
+	float* pRandomRate_;
+	float* pMaxLifeTime_;
 	float* pDualExplosionTime_;
 	float* pDualExplosionRate_;
 
 private:
-	MultiExplosionFirework(float* args, bool initAttr = true)
+	MultiExplosionFirework(float* args, bool initAttr = true,
+			size_t bufferSize = 200000000)
 		: FwRenderBase(args) {
+		nEboToInit_ = bufferSize;
+		nVboToInit_ = bufferSize;
 		nFrames_ = 49;
 		nInterpolation_ = 15;
-		scaleRate_ = 0.0025f;
+		scaleRate_ = 0.025f;
+		pStartColors_ = args_;
+		pStartSizes_ = pStartColors_ + 3 * nFrames_;
+		pXAcc_ = pStartSizes_ + nFrames_;
+		pYAcc_ = pXAcc_ + nFrames_;
+		pSpeed_ = pYAcc_ + nFrames_;
+		pInnerSize_ = pSpeed_ + nFrames_;
+		pInnerColor_ = pInnerSize_ + nFrames_;
+		pColorDecay_ = pInnerColor_ + nFrames_;
+		pSizeDecay_ = pColorDecay_ + 1;
+		pStartPos_ = pSizeDecay_ + 1;
+		pCrossSectionNum_ = pStartPos_ + 3;
+		pRandomRate_ = pCrossSectionNum_ + 1;
+		pMaxLifeTime_ = pRandomRate_ + 1;
+		pDualExplosionTime_ = pMaxLifeTime_ + 1;
+		pDualExplosionRate_ = pDualExplosionTime_ + 1;
 		if (initAttr) {
-			pStartColors_ = args_;
 			BeginGroup(1, 3);
 				AddColorGroup("初始颜色");
 			EndGroup();
-
-			pStartSizes_ = pStartColors_ + 3 * nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("初始尺寸");
 			EndGroup();
-
-			pXAcc_ = pStartSizes_ + nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("X方向加速度");
 			EndGroup();
-
-			pYAcc_ = pXAcc_ + nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("Y方向加速度");
 			EndGroup();
-
-			pSpeed_ = pYAcc_ + nFrames_;
 			BeginGroup(1, 1);
 				AddScalarGroup("离心速度");
 			EndGroup();
-
-			pColorDecay_ = pSpeed_ + nFrames_;
+			BeginGroup(1, 1);
+				AddScalarGroup("内环尺寸");
+			EndGroup();
+			BeginGroup(1, 1);
+				AddScalarGroup("内环色彩增强");
+			EndGroup();
 			AddValue("颜色衰减率");
-
-			pSizeDecay_ = pColorDecay_ + 1;
 			AddValue("尺寸衰减率");
-
-			pStartPos_ = pSizeDecay_ + 1;
 			AddVec3("初始位置");
-
-			pCrossSectionNum_ = pStartPos_ + 3;
 			AddValue("横截面粒子数量");
-
-			pDualExplosionTime_ = pCrossSectionNum_ + 1;
-			AddValue("二次爆炸时间");
-
-			pDualExplosionRate_ = pDualExplosionTime_ + 1;
+			AddValue("随机比率");
+			AddValue("寿命");		
+			AddValue("二次爆炸时间");		
 			AddValue("二次爆炸比率");
 		}
 	}
@@ -93,7 +102,10 @@ private:
 	size_t initDirections() {
 		// 先获取所有的方向, 给dDirections_赋值
 		size_t n = static_cast<size_t>(*pCrossSectionNum_);
-		nDirs_ = normalFireworkDirections(dDirections_, n);
+		printf("%llu\n", n);
+		nDirs_ = normalFireworkDirections(dDirections_, n,
+			*pRandomRate_, *pRandomRate_, *pRandomRate_);
+		printf("%llu %f\n", nDirs_, *pDualExplosionRate_);
 		nSubGroups_ = static_cast<size_t>(
 			static_cast<float>(nDirs_) * *pDualExplosionRate_);
 		nParticleGroups_ = nDirs_ + nDirs_ * nSubGroups_;
@@ -105,6 +117,8 @@ private:
 	}
 
 	void getPoints(int currFrame) override {
+		innerSize_ = pInnerSize_[currFrame];
+		innerColor_ = pInnerColor_[currFrame];
 		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
 			dStartFrames_, dLifeTime_, nParticleGroups_, dDirections_,
 			dCentrifugalPos_, dStartPoses_, currFrame, nFrames_,
@@ -157,12 +171,14 @@ public:
 		cuSum(dCentrifugalPos_, dSpeed_, nFrames_ + 1);
 		scale(dCentrifugalPos_, scaleRate_ * kFrameTime, nFrames_ + 1);
 
+		//show(dCentrifugalPos_, nFrames_ + 1);
+
 		fill(dStartPoses_, pStartPos_, nDirs_, 3);
 		scale(dStartPoses_, scaleRate_, 3 * nDirs_);
 		getSubFireworkPositions(dStartPoses_ + 3 * nDirs_, dDirections_,
 			nDirs_, nSubGroups_, dCentrifugalPos_, *pDualExplosionTime_,
-			nFrames_ * (nInterpolation_ + 1), dShiftX_, dShiftY_);
-		//show(dStartPoses_, 3 * nParticleGroups_, 3 * nDirs_);
+			nFrames_ * (nInterpolation_ + 1) - nInterpolation_, dShiftX_, dShiftY_);
+		//show(dStartPoses_, nParticleGroups_ * 3, nDirs_ * 3);
 	}
 
 public:

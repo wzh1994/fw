@@ -116,6 +116,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="pieceImages.h" />
     <ClInclude Include="VideoProc.h" />
   </ItemGroup>
   <ItemGroup>

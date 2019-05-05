@@ -110,7 +110,8 @@ public:
 enum class FireWorkType {
 	Normal = 0,
 	Mixture,
-	MultiExplosion
+	MultiExplosion,
+	Strafe
 };
 
 

@@ -98,4 +98,24 @@ size_t normalFireworkDirections(float* dDirections,
 	return numDirections;
 }
 
+namespace starfeFw{
+__global__ void strafeFireworkDirections(float* directions) {
+	size_t bidx = blockIdx.x;
+	size_t tidx = threadIdx.x;
+	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+	float theta = M_PI * (30.0f + static_cast<float>(bidx) * 5.0f +
+		(30.0f - 2.5f * static_cast<float>(bidx)) *
+		static_cast<float>(tidx)) / 180.0f;
+	directions[3 * idx] = cosf(theta);
+	directions[3 * idx + 1] = sinf(theta);
+	directions[3 * idx + 2] = 0;
+}
+}
+
+size_t strafeFireworkDirections(
+		float* dDirections, size_t nGroups, size_t size) {
+	starfeFw::strafeFireworkDirections << <nGroups, size >> > (dDirections);
+	return nGroups * size;
+}
+
 }  // end namespace cudaKernel

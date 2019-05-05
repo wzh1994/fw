@@ -118,7 +118,7 @@ void opencv_mouse_callback(int event, int x, int y, int flags, void* ustc) {
 }
 
 VideoProc::VideoProc(string_t name) : fname_(name), x_(0), y_(0), currFrame_(0) {
-	cap_.open(name + ".mp4");
+	cap_.open(name + ".avi");
 	FW_ASSERT(cap_.isOpened()) << "Error open movies given: " << name;
 	totalFrame_ = cap_.get(cv::CAP_PROP_FRAME_COUNT);
 	width_ = cap_.get(cv::CAP_PROP_FRAME_WIDTH);

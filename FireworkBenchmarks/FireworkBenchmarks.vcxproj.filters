@@ -15,15 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VideoProc.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="pieceImages.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="videoproc.cpp">
+    <ClCompile Include="allBenchmark.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

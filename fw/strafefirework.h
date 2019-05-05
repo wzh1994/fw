@@ -1,4 +1,5 @@
 #pragma once
+
 #include "firework.h"
 #include "fireworkrenderbase.h"
 #include <cuda_runtime.h>
@@ -6,8 +7,9 @@
 #include "test.h"
 #include "compare.h"
 
-namespace firework{
-class NormalFirework final : public FwRenderBase {
+namespace firework {
+
+class StrafeFirework final : public FwRenderBase {
 	friend FwBase* getFirework(FireWorkType, float*, bool, size_t);
 
 private:
@@ -26,7 +28,7 @@ private:
 	float* pMaxLifeTime_;
 	
 private:
-	NormalFirework(float* args, bool initAttr = true,
+	StrafeFirework(float* args, bool initAttr = true,
 				   size_t bufferSize = 200000000)
 		: FwRenderBase(args) {
 		nEboToInit_ = bufferSize;
@@ -82,8 +84,8 @@ private:
 	size_t initDirections() {
 		// 先获取所有的方向, 给dDirections_赋值
 		size_t n = static_cast<size_t>(*pCrossSectionNum_);
-		nParticleGroups_ = normalFireworkDirections(dDirections_, n,
-			*pRandomRate_, *pRandomRate_, *pRandomRate_);
+		nParticleGroups_ = strafeFireworkDirections(dDirections_, 5, 5);
+		show(dDirections_, 45, 15);
 		return nParticleGroups_;
 	}
 
@@ -111,7 +113,11 @@ private:
 		fill(dStartPoses_, pStartPos_, nParticleGroups_, 3);
 		scale(dStartPoses_, scaleRate_, 3 * nParticleGroups_);
 
-		fill(dStartFrames_, 0, nParticleGroups_);
+		fill(dStartFrames_, 0, 5);
+		fill(dStartFrames_ + 5, 7, 5);
+		fill(dStartFrames_ + 10, 14, 5);
+		fill(dStartFrames_ + 15, 21, 5);
+		fill(dStartFrames_ + 20, 28, 5);
 		fill(dLifeTime_, *pMaxLifeTime_, nParticleGroups_);
 
 		CUDACHECK(cudaMemcpy(dShiftX_, pXAcc_,
@@ -157,7 +163,7 @@ public:
 	}
 
 public:
-	~NormalFirework() override {
+	~StrafeFirework() override {
 		releaseStaticResources();
 		releaseDynamicResources();
 	}

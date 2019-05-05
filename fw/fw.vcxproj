@@ -218,6 +218,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="strafefirework.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>

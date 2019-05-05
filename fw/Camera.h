@@ -25,10 +25,11 @@ class Camera
 public:
 	// Constructor with vectors
 	Camera(float width, float height,
-		   glm::vec3 position = glm::vec3(0.5f, -2.7f, -1.2f), 
-		   glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f),
-		   glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-		   float zoom = 45.0f)
+		    glm::vec3 position = glm::vec3(0.5f, -2.7f, -1.2f),
+			//glm::vec3 position = glm::vec3(0.0f, 0.5f, -3.0f),
+		    glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f),
+		    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
+		    float zoom = 45.0f)
 		: position_(position)
 		, center_(center)
 		, up_(up)
@@ -39,6 +40,15 @@ public:
 	// Returns the view matrix calculated using Eular Angles and the LookAt Matrix
 	glm::mat4 GetViewMatrix() const {
 		return glm::lookAt(this->position_, this->center_, this->up_);
+	}
+
+	void setCameraArgs(
+			glm::vec3 position = glm::vec3(0.0f, 0.5f, -3.0f),
+			glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f) ) {
+		position_ = position;
+		center_ = center;
+		up_ = up;
 	}
 
 	glm::mat4 GetProjectionMatrix(float width, float height) const {

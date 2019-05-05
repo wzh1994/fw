@@ -8,6 +8,7 @@
 #include "normalfirework.h"
 #include "multiexplosionfirework.hpp"
 #include "mixturefirework.h"
+#include "strafefirework.h"
 
 namespace firework {
 	size_t FwBase::Attr::idx = 0;
@@ -27,6 +28,9 @@ FwBase* getFirework(FireWorkType type, float* args, bool initAttr, size_t buffer
 		break;
 	case FireWorkType::MultiExplosion:
 		return new MultiExplosionFirework(args, initAttr);
+		break;
+	case FireWorkType::Strafe:
+		return new StrafeFirework(args, initAttr);
 		break;
 	default:
 		FW_NOTSUPPORTED << "Invalid firework type!";

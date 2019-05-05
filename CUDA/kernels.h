@@ -1,5 +1,5 @@
-#ifndef FW_KERNEL_UTILS_KERNELS_HPP
-#define FW_KERNEL_UTILS_KERNELS_HPP
+#ifndef FW_KERNEL_KERNELS_HPP
+#define FW_KERNEL_KERNELS_HPP
 
 #include "kernel.h"
 #include "cuda_runtime.h"
@@ -41,14 +41,14 @@ void fill(size_t* dArray, const size_t* data, size_t size, size_t step);
  * 扫描操作
  */
 // 累加和操作 每组输入的最大数量不超过kMmaxBlockDim * kMmaxBlockDim
-void cuSum(float* dOut, const float* dIn, size_t size, size_t numGroup = 1);
-void cuSum(size_t* dOut, const size_t* dIn, size_t size, size_t numGroup = 1);
+void cuSum(float* out, const float* in, size_t size, size_t numGroup = 1);
+void cuSum(size_t* out, const size_t* in, size_t size, size_t numGroup = 1);
 
 // 累计 最大值操作
-void cuMax(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
+void cuMax(float* out, float* in, size_t size, size_t numGroup = 1);
 
 // 累计 乘积操作
-void cuMul(float* dOut, float* dIn, size_t size, size_t numGroup = 1);
+void cuMul(float* out, float* in, size_t size, size_t numGroup = 1);
 
 /*
  * 正则化
@@ -105,6 +105,16 @@ void calcShiftingByOutsideForce(
  */
 // 要求：nFrames不能超过kMmaxBlockDim
 void getColorAndSizeMatrix(
+	const float* startColors, // 输入 起始颜色
+	const float* startSizes, // 输入 起始尺寸
+	size_t nFrames, // 总计帧数
+	float colorDecay, // 颜色衰减率
+	float sizeDecay, // 尺寸衰减率
+	float* dColorMatrix, // 输出，颜色随帧数变化矩阵
+	float* dSizeMatrix // 输出，尺寸随帧数变化矩阵
+);
+
+void getColorAndSizeMatrixDevInput(
 	const float* startColors, // 输入 起始颜色
 	const float* startSizes, // 输入 起始尺寸
 	size_t nFrames, // 总计帧数
@@ -233,6 +243,15 @@ size_t normalFireworkDirections(
 	float xRate = 0.1, float yRate = 0.1, float zRate = 0.1,
 	float xStretch = 1, float yStretch = 1, float zStretch = 1
 );
+
+/* ==================================
+ * StrafeFirework相关方法
+ * ==================================
+ */
+
+ // 获取strafeFirework类型烟花的初始方向，返回其方向的数量，即粒子的组数
+size_t strafeFireworkDirections(
+	float* dDirections, size_t nGroups, size_t size);
 
 /* ==================================
  * MultiExplosionFirework相关方法

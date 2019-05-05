@@ -60,6 +60,20 @@ void getColorAndSizeMatrix(
 	cudaFreeAll(dStartColors, dStartSizes);
 }
 
+void getColorAndSizeMatrixDevInput(
+	const float* dStartColors, const float* dStartSizes,
+	/*在没有找到更合适的下降函数之前，暂定为指数级别的下降*/
+	size_t nFrames, float colorDecay, float sizeDecay,
+	float* dColorMatrix, float* dSizeMatrix) {
+	if (nFrames > kMmaxBlockDim) {
+		throw std::runtime_error("Max nFrames allowed is "
+			+ std::to_string(kMmaxBlockDim) + "!");
+	}
+	getColorAndSizeMatrix << <nFrames, nFrames >> > (dStartColors, dStartSizes,
+		colorDecay, sizeDecay, dColorMatrix, dSizeMatrix);
+	CUDACHECK(cudaGetLastError());
+}
+
 __global__ void particleSystemToPoints(
 		float* points, float* colors, float* sizes, size_t* groupStarts,
 		const size_t* startFrames, const size_t *lifeTime,
@@ -77,11 +91,11 @@ __global__ void particleSystemToPoints(
 	size_t mIdx = (tid + colorAndSizeStarts[bid]) * blockDim.x + existFrame;
 	if (existFrame >= 0 && startFrame <= lifeTime[bid]) {
 		points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
-			centrifugalPos[tid] * time;
+			centrifugalPos[tid];
 		points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *
-			centrifugalPos[tid] * time;
+			centrifugalPos[tid];
 		points[3 * idx + 2] = poses[bid * 3 + 2] + directions[bid * 3 + 2] *
-			centrifugalPos[tid] * time;
+			centrifugalPos[tid];
 		colors[3 * idx] = colorMatrix[3 * mIdx];
 		colors[3 * idx + 1] = colorMatrix[3 * mIdx + 1];
 		colors[3 * idx + 2] = colorMatrix[3 * mIdx + 2];

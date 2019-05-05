@@ -2,11 +2,12 @@
 #define FW_KERNEL_UTILS_TIMER_HPP
 
 #include<chrono>
+#include <queue>
 #include <iostream>
 using namespace std::chrono;
 using std::cout;
 using std::endl;
-namespace cudaKernel {
+
 class Timer {
 
 private:
@@ -27,5 +28,34 @@ public:
 		cout << s << " cost: " << r << " ms" << endl;
 	}
 };
-}
+
+class AverageTime {
+	std::deque<double> times;
+	size_t maxSize_;
+public:
+	AverageTime(size_t maxSize):maxSize_(maxSize){}
+
+	void clear() {
+		std::deque<double> empty;
+		std::swap(empty, times);
+	}
+
+	void append(double time) {
+		if (times.size() < maxSize_) {
+			times.push_back(time);
+		} else {
+			times.pop_front();
+			times.push_back(time);
+		}
+	}
+
+	double averageTime() {
+		double t = 0;
+		for (auto it = times.begin(); it != times.end(); ++it) {
+			t += *it;
+		}
+		return t / static_cast<double>(times.size());
+	}
+};
+
 #endif
