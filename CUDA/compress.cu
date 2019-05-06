@@ -138,14 +138,8 @@ size_t compress(float* dPoints, float* dColors, float* dSizes, size_t nGroups,
 	CUDACHECK(cudaMemcpy(
 		&numGroup, dNumGroup, sizeof(size_t), cudaMemcpyDeviceToHost));
 
-	CUDACHECK(cudaFree(dPointsTemp));
-	CUDACHECK(cudaFree(dColorsTemp));
-	CUDACHECK(cudaFree(dSizesTemp));
-	CUDACHECK(cudaFree(judgement));
-	CUDACHECK(cudaFree(indices));
-	CUDACHECK(cudaFree(groupFlag));
-	CUDACHECK(cudaFree(groupPos));
-	CUDACHECK(cudaFree(dNumGroup));
+	cudaFreeAll(dPointsTemp, dColorsTemp, dSizesTemp, judgement,
+		indices, groupFlag, groupPos, dNumGroup);
 	return numGroup;
 }
 }

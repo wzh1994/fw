@@ -4,7 +4,11 @@
 #include "kernel.h"
 #include "cuda_runtime.h"
 #include "cstdio"
+#define USE_ALLOCATOR
 
+#ifdef USE_ALLOCATOR
+#include <bfc.h>
+#endif
 /*
  * 本项目生成.lib文件供fw调用cuda相关的函数。
  * 本文件声明了所有kernel函数的接口
@@ -22,7 +26,13 @@ static const float kFrameTime = 0.08333333333f;
 template <class T>
 cudaError_t cudaMallocAlign(T** ptr, size_t size) {
 	size = ceilAlign(size) * kernelAlign;
+#ifdef USE_ALLOCATOR
+	*ptr = static_cast<T*>(
+		memory::cudaAllocator().allocate(size));
+	return cudaGetLastError();
+#else
 	return cudaMalloc(ptr, size);
+#endif
 };
 
 /* ==================================

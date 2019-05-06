@@ -54,7 +54,7 @@ void debugShow(T* source, size_t size, size_t step) {
 template<class T>
 void showAndFree(T* source, size_t size, size_t step) {
 	show(source, size, step);
-	CUDACHECK(cudaFree(source));
+	cudaFreeAll(source);
 }
 
 template<class T>
@@ -101,7 +101,7 @@ void debugShow(T* source, size_t* dSteps, size_t nGroups, size_t times) {
 template<class T>
 void showAndFree(T* source, size_t* dSteps, size_t nGroups, size_t times) {
 	show(source, dSteps, nGroups, times);
-	CUDACHECK(cudaFree(source));
+	cudaFreeAll(source);
 }
 
 }

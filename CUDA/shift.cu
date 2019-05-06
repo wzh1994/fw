@@ -45,7 +45,7 @@ void calcShiftingByOutsideForce(
 	cudaMallocAndCopy(tempWorkSpace, dIn, numPerRow * numPerRow);
 	cuSum(tempWorkSpace, dIn, numPerRow, numPerRow);
 	cuSum(dIn, tempWorkSpace, numPerRow, numPerRow);
-	CUDACHECK(cudaFree(tempWorkSpace));
+	cudaFreeAll(tempWorkSpace);
 	scale(dIn, time / static_cast<float>((nInterpolation + 1)),
 		numPerRow * numPerRow);
 	CUDACHECK(cudaGetLastError());

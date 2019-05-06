@@ -41,8 +41,7 @@ bool testCase(int n) {
 	}
 	printSplitLine();
 	show(dOut, n);
-	cudaFree(dIn);
-	cudaFree(dOut);
+	cudaFreeAll(dIn, dOut);
 	delete arr;
 	delete cpuResult;
 	delete gpuResult;

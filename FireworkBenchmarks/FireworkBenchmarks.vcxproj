@@ -47,7 +47,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>../CUDA;../HostMethods;$(IncludePath)</IncludePath>
+    <IncludePath>../CUDA;../HostMethods;../Allocator;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -79,7 +79,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -121,6 +121,9 @@
     <ClCompile Include="allBenchmark.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Allocator\Allocator.vcxproj">
+      <Project>{5177f637-3bf7-46ff-a886-09243d74b109}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\CUDA\CUDA.vcxproj">
       <Project>{89982815-5f0f-489c-8314-83a5e6614230}</Project>
     </ProjectReference>

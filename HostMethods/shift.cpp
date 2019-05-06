@@ -24,7 +24,7 @@ namespace hostMethod {
 		cudaMallocAndCopy(tempWorkSpace, in, numPerRow * numPerRow);
 		cuSum(tempWorkSpace, in, numPerRow, numPerRow);
 		cuSum(in, tempWorkSpace, numPerRow, numPerRow);
-		CUDACHECK(cudaFree(tempWorkSpace));
+		cudaFreeAll(tempWorkSpace);
 		scale(in, time / static_cast<float>((nInterpolation + 1)),
 			numPerRow * numPerRow);
 		CUDACHECK(cudaGetLastError());

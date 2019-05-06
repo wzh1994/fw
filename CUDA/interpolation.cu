@@ -82,7 +82,7 @@ void interpolation(
 		interpolationMatrixOut <<<nGroups, nBlockDim >>> (
 			dArray, tempArray, size, nInterpolation);
 		CUDACHECK(cudaGetLastError());
-		CUDACHECK(cudaFree(tempArray));
+		cudaFreeAll(tempArray);
 	}
 }
 __global__ void interpolationOffsets(size_t* dGroupOffsets,

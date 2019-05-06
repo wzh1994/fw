@@ -96,7 +96,7 @@ private:
 			&dColorAndSizeStarts_, nParticleGroups_ * sizeof(size_t)));
 	};
 	void releaseAppendixResource() override {
-		CUDACHECK(cudaFree(dColorAndSizeStarts_));
+		cudaFreeAll(dColorAndSizeStarts_);
 	};
 
 	size_t initDirections() {

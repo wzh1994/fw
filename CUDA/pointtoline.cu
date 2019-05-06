@@ -1027,8 +1027,7 @@ size_t pointToLine(
 		nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
 		dIndicesOut + totalIndices, outterAlpha, 0.0f, 1.0f, totalBuffers / 7);
 	
-	CUDACHECK(cudaFree(bufferOffsets));
-	CUDACHECK(cudaFree(indicesOffsets));
+	cudaFreeAll(bufferOffsets, indicesOffsets);
 
 	return 2 * totalIndices;
 }

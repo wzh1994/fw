@@ -4,6 +4,7 @@
 #include <cuda_gl_interop.h>
 #include "kernels.h"
 #include "Shader.h"
+#include <utils.h>
 
 #ifdef USE_CUDA_KERNEL //定义在vs工程的预处理器中
 using namespace cudaKernel;
@@ -90,11 +91,8 @@ protected:
 
 	void releaseStaticResources() {
 		deleteBuffer();
-		CUDACHECK(cudaFree(dColorMatrix_));
-		CUDACHECK(cudaFree(dSizeMatrix_));
-		CUDACHECK(cudaFree(dDirections_));
-		CUDACHECK(cudaFree(dShiftX_));
-		CUDACHECK(cudaFree(dShiftY_));
+		cudaFreeAll(dColorMatrix_, dSizeMatrix_, dDirections_,
+			dShiftX_, dShiftY_);
 	}
 
 	void allocDynamicResources() {
@@ -124,17 +122,9 @@ protected:
 	}
 
 	void releaseDynamicResources() {
-		CUDACHECK(cudaFree(dSpeed_));
-		CUDACHECK(cudaFree(dCentrifugalPos_));
-		CUDACHECK(cudaFree(dStartPoses_));
-		CUDACHECK(cudaFree(dStartFrames_));
-
-		CUDACHECK(cudaFree(dPoints_));
-		CUDACHECK(cudaFree(dColors_));
-		CUDACHECK(cudaFree(dSizes_));
-		CUDACHECK(cudaFree(dGroupStarts_));
-		CUDACHECK(cudaFree(dGroupOffsets_));
-		CUDACHECK(cudaFree(dLifeTime_));
+		cudaFreeAll(dSpeed_, dCentrifugalPos_, dStartPoses_, dStartFrames_,
+			dPoints_, dColors_, dSizes_, dGroupStarts_, dGroupOffsets_, 
+			dLifeTime_);
 
 		releaseAppendixResource();
 	}

@@ -76,7 +76,7 @@ public:
 
 	~Compare() {
 		for (auto it = contents_.begin(); it != contents_.end(); ++it) {
-			CUDACHECK(cudaFree(it->second.p));
+			cudaFreeAll(it->second.p);
 		}
 	}
 };

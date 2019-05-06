@@ -16,7 +16,7 @@ void testLowerBound() {
 	};
 	size_t *dJudgement, *dResult, nGroups = 5;
 	cudaMallocAndCopy(dJudgement, judgement, 25);
-	cudaMalloc(&dResult, nGroups * sizeof(size_t));
+	cudaMallocAlign(&dResult, nGroups * sizeof(size_t));
 	argFirstNoneZero(dJudgement, dResult, nGroups, 5);
 	showAndFree(dResult, 5);
 }

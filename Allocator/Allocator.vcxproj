@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{A948741B-78C0-4F32-B47E-8610124D4658}</ProjectGuid>
-    <RootNamespace>HostMethods</RootNamespace>
+    <ProjectGuid>{5177F637-3BF7-46FF-A886-09243D74B109}</ProjectGuid>
+    <RootNamespace>Allocator</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -67,6 +67,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\props\cuda10.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -115,24 +116,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="hostmethod.h" />
-    <ClInclude Include="hostmethods.hpp" />
-    <ClInclude Include="utils.h" />
+    <ClInclude Include="allocator.h" />
+    <ClInclude Include="bfc.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="argfirstnonezero.cpp" />
-    <ClCompile Include="compress.cpp" />
-    <ClCompile Include="directions.cpp" />
-    <ClCompile Include="fill.cpp" />
-    <ClCompile Include="finalpos.cpp" />
-    <ClCompile Include="interpolation.cpp" />
-    <ClCompile Include="normalize.cpp" />
-    <ClCompile Include="particlesystemtopoints.cpp" />
-    <ClCompile Include="pointtoline.cpp" />
-    <ClCompile Include="reduce.cpp" />
-    <ClCompile Include="scale.cpp" />
-    <ClCompile Include="scan.cpp" />
-    <ClCompile Include="shift.cpp" />
+    <ClCompile Include="bfc.cpp" />
+    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

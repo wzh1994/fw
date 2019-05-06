@@ -34,8 +34,8 @@ void testOnePoint() {
 	cudaMallocAndCopy(dSizesIn, sizesIn, kPoints );
 	cudaMallocAndCopy(dColorsIn, colorIn, kPoints * 3);
 	cudaMallocAndCopy(dGroupOffsets, groupOffsers, 2);
-	cudaMalloc(&buffer, 10000 * sizeof(float));
-	cudaMalloc(&dIndicesOut, 10000 * sizeof(uint32_t));
+	cudaMallocAlign(&buffer, 10000 * sizeof(float));
+	cudaMallocAlign(&dIndicesOut, 10000 * sizeof(uint32_t));
 	size_t r = pointToLine(dPointsIn, dSizesIn, dColorsIn,
 		maxSizePerGroup, dGroupOffsets, nGroups, buffer, dIndicesOut);
 	printSplitLine();
@@ -68,12 +68,12 @@ void testOneGroupWithHorizenLine() {
 	float *dPointsIn, *dSizesIn, *dColorsIn, *buffer;
 	size_t *dGroupOffsets;
 	uint32_t *dIndicesOut;
-	cudaMalloc(&dPointsIn, kPoints * 3 * sizeof(float));
-	cudaMalloc(&dSizesIn, kPoints * sizeof(float));
-	cudaMalloc(&dColorsIn, kPoints * 3 * sizeof(float));
-	cudaMalloc(&buffer, 10000 * sizeof(float));
-	cudaMalloc(&dGroupOffsets, 2 * sizeof(size_t));
-	cudaMalloc(&dIndicesOut, 10000 * sizeof(uint32_t));
+	cudaMallocAlign(&dPointsIn, kPoints * 3 * sizeof(float));
+	cudaMallocAlign(&dSizesIn, kPoints * sizeof(float));
+	cudaMallocAlign(&dColorsIn, kPoints * 3 * sizeof(float));
+	cudaMallocAlign(&buffer, 10000 * sizeof(float));
+	cudaMallocAlign(&dGroupOffsets, 2 * sizeof(size_t));
+	cudaMallocAlign(&dIndicesOut, 10000 * sizeof(uint32_t));
 
 	cudaMemcpy(dPointsIn, pointsIn, kPoints * 3 * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizesIn, sizesIn, kPoints * sizeof(float), cudaMemcpyHostToDevice);
@@ -101,12 +101,7 @@ void testOneGroupWithHorizenLine() {
 	}
 	delete[] hBuffer;
 
-	cudaFree(dPointsIn);
-	cudaFree(dSizesIn);
-	cudaFree(dColorsIn);
-	cudaFree(buffer);
-	cudaFree(dGroupOffsets);
-	cudaFree(dIndicesOut);
+	cudaFreeAll(dPointsIn, dSizesIn, dColorsIn, buffer, dGroupOffsets, dIndicesOut);
 	system("pause");
 }
 
@@ -161,12 +156,12 @@ void testThreeneGroupWithHorizenLine() {
 	float *dPointsIn, *dSizesIn, *dColorsIn, *buffer;
 	size_t *dGroupOffsets;
 	uint32_t *dIndicesOut;
-	cudaMalloc(&dPointsIn, kPoints * 3 * sizeof(float));
-	cudaMalloc(&dSizesIn, kPoints * sizeof(float));
-	cudaMalloc(&dColorsIn, kPoints * 3 * sizeof(float));
-	cudaMalloc(&buffer, 10000 * sizeof(float));
-	cudaMalloc(&dGroupOffsets, 4 * sizeof(size_t));
-	cudaMalloc(&dIndicesOut, 10000 * sizeof(uint32_t));
+	cudaMallocAlign(&dPointsIn, kPoints * 3 * sizeof(float));
+	cudaMallocAlign(&dSizesIn, kPoints * sizeof(float));
+	cudaMallocAlign(&dColorsIn, kPoints * 3 * sizeof(float));
+	cudaMallocAlign(&buffer, 10000 * sizeof(float));
+	cudaMallocAlign(&dGroupOffsets, 4 * sizeof(size_t));
+	cudaMallocAlign(&dIndicesOut, 10000 * sizeof(uint32_t));
 
 	cudaMemcpy(dPointsIn, pointsIn, kPoints * 3 * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizesIn, sizesIn, kPoints * sizeof(float), cudaMemcpyHostToDevice);
@@ -194,12 +189,7 @@ void testThreeneGroupWithHorizenLine() {
 	}
 	delete[] hBuffer;
 
-	cudaFree(dPointsIn);
-	cudaFree(dSizesIn);
-	cudaFree(dColorsIn);
-	cudaFree(buffer);
-	cudaFree(dGroupOffsets);
-	cudaFree(dIndicesOut);
+	cudaFreeAll(dPointsIn, dSizesIn, dColorsIn, buffer, dGroupOffsets, dIndicesOut);
 	system("pause");
 }
 

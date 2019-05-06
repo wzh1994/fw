@@ -977,8 +977,7 @@ namespace hostMethod {
 			nGroups, bufferOffsets, indicesOffsets, dBuffer + totalBuffers,
 			dIndicesOut + totalIndices, outterAlpha, 0.0f, 1.0f, totalBuffers / 7);
 
-		cudaFree(bufferOffsets);
-		cudaFree(indicesOffsets);
+		cudaFreeAll(bufferOffsets, indicesOffsets);
 		return 2 * totalIndices;
 	}
 }

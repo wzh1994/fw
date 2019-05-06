@@ -49,7 +49,12 @@ inline void cudaFreeAll() {}
 
 template<class T, class ...Args>
 void cudaFreeAll(T* p, Args... args) {
+#ifdef USE_ALLOCATOR
+	memory::cudaAllocator().release(p);
+	CUDACHECK(cudaGetLastError());
+#else
 	CUDACHECK(cudaFree(p));
+#endif
 	cudaFreeAll(std::forward<Args>(args)...);
 }
 

@@ -89,7 +89,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\CUDA;$(IncludePath)</IncludePath>
+    <IncludePath>..\CUDA;..\Allocator;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -246,6 +246,9 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <Image Include="res\fw.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Allocator\Allocator.vcxproj">
+      <Project>{5177f637-3bf7-46ff-a886-09243d74b109}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\CUDA\CUDA.vcxproj">
       <Project>{89982815-5f0f-489c-8314-83a5e6614230}</Project>
     </ProjectReference>

@@ -15,7 +15,7 @@ void testReduce(ReduceOption op) {
 	};
 	size_t *dMatrix, *dResult;
 	cudaMallocAndCopy(dMatrix, matrix, 25);
-	cudaMalloc(&dResult, 5 * sizeof(size_t));
+	cudaMallocAlign(&dResult, 5 * sizeof(size_t));
 	reduce(dMatrix, dResult, 5, 5, op);
 	showAndFree(dResult, 5);
 }
@@ -29,7 +29,7 @@ void testReduceFloat(ReduceOption op) {
 	};
 	float *dMatrix, *dResult;
 	cudaMallocAndCopy(dMatrix, matrix, 25);
-	cudaMalloc(&dResult, 5 * sizeof(float));
+	cudaMallocAlign(&dResult, 5 * sizeof(float));
 	reduce(dMatrix, dResult, 5, 5, op);
 	showAndFree(dResult, 5);
 }
@@ -43,7 +43,7 @@ void testReduceMinFloat() {
 	};
 	float *dMatrix, *dResult;
 	cudaMallocAndCopy(dMatrix, matrix, 25);
-	cudaMalloc(&dResult, 5 * sizeof(float));
+	cudaMallocAlign(&dResult, 5 * sizeof(float));
 	reduceMin(dMatrix, dResult, 5, 5);
 	showAndFree(dResult, 5);
 }
@@ -57,7 +57,7 @@ void testReduceMin() {
 	};
 	size_t *dMatrix, *dResult;
 	cudaMallocAndCopy(dMatrix, matrix, 25);
-	cudaMalloc(&dResult, 5 * sizeof(size_t));
+	cudaMallocAlign(&dResult, 5 * sizeof(size_t));
 	reduceMin(dMatrix, dResult, 5, 5);
 	showAndFree(dResult, 5);
 }

@@ -99,7 +99,7 @@ void callScanKernel(T* dOut, const T* dIn, size_t size, size_t nGroups, F f) {
 		groupResultToOut << <dim3(nGroups, nSubGroups), nBlockDim >> > (
 			dOut, groupScanResults, f, size);
 		CUDACHECK(cudaGetLastError());
-		CUDACHECK(cudaFree(groupScanResults));
+		cudaFreeAll(groupScanResults);
 	}
 	else {
 		throw std::runtime_error("Max size of each group is "

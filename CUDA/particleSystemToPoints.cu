@@ -133,7 +133,7 @@ namespace {
 struct CUDAPointerDeleter{
 	template <typename T>
 	void operator()(T* p) {
-		// CUDACHECK(cudaFree(p));
+		// CUDACHECK(cudaFreeAll(p));
 	}
 };
 }

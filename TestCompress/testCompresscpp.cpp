@@ -65,11 +65,7 @@ void testOneGroup(){
 	}
 	printf("\n");
 	delete[] groupOffsets;
-	cudaFree(dPoints);
-	cudaFree(dColors);
-	cudaFree(dSizes);
-	cudaFree(dGroupOffsets);
-	showAndFree(dGroupStarts, res);
+	cudaFreeAll(dPoints, dColors, dSizes, dGroupOffsets, dGroupStarts, res);
 }
 
 void testFiveGroupsWithTwoEmpty() {

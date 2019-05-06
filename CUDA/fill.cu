@@ -41,7 +41,7 @@ void fillImpl(T* dArray, const T* data, size_t size, size_t step) {
 		throw std::runtime_error("Max step supported is 1024");
 	}
 	CUDACHECK(cudaGetLastError());
-	CUDACHECK(cudaFree(dData));
+	cudaFreeAll(dData);
 }
 
 void fill(size_t* dArray, const size_t* data, size_t size, size_t step) {

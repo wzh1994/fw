@@ -75,4 +75,7 @@
       <Filter>kernels</Filter>
     </CudaCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
 </Project>

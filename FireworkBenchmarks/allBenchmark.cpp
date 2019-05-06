@@ -14,13 +14,13 @@ void mallocBenchmark() {
 	float* a;
 	FOREACH(20, {
 		cudaMallocAlign(&a, 10000);
-		cudaFree(a);
+		cudaFreeAll(a);
 		});
 	Timer t;
 	t.start();
 	FOREACH(1000, {
 		cudaMallocAlign(&a, 10000);
-		cudaFree(a);
+		cudaFreeAll(a);
 		});
 	t.pstop("cuda malloc");
 }
@@ -207,6 +207,7 @@ void finalPosBenchmark() {
 			interpolation(tempPoints, tempColors, tempSizes, dGroupOffsetsTemp, nGroups, 49, 15);
 		});
 		t.pstop("cuda interpolation");
+		cudaFreeAll(tempPoints, tempColors, tempSizes, dGroupOffsetsTemp);
 	}
 	interpolation(dPoints, dColors, dSizes, dGroupOffsets, nGroups, 49, 15);
 	{
@@ -218,19 +219,64 @@ void finalPosBenchmark() {
 			dGroupStarts, dStartFrames, shiftX, shiftY, shiftSize));
 		t.pstop("cuda finalPosBenchmark");
 	}
+	//float* pVboData;
+	//uint32_t* pEboData;
+	//cudaMallocAlign(&pVboData, 200000000 * sizeof(float));
+	//cudaMallocAlign(&pEboData, 200000000 * sizeof(uint32_t));
+	//FOREACH(20, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+	//		pVboData, pEboData, 0.5, 0.5, 0.5));
+	//Timer t;
+	//t.start();
+	//FOREACH(1000, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+	//	pVboData, pEboData, 0.5, 0.5, 0.5));
+	//t.pstop("cuda pointToLine");
+
+
+}
+void pointToLineBenchmark() {
+	constexpr size_t nGroups = 300, realNGroups = 300;
+	constexpr size_t nPoints = 700;
+	float *points = new float[nGroups * nPoints * 3];
+	float *sizes = new float[nGroups * nPoints];
+	float *colors = new float[nGroups * nPoints * 3];
+	for (size_t i = 0; i < nGroups * nPoints; ++i) {
+		points[3 * i] = i;
+		points[3 * i + 1] = i;
+		points[3 * i + 2] = i;
+		sizes[i] = 1;
+		colors[3 * i] = 1;
+		colors[3 * i + 1] = 1;
+		colors[3 * i + 2] = 1;
+	}
+
+	float *dPoints, *dSizes, *dColors;
+	size_t *dGroupOffsets;
+	cudaMallocAndCopy(dPoints, points, nGroups * nPoints * 3);
+	cudaMallocAndCopy(dSizes, sizes, nGroups * nPoints);
+	cudaMallocAndCopy(dColors, colors, nGroups * nPoints * 3);
+
+	size_t offsets[nGroups + 1];
+	for (size_t i = 0; i < nGroups + 1; ++i) {
+		offsets[i] = 700 * i;
+	}
+	cudaMallocAndCopy(dGroupOffsets, offsets, nGroups + 1);
+	show(dGroupOffsets, nGroups + 1);
+
 	float* pVboData;
 	uint32_t* pEboData;
-	cudaMalloc(&pVboData, 200000000 * sizeof(float));
-	cudaMalloc(&pEboData, 200000000 * sizeof(uint32_t));
+	cudaMalloc(&pVboData, 100000000 * sizeof(float));
+	cudaMalloc(&pEboData, 100000000 * sizeof(uint32_t));
+	CUDACHECK(cudaDeviceSynchronize());
 	FOREACH(20, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
-			pVboData, pEboData, 0.5, 0.5, 0.5));
+		pVboData, pEboData, 0.5, 0.5, 0.5));
 	Timer t;
 	t.start();
 	FOREACH(1000, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
 		pVboData, pEboData, 0.5, 0.5, 0.5));
-	t.pstop("cuda pointToLine");
-
-
+	t.pstop("host pointToLine");
+	delete[] points, colors, sizes;
+	cudaFree(pVboData);
+	cudaFree(pEboData);
 }
 }
 
@@ -240,13 +286,13 @@ void mallocBenchmark() {
 	float* a;
 	FOREACH(20, {
 		cudaMallocAlign(&a, 100);
-		cudaFree(a);
+		cudaFreeAll(a);
 		});
 	Timer t;
 	t.start();
 	FOREACH(1000, {
 		cudaMallocAlign(&a, 100);
-		cudaFree(a);
+		cudaFreeAll(a);
 		});
 	t.pstop("host malloc");
 }
@@ -421,6 +467,48 @@ void finalPosBenchmark() {
 		pVboData, pEboData, 0.5, 0.5, 0.5));
 	t.pstop("host pointToLine");
 }
+void pointToLineBenchmark() {
+	constexpr size_t nGroups = 300, realNGroups = 300;
+	constexpr size_t nPoints = 700;
+	float *points = new float[nGroups * nPoints * 3];
+	float *sizes = new float[nGroups * nPoints];
+	float *colors = new float[nGroups * nPoints * 3];
+	for (size_t i = 0; i < nGroups * nPoints; ++i) {
+		points[3 * i] = i;
+		points[3 * i + 1] = i;
+		points[3 * i + 2] = i;
+		sizes[i] = 1;
+		colors[3 * i] = 1;
+		colors[3 * i + 1] = 1;
+		colors[3 * i + 2] = 1;
+	}
+
+	float *dPoints, *dSizes, *dColors;
+	size_t *dGroupOffsets;
+	cudaMallocAndCopy(dPoints, points, nGroups * nPoints * 3);
+	cudaMallocAndCopy(dSizes, sizes, nGroups * nPoints);
+	cudaMallocAndCopy(dColors, colors, nGroups * nPoints * 3);
+
+	size_t offsets[nGroups + 1];
+	for (size_t i = 0; i < nGroups + 1; ++i) {
+		offsets[i] = 700 * i;
+	}
+	cudaMallocAndCopy(dGroupOffsets, offsets, nGroups + 1);
+
+	float* pVboData;
+	uint32_t* pEboData;
+	cudaMallocAlign(&pVboData, 200000000 * sizeof(float));
+	cudaMallocAlign(&pEboData, 200000000 * sizeof(uint32_t));
+	FOREACH(20, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+		pVboData, pEboData, 0.5, 0.5, 0.5));
+	Timer t;
+	t.start();
+	FOREACH(100, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+		pVboData, pEboData, 0.5, 0.5, 0.5));
+	t.pstop("host pointToLine");
+	delete[] points, colors, sizes;
+	cudaFreeAll(pVboData, pEboData);
+}
 
 }
 
@@ -434,8 +522,9 @@ void main() {
 	//cudaKernel::shiftBenchmark();
 	//hostMethod::shiftBenchmark();
 	//cudaKernel::particleToPointsBenchmark();
-	cudaKernel::compressBenchmark();
+	//cudaKernel::compressBenchmark();
 	//cudaKernel::finalPosBenchmark();
-	hostMethod::finalPosBenchmark();
-
+	//hostMethod::finalPosBenchmark();
+	cudaKernel::pointToLineBenchmark();
+	//hostMethod::pointToLineBenchmark();
 }

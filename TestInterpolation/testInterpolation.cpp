@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cuda_runtime.h>
 #include <windows.h>
+#include "utils.h"
 
 // void interpolation(float* dArray, size_t nGroups, size_t size, size_t count)
 namespace cudaKernel {
@@ -9,20 +10,20 @@ namespace cudaKernel {
 void testInterpolationMatrix() {
 	float array[100]{1, 2, 3, 4, 5};
 	float *dArray;
-	cudaMalloc(&dArray, 100 * sizeof(float));
+	cudaMallocAlign(&dArray, 100 * sizeof(float));
 	cudaMemcpy(dArray, array, 5 * sizeof(float), cudaMemcpyHostToDevice);
 	interpolation(dArray, 1, 5, 15);
 	cudaMemcpy(array, dArray, 65 * sizeof(float), cudaMemcpyDeviceToHost);
 	for (int i = 0; i < 65; ++i) {
 		printf("%.4f ", array[i]);
 	}
-	cudaFree(dArray);
+	cudaFreeAll(dArray);
 }
 
 void testInterpolationMatrixMultiGroups() {
 	float array[200]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 	float *dArray;
-	cudaMalloc(&dArray, 200 * sizeof(float));
+	cudaMallocAlign(&dArray, 200 * sizeof(float));
 	cudaMemcpy(dArray, array, 15 * sizeof(float), cudaMemcpyHostToDevice);
 	interpolation(dArray, 3, 5, 15);
 	cudaMemcpy(array, dArray, 195 * sizeof(float), cudaMemcpyDeviceToHost);
@@ -31,7 +32,7 @@ void testInterpolationMatrixMultiGroups() {
 		if ((++i) % 65 == 0)
 			printf("\n");
 	}
-	cudaFree(dArray);
+	cudaFreeAll(dArray);
 }
 
 void testInterpolationPointMultiGroups() {
@@ -41,10 +42,10 @@ void testInterpolationPointMultiGroups() {
 	size_t offsets[5]{0, 2, 7, 11, 15};
 	float *dPoints, *dColors, *dSizes;
 	size_t *dOffsets;
-	cudaMalloc(&dPoints, 600 * sizeof(float));
-	cudaMalloc(&dColors, 600 * sizeof(float));
-	cudaMalloc(&dSizes, 600 * sizeof(float));
-	cudaMalloc(&dOffsets, 5 * sizeof(size_t));
+	cudaMallocAlign(&dPoints, 600 * sizeof(float));
+	cudaMallocAlign(&dColors, 600 * sizeof(float));
+	cudaMallocAlign(&dSizes, 600 * sizeof(float));
+	cudaMallocAlign(&dOffsets, 5 * sizeof(size_t));
 	cudaMemcpy(dPoints, point, 45 * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dColors, color, 45 * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dSizes, size, 15 * sizeof(float), cudaMemcpyHostToDevice);
@@ -83,10 +84,7 @@ void testInterpolationPointMultiGroups() {
 		}
 	}
 	printf("\n");
-	cudaFree(dPoints);
-	cudaFree(dColors);
-	cudaFree(dSizes);
-	cudaFree(dOffsets);
+	cudaFreeAll(dPoints, dColors, dSizes, dOffsets);
 }
 
 }
