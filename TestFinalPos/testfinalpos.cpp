@@ -45,7 +45,7 @@ void testFinalPos() {
 	
 	constexpr size_t currFrame = 10;
 	calcFinalPosition(dPoints, realNGroups, size, count, currFrame,
-		dGroupOffsets, dGroupStarts, dForceX, dForceY, shiftSize);
+		dGroupOffsets, dGroupStarts, dGroupStarts, dForceX, dForceY, shiftSize);
 
 	showAndFree(dPoints, 3 * (size * (count + 1) - count), 3 * (count + 1));
 	cudaFreeAll(dColors, dSizes, dGroupOffsets, dGroupStarts);
@@ -106,7 +106,7 @@ void testFinalPosMultiGroups() {
 	printSplitLine();
 	constexpr size_t currFrame = 10;
 	calcFinalPosition(dPoints, realNGroups, size * count, count, currFrame,
-		dGroupOffsets, dGroupStarts, dForceX, dForceY, shiftSize);
+		dGroupOffsets, dGroupStarts, dGroupStarts, dForceX, dForceY, shiftSize);
 
 	showAndFree(dPoints, dGroupOffsets, realNGroups, 3);
 	cudaFreeAll(dColors, dSizes, dGroupOffsets, dGroupStarts, dForceX, dForceY);

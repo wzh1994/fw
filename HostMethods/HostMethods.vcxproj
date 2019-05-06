@@ -121,11 +121,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="argfirstnonezero.cpp" />
+    <ClCompile Include="compress.cpp" />
     <ClCompile Include="directions.cpp" />
     <ClCompile Include="fill.cpp" />
     <ClCompile Include="finalpos.cpp" />
     <ClCompile Include="interpolation.cpp" />
     <ClCompile Include="normalize.cpp" />
+    <ClCompile Include="particlesystemtopoints.cpp" />
+    <ClCompile Include="pointtoline.cpp" />
     <ClCompile Include="reduce.cpp" />
     <ClCompile Include="scale.cpp" />
     <ClCompile Include="scan.cpp" />

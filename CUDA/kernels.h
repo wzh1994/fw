@@ -3,6 +3,7 @@
 
 #include "kernel.h"
 #include "cuda_runtime.h"
+#include "cstdio"
 
 /*
  * 本项目生成.lib文件供fw调用cuda相关的函数。

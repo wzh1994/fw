@@ -62,5 +62,14 @@
     <ClCompile Include="finalpos.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="particlesystemtopoints.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="compress.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="pointtoline.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

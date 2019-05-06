@@ -4,6 +4,7 @@
 #include<chrono>
 #include <queue>
 #include <iostream>
+#include <string>
 using namespace std::chrono;
 using std::cout;
 using std::endl;

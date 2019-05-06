@@ -104,6 +104,37 @@ namespace hostMethod {
 		float time = kFrameTime // 两帧间隔的时间
 	);
 
+	void particleSystemToPoints(
+		float* dPoints, // 输出 起始位置 
+		float* dColors, // 输出 起始颜色
+		float* dSizes, // 输出 起始尺寸
+		size_t* dGroupStarts, // 输出 此方法将dStartFrames拷贝过来
+		const size_t* dStartFrames, // 每一组粒子的起始帧
+		const size_t* dLifeTime, // 每一组粒子的寿命
+		size_t nGroups, // 总计的粒子组数
+		const float* dDirections, // 每一组粒子的方向
+		const float* dCentrifugalPos, // 每一组粒子的初始速度
+		const float* dStartPoses, // 每一帧粒子生成时候的离心位置
+		size_t currFrame, // 当前帧数
+		size_t nFrames, // 总帧数
+		const float* dColorMatrix, // 颜色随帧数变化的矩阵
+		const float* dSizeMatrix, // 尺寸随帧数变化的矩阵
+		float time = kFrameTime // 两帧间隔的时间
+	);
+
+	void argFirstNoneZero(size_t* matrix, size_t* result,
+		size_t nGroups, size_t size);
+
+	size_t compress(
+		float* dPoints, // 输入&输出 粒子的位置
+		float* dColors, // 输入&输出 粒子的颜色
+		float* dSizes, // 输入&输出 粒子的尺寸
+		size_t nGroups, // 粒子组数
+		size_t size, // 每组粒子的个数，此方法输入的每组粒子数量相同
+		size_t* dGroupOffsets, // 输出 压缩后每组粒子位置相对于起始位置的偏移
+		size_t* dGroupStarts // 输出 压缩后的每组粒子的起始帧
+	);
+
 	/*
 	 * 插值算法 对N组相同长度的数组做插值
 	 */
@@ -125,10 +156,29 @@ namespace hostMethod {
 		size_t nInterpolation // 每两个粒子之间插入的粒子数量
 	);
 
+	void calcFinalPosition(float* dPoints, size_t nGroups, size_t maxSize,
+		size_t nInterpolation, size_t frame, const size_t* dGroupOffsets,
+		const size_t* dGroupStarts, const size_t* dStartFrames,
+		const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize);
+
 	size_t normalFireworkDirections(float* directions,
 		size_t nIntersectingSurfaceParticle,
 		float xRate=0, float yRate=0, float zRate=0,
 		float xStretch=0, float yStretch=0, float zStretch=0);
+
+	size_t pointToLine(
+		const float* dPointsIn,
+		const float* dSizesIn,
+		const float* dColorsIn,
+		size_t maxSizePerGroup,
+		size_t* const dGroupOffsets,
+		size_t nGroups,
+		float* dBuffer,
+		uint32_t* dIndicesOut,
+		float outterAlpha,
+		float innerSize,
+		float innerColor
+	);
 
 }
 

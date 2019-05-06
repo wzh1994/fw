@@ -2,12 +2,28 @@
 #include <hostmethods.hpp>
 #include <timer.h>
 #include <../CUDA/utils.h>
+#include <../CUDA/test.h>
 #include <../hostmethods/utils.h>
 
 using namespace std;
 
 
 namespace cudaKernel {
+
+void mallocBenchmark() {
+	float* a;
+	FOREACH(20, {
+		cudaMallocAlign(&a, 10000);
+		cudaFree(a);
+		});
+	Timer t;
+	t.start();
+	FOREACH(1000, {
+		cudaMallocAlign(&a, 10000);
+		cudaFree(a);
+		});
+	t.pstop("cuda malloc");
+}
 
 void dirBenchmark(){
 	constexpr size_t nIntersectingSurfaceParticle = 30;
@@ -46,11 +62,10 @@ void shiftBenchmark() {
 	}
 	cudaMallocAndCopy(dIn, in, 1000000, 50);
 	FOREACH(1000, calcShiftingByOutsideForce(dIn, 49, 15, 1));
-	printf("here\n");
 	Timer t;
 	t.start();
 	FOREACH(1000, calcShiftingByOutsideForce(dIn, 49, 15, 1));
-	t.pstop("host calcShiftingByOutsideForce");
+	t.pstop("cuda calcShiftingByOutsideForce");
 }
 void particleToPointsBenchmark() {
 
@@ -112,8 +127,8 @@ void compressBenchmark() {
 	}
 	float* dPoints, *dColors, *dSizes;
 	size_t *dGroupOffsets, *dGroupStarts;
-	cudaMallocAlign(&dGroupOffsets, 50 * sizeof(size_t));
-	cudaMallocAlign(&dGroupStarts, 50 * sizeof(size_t));
+	cudaMallocAlign(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+	cudaMallocAlign(&dGroupStarts, nGroups * sizeof(size_t));
 	cudaMallocAndCopy(dPoints, fill, 3 * nGroups * size);
 	cudaMallocAndCopy(dColors, fill, 3 * nGroups * size);
 	cudaMallocAndCopy(dSizes, fill, nGroups * size);
@@ -130,66 +145,111 @@ void finalPosBenchmark() {
 	for (size_t i = 0; i < 3 * nGroups; ++i) {
 		fill[i] = i;
 	}
-	float in[50], *shiftX, *shiftY;
-	for (size_t i = 0; i < 50; ++i) {
-		in[i] = 0;
-	}
-	cudaMallocAndCopy(shiftX, in, 1000000, 50);
-	cudaMallocAndCopy(shiftY, in, 1000000, 50);
+	float *shiftX, *shiftY;
+	cudaMallocAndCopy(shiftX, fill, 1000000, 50);
+	cudaMallocAndCopy(shiftY, fill, 1000000, 50);
 	calcShiftingByOutsideForce(shiftX, 49, 15, 1);
 	calcShiftingByOutsideForce(shiftY, 49, 15, 1);
 
-	float startColors[150], startSizes[150];
 	float *dColorMatrix, *dSizeMatrix;
-	size_t num[50], *dGroupStarts, *dStartFrames, *dLifeTime;
-	for (size_t i = 0; i < 150; ++i) {
-		startColors[i] = i;
-		startSizes[i] = i;
-		num[i] = i;
+	size_t num1[500], num2[500], *dGroupStarts, *dStartFrames, *dLifeTime;
+	for (size_t i = 0; i < 500; ++i) {
+		num1[i] = 0;
+	}
+	for (size_t i = 0; i < 500; ++i) {
+		num2[i] = 50;
 	}
 	float *dStartColors, *dStartSizes, *dPoints, *dColors, *dSizes;
-	cudaMallocAlign(&dPoints, 16 * 150 * nGroups * sizeof(size_t));
-	cudaMallocAlign(&dColors, 16 * 150 * nGroups * sizeof(size_t));
-	cudaMallocAlign(&dSizes, 16 * 150 * nGroups * sizeof(size_t));
-	cudaMallocAndCopy(dStartColors, startColors, 150);
-	cudaMallocAndCopy(dStartSizes, startSizes, 50);
-
-	cudaMallocAndCopy(dGroupStarts, num, 50);
-	cudaMallocAndCopy(dStartFrames, num, 50);
-	cudaMallocAndCopy(dLifeTime, num, 50);
-	cudaMallocAlign(&dColorMatrix, 2500 * sizeof(float));
-	cudaMallocAlign(&dSizeMatrix, 2500 * sizeof(float));
+	cudaMallocAlign(&dPoints, 16 * 150 * nGroups * sizeof(float));
+	cudaMallocAlign(&dColors, 16 * 150 * nGroups * sizeof(float));
+	cudaMallocAlign(&dSizes, 16 * 50 * nGroups * sizeof(float));
+	cudaMallocAndCopy(dStartColors, fill, 150);
+	cudaMallocAndCopy(dStartSizes, fill, 50);
+	cudaMallocAndCopy(dGroupStarts, num1, nGroups + 1);
+	cudaMallocAndCopy(dStartFrames, num1, nGroups + 1);
+	cudaMallocAndCopy(dLifeTime, num2, nGroups);
+	cudaMallocAlign(&dColorMatrix, 25000 * sizeof(float));
+	cudaMallocAlign(&dSizeMatrix, 25000 * sizeof(float));
 	getColorAndSizeMatrixDevInput(
-		dStartColors, dSizeMatrix, 49, 0.99, 0.99, dColorMatrix, dSizeMatrix);
-
+		dStartColors, dStartSizes, 49, 0.99, 0.99, dColorMatrix, dSizeMatrix);
 
 	float* dDirections, *dCentrifugalPos, *dStartPoses;
 	cudaMallocAndCopy(dDirections, fill, 3 * nGroups);
 	cudaMallocAndCopy(dCentrifugalPos, fill, nGroups);
 	cudaMallocAndCopy(dStartPoses, fill, nGroups);
-
 	particleSystemToPoints(dPoints, dColors, dSizes, dGroupStarts, dStartFrames,
 		dLifeTime, nGroups, dDirections, dCentrifugalPos, dStartPoses,
 		10, 49, dColorMatrix, dSizeMatrix);
-
 	size_t *dGroupOffsets;
-	cudaMallocAlign(&dGroupOffsets, 50 * sizeof(dGroupOffsets));
-	compress(dPoints, dColors, dSizes, nGroups, 49, dGroupOffsets, dGroupStarts);
-	size_t shiftSize =
-		49 * (15 + 1) - 15;
+	cudaMallocAlign(&dGroupOffsets, (nGroups + 1 )* sizeof(size_t));
+	size_t realNGroups = compress(dPoints, dColors, dSizes, nGroups, 49, dGroupOffsets, dGroupStarts);
+	size_t shiftSize = 49 * (15 + 1) - 15;
+	{
+		float* tempPoints;
+		float* tempColors;
+		float* tempSizes;
+		size_t* dGroupOffsetsTemp;
+		cudaMallocAlign(&tempPoints, 16 * 150 * nGroups * sizeof(float));
+		cudaMemcpy(tempPoints, dPoints, 150 * nGroups * sizeof(float), cudaMemcpyDeviceToDevice);
+		cudaMallocAlign(&tempColors, 16 * 150 * nGroups * sizeof(float));
+		cudaMemcpy(tempColors, dColors, 150 * nGroups * sizeof(float), cudaMemcpyDeviceToDevice);
+		cudaMallocAlign(&tempSizes, 16 * 50 * nGroups * sizeof(float));
+		cudaMemcpy(tempSizes, dSizes, 50 * nGroups * sizeof(float), cudaMemcpyDeviceToDevice);
+		cudaMallocAlign(&dGroupOffsetsTemp, (nGroups + 1) * sizeof(size_t));
+		FOREACH(20, {
+			cudaMemcpy(dGroupOffsetsTemp, dGroupOffsets, (nGroups + 1) * sizeof(size_t), cudaMemcpyDeviceToDevice);
+			interpolation(tempPoints, tempColors, tempSizes, dGroupOffsetsTemp, nGroups, 49, 15); 
+		});
+		Timer t;
+		t.start();
+		FOREACH(1000, {
+			cudaMemcpy(dGroupOffsetsTemp, dGroupOffsets, (nGroups + 1) * sizeof(size_t), cudaMemcpyDeviceToDevice);
+			interpolation(tempPoints, tempColors, tempSizes, dGroupOffsetsTemp, nGroups, 49, 15);
+		});
+		t.pstop("cuda interpolation");
+	}
+	interpolation(dPoints, dColors, dSizes, dGroupOffsets, nGroups, 49, 15);
+	{
+		FOREACH(20, calcFinalPosition(dPoints, nGroups, shiftSize, 15, 1, dGroupOffsets,
+			dGroupStarts, dStartFrames, shiftX, shiftY, shiftSize));
+		Timer t;
+		t.start();
+		FOREACH(1000, calcFinalPosition(dPoints, nGroups, shiftSize, 15, 1, dGroupOffsets,
+			dGroupStarts, dStartFrames, shiftX, shiftY, shiftSize));
+		t.pstop("cuda finalPosBenchmark");
+	}
+	float* pVboData;
+	uint32_t* pEboData;
+	cudaMalloc(&pVboData, 200000000 * sizeof(float));
+	cudaMalloc(&pEboData, 200000000 * sizeof(uint32_t));
+	FOREACH(20, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+			pVboData, pEboData, 0.5, 0.5, 0.5));
 	Timer t;
 	t.start();
-	interpolation(dPoints, dColors, dSizes, dGroupStarts, nGroups, 49, 15);
+	FOREACH(1000, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+		pVboData, pEboData, 0.5, 0.5, 0.5));
+	t.pstop("cuda pointToLine");
 
-	calcFinalPosition(dPoints, nGroups, shiftSize, 15, 1, dGroupOffsets,
-		dGroupStarts, dStartFrames, shiftX, shiftY, shiftSize);
 
-	t.pstop("cuda finalPosBenchmark");
 }
 }
 
 namespace hostMethod {
 
+void mallocBenchmark() {
+	float* a;
+	FOREACH(20, {
+		cudaMallocAlign(&a, 100);
+		cudaFree(a);
+		});
+	Timer t;
+	t.start();
+	FOREACH(1000, {
+		cudaMallocAlign(&a, 100);
+		cudaFree(a);
+		});
+	t.pstop("host malloc");
+}
 void dirBenchmark() {
 	constexpr size_t nIntersectingSurfaceParticle = 30;
 	float* dDirections;
@@ -227,11 +287,146 @@ void shiftBenchmark() {
 	FOREACH(1000, calcShiftingByOutsideForce(dIn, 49, 15));
 	t.pstop("cuda calcShiftingByOutsideForce");
 }
+void finalPosBenchmark() {
 
+	constexpr size_t nGroups = 300;
+	float fill[3 * nGroups];
+	for (size_t i = 0; i < 3 * nGroups; ++i) {
+		fill[i] = i;
+	}
+	float *shiftX, *shiftY;
+	cudaMallocAndCopy(shiftX, fill, 1000000, 50);
+	cudaMallocAndCopy(shiftY, fill, 1000000, 50);
+	calcShiftingByOutsideForce(shiftX, 49, 15, 1);
+	calcShiftingByOutsideForce(shiftY, 49, 15, 1);
+
+	float *dColorMatrix, *dSizeMatrix;
+	size_t num1[500], num2[500], *dGroupStarts, *dStartFrames, *dLifeTime;
+	for (size_t i = 0; i < 500; ++i) {
+		num1[i] = 0;
+	}
+	for (size_t i = 0; i < 500; ++i) {
+		num2[i] = 50;
+	}
+	float *dStartColors, *dStartSizes, *dPoints, *dColors, *dSizes;
+	cudaMallocAlign(&dPoints, 16 * 150 * nGroups * sizeof(float));
+	cudaMallocAlign(&dColors, 16 * 150 * nGroups * sizeof(float));
+	cudaMallocAlign(&dSizes, 16 * 50 * nGroups * sizeof(float));
+	cudaMallocAndCopy(dStartColors, fill, 150);
+	cudaMallocAndCopy(dStartSizes, fill, 50);
+	cudaMallocAndCopy(dGroupStarts, num1, nGroups + 1);
+	cudaMallocAndCopy(dStartFrames, num1, nGroups + 1);
+	cudaMallocAndCopy(dLifeTime, num2, nGroups);
+	cudaMallocAlign(&dColorMatrix, 25000 * sizeof(float));
+	cudaMallocAlign(&dSizeMatrix, 25000 * sizeof(float));
+	getColorAndSizeMatrix(
+		dStartColors, dStartSizes, 49, 0.99, 0.99, dColorMatrix, dSizeMatrix);
+
+	float* dDirections, *dCentrifugalPos, *dStartPoses;
+	cudaMallocAndCopy(dDirections, fill, 3 * nGroups);
+	cudaMallocAndCopy(dCentrifugalPos, fill, nGroups);
+	cudaMallocAndCopy(dStartPoses, fill, nGroups);
+	particleSystemToPoints(dPoints, dColors, dSizes, dGroupStarts, dStartFrames,
+		dLifeTime, nGroups, dDirections, dCentrifugalPos, dStartPoses,
+		10, 49, dColorMatrix, dSizeMatrix);
+	/*{
+		float *tempPoints, *tempColor, *tempSize;
+		size_t *tempGroupStarts;
+		cudaMallocAlign(&tempPoints, 16 * 150 * nGroups * sizeof(float));
+		cudaMallocAlign(&tempColor, 16 * 150 * nGroups * sizeof(float));
+		cudaMallocAlign(&tempSize, 16 * 50 * nGroups * sizeof(float));
+		cudaMallocAndCopy(tempGroupStarts, num1, nGroups + 1);
+		FOREACH(20, particleSystemToPoints(tempPoints, tempColor, tempSize, tempGroupStarts, dStartFrames,
+			dLifeTime, nGroups, dDirections, dCentrifugalPos, dStartPoses,
+			10, 49, dColorMatrix, dSizeMatrix));
+		Timer t;
+		t.start();
+		FOREACH(1000, particleSystemToPoints(tempPoints, tempColor, tempSize, tempGroupStarts, dStartFrames,
+			dLifeTime, nGroups, dDirections, dCentrifugalPos, dStartPoses,
+			10, 49, dColorMatrix, dSizeMatrix));
+		t.pstop("host particleSystemToPoints");
+	}*/
+	
+	/*{
+		float *tempPoints, *tempColor, *tempSize;
+		size_t *tempGroupStarts;
+		size_t *tempGroupOffsets;
+		cudaMallocAlign(&tempGroupStarts, (nGroups + 1) * sizeof(size_t));
+		cudaMallocAlign(&tempGroupOffsets, (nGroups + 1) * sizeof(size_t));
+		cudaMallocAlign(&tempPoints, 16 * 150 * nGroups * sizeof(float));
+		cudaMallocAlign(&tempColor, 16 * 150 * nGroups * sizeof(float));
+		cudaMallocAlign(&tempSize, 16 * 50 * nGroups * sizeof(float));
+		memcpy(tempPoints, dPoints, 16 * 150 * nGroups * sizeof(float));
+		memcpy(tempColor, dColors, 16 * 150 * nGroups * sizeof(float));
+		memcpy(tempSize, dSizes, 16 * 50 * nGroups * sizeof(float));
+		FOREACH(20, compress(tempPoints, tempColor, tempSize, nGroups, 49, tempGroupOffsets, tempGroupStarts));
+		Timer t;
+		t.start();
+		FOREACH(1000, compress(tempPoints, tempColor, tempSize, nGroups, 49, tempGroupOffsets, tempGroupStarts));
+		t.pstop("host compress");
+	}*/
+	size_t *dGroupOffsets;
+	cudaMallocAlign(&dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+	size_t realNGroups = compress(dPoints, dColors, dSizes, nGroups, 49, dGroupOffsets, dGroupStarts);
+	cout << "compress done" << endl;
+	size_t shiftSize = 49 * (15 + 1) - 15;
+	{
+		float* tempPoints;
+		float* tempColors;
+		float* tempSizes;
+		size_t* dGroupOffsetsTemp;
+		cudaMallocAlign(&tempPoints, 16 * 150 * nGroups * sizeof(float));
+		memcpy(tempPoints, dPoints, 150 * nGroups * sizeof(float));
+		cudaMallocAlign(&tempColors, 16 * 150 * nGroups * sizeof(float));
+		memcpy(tempColors, dColors, 150 * nGroups * sizeof(float));
+		cudaMallocAlign(&tempSizes, 16 * 50 * nGroups * sizeof(float));
+		memcpy(tempSizes, dSizes, 50 * nGroups * sizeof(float));
+		cudaMallocAlign(&dGroupOffsetsTemp, (nGroups + 1) * sizeof(size_t));
+		FOREACH(20, {
+			memcpy(dGroupOffsetsTemp, dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+			interpolation(tempPoints, tempColors, tempSizes, dGroupOffsetsTemp, nGroups, 49, 15);
+			});
+		Timer t;
+		t.start();
+		FOREACH(1000, {
+			memcpy(dGroupOffsetsTemp, dGroupOffsets, (nGroups + 1) * sizeof(size_t));
+			interpolation(tempPoints, tempColors, tempSizes, dGroupOffsetsTemp, nGroups, 49, 15);
+			});
+		t.pstop("host interpolation");
+	}
+
+	interpolation(dPoints, dColors, dSizes, dGroupOffsets, nGroups, 49, 15);
+	{
+		cout << "here" << endl;
+		FOREACH(20, calcFinalPosition(dPoints, nGroups, shiftSize, 15, 1, dGroupOffsets,
+			dGroupStarts, dStartFrames, shiftX, shiftY, shiftSize));
+		cout << "here" << endl;
+		Timer t;
+		t.start();
+		FOREACH(1000, calcFinalPosition(dPoints, nGroups, shiftSize, 15, 1, dGroupOffsets,
+			dGroupStarts, dStartFrames, shiftX, shiftY, shiftSize));
+		t.pstop("host finalPosBenchmark");
+		cout << "here" << endl;
+	}
+
+	float* pVboData;
+	uint32_t* pEboData;
+	cudaMallocAlign(&pVboData, 200000000 * sizeof(float));
+	cudaMallocAlign(&pEboData, 200000000 * sizeof(uint32_t));
+	FOREACH(20, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+		pVboData, pEboData, 0.5, 0.5, 0.5));
+	Timer t;
+	t.start();
+	FOREACH(1000, pointToLine(dPoints, dSizes, dColors, 49 * 16, dGroupOffsets, realNGroups,
+		pVboData, pEboData, 0.5, 0.5, 0.5));
+	t.pstop("host pointToLine");
+}
 
 }
 
 void main() {
+	//cudaKernel::mallocBenchmark();
+	//hostMethod::mallocBenchmark();
 	//cudaKernel::dirBenchmark();
 	//hostMethod::dirBenchmark();
 	//cudaKernel::casBenchmark();
@@ -239,6 +434,8 @@ void main() {
 	//cudaKernel::shiftBenchmark();
 	//hostMethod::shiftBenchmark();
 	//cudaKernel::particleToPointsBenchmark();
-	//cudaKernel::compressBenchmark();
-	cudaKernel::finalPosBenchmark();
+	cudaKernel::compressBenchmark();
+	//cudaKernel::finalPosBenchmark();
+	hostMethod::finalPosBenchmark();
+
 }

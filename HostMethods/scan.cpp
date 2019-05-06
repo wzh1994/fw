@@ -8,7 +8,7 @@ void scan(T* out, const T* in, size_t size, size_t nGroups, Func f) {
 		size_t j = 0;
 		out[i * size + j] = in[i * size + j];
 		for (++j; j < size; ++j) {
-			out[i * size + j] = f(in[i * size + j - 1], in[i * size + j]);
+			out[i * size + j] = f(out[i * size + j - 1], in[i * size + j]);
 		}
 	}
 }
