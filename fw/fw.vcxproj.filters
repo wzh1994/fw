@@ -90,6 +90,15 @@
     <ClInclude Include="strafefirework.h">
       <Filter>include\Firework</Filter>
     </ClInclude>
+    <ClInclude Include="mixturefireworkbase.h">
+      <Filter>include\Firework</Filter>
+    </ClInclude>
+    <ClInclude Include="circlefirework.h">
+      <Filter>include\Firework</Filter>
+    </ClInclude>
+    <ClInclude Include="twinklefirework.h">
+      <Filter>include\Firework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fwDlg.cpp">

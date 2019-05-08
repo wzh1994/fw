@@ -201,6 +201,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="circlefirework.h" />
     <ClInclude Include="compare.h" />
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="firework.h" />
@@ -209,6 +210,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <ClInclude Include="fwDlg.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="mixturefirework.h" />
+    <ClInclude Include="mixturefireworkbase.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="multiexplosionfirework.hpp" />
     <ClInclude Include="normalfirework.h" />
@@ -220,6 +222,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="strafefirework.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="twinklefirework.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="firework.cpp" />
