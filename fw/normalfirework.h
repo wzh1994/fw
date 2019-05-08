@@ -1,10 +1,6 @@
 #pragma once
-#include "firework.h"
 #include "fireworkrenderbase.h"
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include "test.h"
-#include "compare.h"
+
 
 namespace firework{
 class NormalFirework final : public FwRenderBase {

@@ -43,11 +43,18 @@ protected:
 	// 外力相关
 	float *dShiftX_, *dShiftY_;
 
+	// 随机数相关
+	curandState *devStates_;
+	float visibleRate_;
+
 	// 着色器
 	std::unique_ptr<Shader> shader_;
 
 protected:
-	FwRenderBase(float* args) : FwBase(args) {}
+	FwRenderBase(float* args)
+		: FwBase(args)
+		, devStates_(nullptr)
+		, visibleRate_(1.0f) {}
 
 public:
 	// 与opengl有关的初始化放在这里，以保证其在glewInit之后执行
@@ -117,7 +124,6 @@ protected:
 			&dGroupOffsets_, (nParticleGroups_ + 1) * sizeof(size_t)));
 		CUDACHECK(cudaMallocAlign(
 			&dLifeTime_, nParticleGroups_ * sizeof(size_t)));
-
 		allocAppendixResource();
 	}
 
@@ -170,8 +176,15 @@ public:
 
 		CUDACHECK(cudaDeviceSynchronize());
 
-		realNGroups_ = compress(dPoints_, dColors_, dSizes_,
-			nParticleGroups_, nFrames_, dGroupOffsets_, dGroupStarts_);
+		if (visibleRate_ < 1.0f) {
+			realNGroups_ = compress(dPoints_, dColors_,
+				dSizes_, nParticleGroups_, nFrames_, dGroupOffsets_,
+				dGroupStarts_, visibleRate_, devStates_);
+		} else {
+			realNGroups_ = compress(
+				dPoints_, dColors_, dSizes_, nParticleGroups_,
+				nFrames_, dGroupOffsets_, dGroupStarts_);
+		}
 
 		CUDACHECK(cudaDeviceSynchronize());
 		if (realNGroups_ > 0) {

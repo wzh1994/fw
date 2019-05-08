@@ -109,9 +109,12 @@ public:
 
 enum class FireWorkType {
 	Normal = 0,
-	Mixture,
-	MultiExplosion,
-	Strafe
+	MultiExplosion = 1,
+	Strafe = 2,
+	CircleFirework = 3,
+	TwinkleFirework = 4,
+	DualMixture = 5,
+	TriplicateMixture = 6
 };
 
 

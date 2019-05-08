@@ -3,6 +3,7 @@
 
 #include "kernel.h"
 #include "cuda_runtime.h"
+#include "curand_kernel.h" 
 #include "cstdio"
 #define USE_ALLOCATOR
 
@@ -179,7 +180,9 @@ size_t compress(
 	size_t nGroups, // 粒子组数
 	size_t size, // 每组粒子的个数，此方法输入的每组粒子数量相同
 	size_t* dGroupOffsets, // 输出 压缩后每组粒子位置相对于起始位置的偏移
-	size_t* dGroupStarts // 输出 压缩后的每组粒子的起始帧
+	size_t* dGroupStarts, // 输出 压缩后的每组粒子的起始帧
+	float rate = 1.0f,  // 粒子束被显示的比例
+	curandState* devStates = nullptr
 );
 
 /*
@@ -242,6 +245,8 @@ size_t pointToLine(
 	/*,float innerColorRate = 1*/
 );
 
+void initRand(curandState *dev_states, size_t size);
+
 /* ==================================
  * NormalFirework相关方法
  * ==================================
@@ -254,6 +259,17 @@ size_t normalFireworkDirections(
 	float xRate = 0.1, float yRate = 0.1, float zRate = 0.1,
 	float xStretch = 1, float yStretch = 1, float zStretch = 1
 );
+
+/* ==================================
+ * CircleFirework相关方法
+ * ==================================
+ */
+
+ // 获取normalFirework类型烟花的初始方向，返回其方向的数量
+size_t circleFireworkDirections(float* dDirections,
+	size_t nIntersectingSurfaceParticle,
+	float xRate = 0.1, float yRate = 0.1, float zRate = 0.1,
+	float xStretch = 1, float yStretch = 1, float zStretch = 1);
 
 /* ==================================
  * StrafeFirework相关方法

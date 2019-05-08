@@ -48,7 +48,7 @@ void init(size_t w = screenWidth, size_t h = screenHeight) {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK) {
-		FW_THROW(NotInitialized) << "Init failed!";
+		FW_NO_THROW(NotInitialized) << "Init failed!";
 	};
 	glEnable(GL_DEPTH_TEST);
 }
@@ -93,8 +93,8 @@ void playInNewThread(firework::FireWorkType type,
 	}
 
 	if (genVideo) {
-		//CV_FOURCC('M', 'J', 'P', 'G');
-		cv::VideoWriter writer(fname + ".avi", cv::CAP_ANY, 24.0, cv::Size(400, 400));
+		cv::VideoWriter writer(fname + ".avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+			24.0, cv::Size(400, 400));
 		for (int i = 0; i < imgs.size(); i++)
 			writer << imgs[i];
 	}

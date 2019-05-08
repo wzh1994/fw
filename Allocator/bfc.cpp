@@ -2,11 +2,14 @@
 #include "bfc.h"
 #include <algorithm>
 
+#undef min;
+#undef max;
+
 namespace memory {
 
 	BfcAllocator::~BfcAllocator() {
 		shrink();
-		FW_ASSERT(chunkRegister_.empty());
+		// FW_ASSERT(chunkRegister_.empty());
 	}
 
 	void* BfcAllocator::allocateRaw(size_t nbytes) {
@@ -28,7 +31,7 @@ namespace memory {
 			}
 		}
 
-		FW_THROW(AllocFailed) <<
+		FW_NO_THROW(AllocFailed) <<
 			sstr("BfcAllocator::allocate: memory allocation failed."
 				" Try to allocate ", roundedBytes, " bytes");
 	}

@@ -59,13 +59,22 @@ __global__ void getDirections(float *directions, const float* angles,
 
 }
 
-void initRand(curandState *dev_states, size_t size) {
+void initFixedRand(curandState *dev_states, size_t size) {
 	static clock_t seed;
 	static std::once_flag inited;
 	std::call_once(inited, [] { seed = clock(); });
 	size_t blockDim = 256;
 	size_t gridDim = ceilAlign(size, blockDim);
 	kernel_set_random<<<gridDim, blockDim>>>(dev_states, seed);
+	CUDACHECK(cudaGetLastError());
+}
+
+void initRand(curandState *dev_states, size_t size) {
+	clock_t seed = clock();
+	size_t blockDim = 256;
+	size_t gridDim = ceilAlign(size, blockDim);
+	kernel_set_random << <gridDim, blockDim >> > (dev_states, seed);
+	CUDACHECK(cudaGetLastError());
 }
 
 size_t normalFireworkDirections(float* dDirections,
@@ -89,13 +98,45 @@ size_t normalFireworkDirections(float* dDirections,
 		sizeof(size_t), cudaMemcpyDeviceToHost));
 	curandState *devStates;
 	CUDACHECK(cudaMallocAlign(&devStates, sizeof(curandState) * numDirections));
-	initRand(devStates, numDirections);
+	initFixedRand(devStates, numDirections);
 
 	normalFw::getDirections << <nGroups, nIntersectingSurfaceParticle >> > (
 		dDirections, dAngles, dSizes, dOffsets, xStretch, xRate,
 		yStretch, yRate, zStretch, zRate, devStates);
 	cudaFreeAll(dSizes, dOffsets, dAngles, devStates);
 	return numDirections;
+}
+
+namespace circleFw {
+__global__ void circleFireworkDirections(float* directions, float angle,
+		float xStretch, float xRate, float yStretch, float yRate,
+		float zStretch, float zRate, curandState *devStates) {
+	size_t idx = threadIdx.x;
+	xRate = (2 * abs(curand_uniform(devStates + idx)) - 1) * xRate + xStretch;
+	yRate = (2 * abs(curand_uniform(devStates + idx)) - 1) * yRate + yStretch;
+	zRate = (2 * abs(curand_uniform(devStates + idx)) - 1) * zRate + zStretch;
+	directions[3 * idx] = cosf(angle * idx) * xRate;
+	directions[3 * idx + 1] = 0 * yRate;
+	directions[3 * idx + 2] = sinf(angle * idx) * zRate;
+}
+}
+
+size_t circleFireworkDirections(float* dDirections,
+	size_t nIntersectingSurfaceParticle,
+	float xRate, float yRate, float zRate,
+	float xStretch, float yStretch, float zStretch) {
+	float angle =  M_PI * 2 / static_cast<float>(nIntersectingSurfaceParticle);
+	curandState *devStates;
+	CUDACHECK(cudaMallocAlign(&devStates, sizeof(curandState) *
+		nIntersectingSurfaceParticle));
+	initFixedRand(devStates, nIntersectingSurfaceParticle);
+
+	circleFw::circleFireworkDirections <<<1, nIntersectingSurfaceParticle >>> (
+		dDirections, angle, xStretch, xRate,
+		yStretch, yRate, zStretch, zRate, devStates);
+	CUDACHECK(cudaGetLastError());
+	cudaFreeAll(devStates);
+	return nIntersectingSurfaceParticle;
 }
 
 namespace starfeFw{

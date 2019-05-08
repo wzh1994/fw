@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include "../fw/exceptions.h"
 #include <cuda_runtime.h>
-
+#undef min;
 namespace memory {
 constexpr size_t kAlignment = 512;
 class BfcAllocator {
@@ -77,7 +77,7 @@ private:
 	mutable mutex_t mut_;
 
 private:
-	BfcAllocator(size_t limit = 6000000000) : limit_(limit){
+	BfcAllocator(size_t limit = 8000000000) : limit_(limit){
 		totalReservedBytes_ = 0;
 		currExtendBytes_ = roundBytes(0x100000);
 	}
@@ -94,7 +94,11 @@ private:
 
 	void* allocateOnDevice(size_t nbytes) {
 		void* ptr;
-		cudaMalloc(&ptr, nbytes);
+		cudaError_t r = cudaMalloc(&ptr, nbytes);
+		if (r != cudaSuccess) {
+			FW_THROW(AllocFailed) << sstr("Cuda malloc failed when trying to "
+				"malloc ", nbytes, " bytes!");
+		}
 		currCached_ += nbytes;
 		if (currCached_ > peakCached_) {
 			peakCached_.store(currCached_.load());
