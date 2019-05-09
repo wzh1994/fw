@@ -4,6 +4,7 @@
 #include <memory>
 #include "exceptions.h"
 #include "Camera.h" 
+#include "fwrule.h"
 
 namespace firework{
 
@@ -120,7 +121,8 @@ enum class FireWorkType {
 
 // 构造所有FireWork类的唯一入口函数
 __declspec(dllexport)
-FwBase* getFirework(FireWorkType, float*, bool initAttr = true, size_t bufferSize = 200000000);
+FwBase* getFirework(FireWorkType, float*,
+	bool initAttr = true, size_t bufferSize = 200000000);
 
 }
 

@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "../fw/exceptions.h"
+#undef min
 
 class VideoProc {
 	using string_t = std::string;
@@ -22,6 +23,10 @@ public:
 		cv::VideoWriter video(fname_ + ".avi", cv::CAP_ANY, 24.0, cv::Size(width_, height_));
 		for (T s = start; s != end; ++s) {
 			video << *s;
+		}
+		size_t len = end - start;
+		for (size_t i = len; i < 49; ++i) {
+			video << cv::Mat(width_, height_, CV_8UC3, cv::Scalar(0, 0, 0));
 		}
 	}
 

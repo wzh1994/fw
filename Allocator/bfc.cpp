@@ -2,8 +2,8 @@
 #include "bfc.h"
 #include <algorithm>
 
-#undef min;
-#undef max;
+#undef min
+#undef max
 
 namespace memory {
 

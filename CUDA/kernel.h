@@ -30,9 +30,7 @@ inline size_t ceilAlign(size_t size, size_t align = kMmaxBlockDim) {
 #define CUDACHECK(cmd) do {                         \
   cudaError_t e = cmd;                              \
   if( e != cudaSuccess ) {                          \
-    printf("Failed: Cuda error %s:%d '%s'\n",       \
-        __FILE__,__LINE__,cudaGetErrorString(e));   \
-    exit(1);                                        \
+    FW_NO_THROW(ExecutionFailed);                   \
   }                                                 \
 } while(0)
 

@@ -26,10 +26,12 @@ FwBase* getFirework(FireWorkType type, float* args, bool initAttr, size_t buffer
 		return new NormalFirework(args, initAttr, bufferSize);
 		break;
 	case FireWorkType::DualMixture:
-		return new NormalMixtureFirework(args, 2, initAttr);
+		FW_ASSERT(initAttr);
+		return new NormalMixtureFirework(args, 2);
 		break;
 	case FireWorkType::TriplicateMixture:
-		return new NormalMixtureFirework(args, 3, initAttr);
+		FW_ASSERT(initAttr);
+		return new NormalMixtureFirework(args, 3);
 		break;
 	case FireWorkType::MultiExplosion:
 		return new MultiExplosionFirework(args, initAttr);

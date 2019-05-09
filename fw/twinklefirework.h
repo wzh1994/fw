@@ -28,9 +28,9 @@ namespace firework {
 			: FwRenderBase(args) {
 			nEboToInit_ = bufferSize;
 			nVboToInit_ = bufferSize;
-			nFrames_ = 49;
-			nInterpolation_ = 15;
-			scaleRate_ = 0.025f;
+			nFrames_ = kDefaultFrames;
+			nInterpolation_ = kDefaultInterpolation;
+			scaleRate_ = kDefaultScaleRate;
 			pStartColors_ = args_;
 			pStartSizes_ = pStartColors_ + 3 * nFrames_;
 			pXAcc_ = pStartSizes_ + nFrames_;
@@ -47,36 +47,8 @@ namespace firework {
 			pMaxLifeTime_ = pRandomRate_ + 1;
 
 			if (initAttr) {
-				BeginGroup(1, 3);
-					AddColorGroup("初始颜色");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("初始尺寸");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("X方向加速度");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("Y方向加速度");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("离心速度");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("内环尺寸");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("内环色彩增强");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("可见粒子束比例");
-				EndGroup();
-				AddValue("颜色衰减率");
-				AddValue("尺寸衰减率");
-				AddVec3("初始位置");
-				AddValue("横截面粒子数量");
-				AddValue("随机比率");
-				AddValue("寿命");
+				TWINKLE_RULE_GROUP(std::wstring(L""));
+				TWINKLE_RULE_VALUE(std::wstring(L""));
 			}
 		}
 

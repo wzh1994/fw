@@ -19,6 +19,8 @@ namespace firework {
 		float* pCrossSectionNum_;
 		float* pRandomRate_;
 		float* pMaxLifeTime_;
+		float* pNorm_;
+		float* pAngleFromMormal_;
 
 	private:
 		CircleFirework(float* args, bool initAttr = true,
@@ -26,9 +28,9 @@ namespace firework {
 			: FwRenderBase(args) {
 			nEboToInit_ = bufferSize;
 			nVboToInit_ = bufferSize;
-			nFrames_ = 49;
-			nInterpolation_ = 15;
-			scaleRate_ = 0.025f;
+			nFrames_ = kDefaultFrames;
+			nInterpolation_ = kDefaultInterpolation;
+			scaleRate_ = kDefaultScaleRate;
 			pStartColors_ = args_;
 			pStartSizes_ = pStartColors_ + 3 * nFrames_;
 			pXAcc_ = pStartSizes_ + nFrames_;
@@ -42,42 +44,20 @@ namespace firework {
 			pCrossSectionNum_ = pStartPos_ + 3;
 			pRandomRate_ = pCrossSectionNum_ + 1;
 			pMaxLifeTime_ = pRandomRate_ + 1;
+			pNorm_ = pMaxLifeTime_ + 1;
+			pAngleFromMormal_ = pNorm_ + 3;
 
 			if (initAttr) {
-				BeginGroup(1, 3);
-					AddColorGroup("初始颜色");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("初始尺寸");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("X方向加速度");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("Y方向加速度");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("离心速度");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("内环尺寸");
-				EndGroup();
-				BeginGroup(1, 1);
-					AddScalarGroup("内环色彩增强");
-				EndGroup();
-				AddValue("颜色衰减率");
-				AddValue("尺寸衰减率");
-				AddVec3("初始位置");
-				AddValue("横截面粒子数量");
-				AddValue("随机比率");
-				AddValue("寿命");
+				CIRCLE_RULE_GROUP(std::wstring(L""));
+				CIRCLE_RULE_VALUE(std::wstring(L""));
 			}
 		}
 
 		size_t initDirections() {
 			// 先获取所有的方向, 给dDirections_赋值
 			size_t n = static_cast<size_t>(*pCrossSectionNum_);
-			nParticleGroups_ = circleFireworkDirections(dDirections_, n,
+			nParticleGroups_ = circleFireworkDirections(
+				dDirections_, n, pNorm_, *pAngleFromMormal_,
 				*pRandomRate_, *pRandomRate_, *pRandomRate_);
 			return nParticleGroups_;
 		}

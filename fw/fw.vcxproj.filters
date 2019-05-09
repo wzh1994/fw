@@ -99,6 +99,9 @@
     <ClInclude Include="twinklefirework.h">
       <Filter>include\Firework</Filter>
     </ClInclude>
+    <ClInclude Include="fwrule.h">
+      <Filter>include\Firework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fwDlg.cpp">

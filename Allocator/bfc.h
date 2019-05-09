@@ -11,7 +11,8 @@
 #include <unordered_map>
 #include "../fw/exceptions.h"
 #include <cuda_runtime.h>
-#undef min;
+#undef min
+
 namespace memory {
 constexpr size_t kAlignment = 512;
 class BfcAllocator {

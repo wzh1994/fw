@@ -266,8 +266,9 @@ size_t normalFireworkDirections(
  */
 
  // 获取normalFirework类型烟花的初始方向，返回其方向的数量
-size_t circleFireworkDirections(float* dDirections,
-	size_t nIntersectingSurfaceParticle,
+size_t circleFireworkDirections(
+	float* dDirections, size_t nIntersectingSurfaceParticle,
+	float* norm, float angleFromNormal = 0,
 	float xRate = 0.1, float yRate = 0.1, float zRate = 0.1,
 	float xStretch = 1, float yStretch = 1, float zStretch = 1);
 

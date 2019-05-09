@@ -208,6 +208,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <ClInclude Include="fireworkrenderbase.h" />
     <ClInclude Include="format.h" />
     <ClInclude Include="fwDlg.h" />
+    <ClInclude Include="fwrule.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="mixturefirework.h" />
     <ClInclude Include="mixturefireworkbase.h" />
