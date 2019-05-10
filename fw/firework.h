@@ -112,10 +112,15 @@ enum class FireWorkType {
 	Normal = 0,
 	MultiExplosion = 1,
 	Strafe = 2,
-	CircleFirework = 3,
-	TwinkleFirework = 4,
+	Circle = 3,
+	Twinkle = 4,
 	DualMixture = 5,
-	TriplicateMixture = 6
+	TriplicateMixture = 6,
+	NormalCircleAndTwinkle = 7,
+	FiveNormal = 8,
+	SixCircle = 9,
+	ThreeNormalAndTwinkle = 10,
+	ThreeNormalCircleTwinkle = 11
 };
 
 

@@ -82,7 +82,7 @@ private:
 		scale(dStartPoses_, scaleRate_, 3 * nParticleGroups_);
 
 		fill(dStartFrames_, 0, nParticleGroups_);
-		fill(dLifeTime_, *pMaxLifeTime_, nParticleGroups_);
+		fill(dLifeTime_, static_cast<size_t>(*pMaxLifeTime_), nParticleGroups_);
 
 		CUDACHECK(cudaMemcpy(dShiftX_, pXAcc_,
 			nFrames_ * sizeof(float), cudaMemcpyHostToDevice));

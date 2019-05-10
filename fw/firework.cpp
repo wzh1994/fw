@@ -39,11 +39,36 @@ FwBase* getFirework(FireWorkType type, float* args, bool initAttr, size_t buffer
 	case FireWorkType::Strafe:
 		return new StrafeFirework(args, initAttr);
 		break;
-	case FireWorkType::CircleFirework:
+	case FireWorkType::Circle:
 		return new CircleFirework(args, initAttr);
 		break;
-	case FireWorkType::TwinkleFirework:
+	case FireWorkType::Twinkle:
 		return new TwinkleFirework(args, initAttr);
+		break;
+	case FireWorkType::NormalCircleAndTwinkle:
+		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>{
+			FireWorkType::Normal,
+			FireWorkType::Circle,
+			FireWorkType::Twinkle});
+	case FireWorkType::FiveNormal:
+		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>(
+			5, FireWorkType::Normal));
+	case FireWorkType::SixCircle:
+		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>(
+			6, FireWorkType::Circle));
+	case FireWorkType::ThreeNormalAndTwinkle:
+		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>{
+			FireWorkType::Normal,
+			FireWorkType::Normal,
+			FireWorkType::Normal,
+			FireWorkType::Twinkle});
+	case FireWorkType::ThreeNormalCircleTwinkle:
+		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>{
+			FireWorkType::Normal,
+			FireWorkType::Normal,
+			FireWorkType::Normal,
+			FireWorkType::Circle,
+			FireWorkType::Twinkle});
 		break;
 	default:
 		FW_NOTSUPPORTED << "Invalid firework type!";

@@ -16,7 +16,7 @@ class VideoProc {
 	int width_, height_;
 	size_t currFrame_;
 public:
-	VideoProc(string_t name);
+	VideoProc(string_t name, string_t appendix = ".avi");
 
 	template <class T>
 	void saveIter(T start,T end) {
@@ -122,8 +122,9 @@ void opencv_mouse_callback(int event, int x, int y, int flags, void* ustc) {
 	}
 }
 
-VideoProc::VideoProc(string_t name) : fname_(name), x_(0), y_(0), currFrame_(0) {
-	cap_.open(name + ".avi");
+VideoProc::VideoProc(string_t name, string_t appendix)
+	: fname_(name), x_(0), y_(0), currFrame_(0) {
+	cap_.open(name + appendix);
 	FW_ASSERT(cap_.isOpened()) << "Error open movies given: " << name;
 	totalFrame_ = cap_.get(cv::CAP_PROP_FRAME_COUNT);
 	width_ = cap_.get(cv::CAP_PROP_FRAME_WIDTH);

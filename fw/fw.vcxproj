@@ -244,6 +244,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <None Include="..\x64\Release\fw.vs" />
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
     <None Include="res\fw.rc2" />
   </ItemGroup>
   <ItemGroup>

@@ -37,14 +37,14 @@ class MultiKindMixtureFirework final : public MixtureFireworkBase {
 		size_t offset = 0;
 		size_t index = 1;
 		for (auto it = types.begin(); it != types.end(); ++it, ++index) {
-			fws.emplace_back(getFirework(*it, args + offset, false));
+			fws.emplace_back(getFirework(*it, args + offset, false, 80000000));
 			switch (*it) {
 			case FireWorkType::Normal:
 				NORMAL_RULE_GROUP(std::to_wstring(index));
 				NORMAL_RULE_VALUE(std::to_wstring(index));
 				offset += kDefaultNormalArgs;
 				break;
-			case FireWorkType::CircleFirework:
+			case FireWorkType::Circle:
 				CIRCLE_RULE_GROUP(std::to_wstring(index));
 				CIRCLE_RULE_VALUE(std::to_wstring(index));
 				offset += kDefaultCircleArgs;
@@ -54,7 +54,7 @@ class MultiKindMixtureFirework final : public MixtureFireworkBase {
 				STRAFE_RULE_VALUE(std::to_wstring(index));
 				offset += kDefaultStrafeArgs;
 				break;
-			case FireWorkType::TwinkleFirework:
+			case FireWorkType::Twinkle:
 				TWINKLE_RULE_GROUP(std::to_wstring(index));
 				TWINKLE_RULE_VALUE(std::to_wstring(index));
 				offset += kDefaultTwinkleArgs;

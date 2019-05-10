@@ -5,6 +5,7 @@
 #include "kernels.h"
 #include "Shader.h"
 #include <utils.h>
+#include "test.h"
 
 #ifdef USE_CUDA_KERNEL //定义在vs工程的预处理器中
 using namespace cudaKernel;
@@ -175,7 +176,6 @@ public:
 
 
 		CUDACHECK(cudaDeviceSynchronize());
-
 		if (visibleRate_ < 1.0f) {
 			realNGroups_ = compress(dPoints_, dColors_,
 				dSizes_, nParticleGroups_, nFrames_, dGroupOffsets_,
@@ -185,12 +185,14 @@ public:
 				dPoints_, dColors_, dSizes_, nParticleGroups_,
 				nFrames_, dGroupOffsets_, dGroupStarts_);
 		}
-
 		CUDACHECK(cudaDeviceSynchronize());
 		if (realNGroups_ > 0) {
+			//printSplitLine("before");
+			//show(dPoints_, dGroupOffsets_, realNGroups_, 3);
+			//printSplitLine("after");
 			interpolation(dPoints_, dColors_, dSizes_, dGroupOffsets_,
 				realNGroups_, nFrames_, nInterpolation_);
-
+			//show(dPoints_, dGroupOffsets_, realNGroups_, 3);
 			CUDACHECK(cudaDeviceSynchronize());
 			size_t shiftSize =
 				nFrames_ * (nInterpolation_ + 1) - nInterpolation_;

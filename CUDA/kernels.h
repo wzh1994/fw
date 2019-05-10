@@ -30,6 +30,7 @@ cudaError_t cudaMallocAlign(T** ptr, size_t size) {
 #ifdef USE_ALLOCATOR
 	*ptr = static_cast<T*>(
 		memory::cudaAllocator().allocate(size));
+	cudaMemset(*ptr, 0, size);
 	return cudaGetLastError();
 #else
 	return cudaMalloc(ptr, size);
