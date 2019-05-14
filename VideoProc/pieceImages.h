@@ -13,8 +13,8 @@ inline void pieceImages(std::vector<std::string> fnames,
 	std::cout << result.size() << std::endl;
 	for (size_t i = 0; i < nCol; ++i) {
 		for (size_t j = 0; j < nRow; ++j) {
-			std::cout << i << " " << j << " "<< padding * (j + 1) + row * j  <<" " << padding * (i + 1) + col * i << std::endl;
 			size_t index = i * nRow + j;
+			std::cout << i << " " << j << " "<< padding * (j + 1) + row * j  <<" " << padding * (i + 1) + col * i <<  " " << fnames[index] << std::endl;
 			cv::Mat imageROI = result(cv::Rect(
 				padding * (j + 1) + row * j,
 				padding * (i + 1) + col * i,

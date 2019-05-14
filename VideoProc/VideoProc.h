@@ -93,10 +93,20 @@ public:
 		cv::imshow(fname_.c_str(), imageROI);
 	}
 
-	void toPics() {
+	void toPics(bool otsu = false) {
 		for (size_t i = 0; i < totalFrame_; ++i) {
 			string_t name = fname_ + "/" + std::to_string(i) + ".png";
-			cv::imwrite(name, photos_[i]);
+			if (otsu) {
+				cv::Mat m1(photos_[i].cols, photos_[i].rows, CV_8UC1, cv::Scalar(0));
+				cv::cvtColor(photos_[i].clone(), m1, CV_BGR2GRAY);
+				cv::threshold(m1.clone(), m1, 0, 255, cv::THRESH_OTSU);
+				cv::Mat m2(m1.cols, m1.rows, CV_8UC3, cv::Scalar(0, 0, 0));
+				photos_[i].copyTo(m2, m1);
+				cv::imwrite(name, m2);
+			}
+			else {
+				cv::imwrite(name, photos_[i]);
+			}
 		}
 	}
 };
@@ -129,7 +139,7 @@ VideoProc::VideoProc(string_t name, string_t appendix)
 	totalFrame_ = cap_.get(cv::CAP_PROP_FRAME_COUNT);
 	width_ = cap_.get(cv::CAP_PROP_FRAME_WIDTH);
 	height_ = cap_.get(cv::CAP_PROP_FRAME_HEIGHT);
-	for (size_t i = 0; i < totalFrame_; ++i) {
+	for (size_t i = 0; i < std::min(totalFrame_, 200ull); ++i) {
 		cv::Mat frame;
 		cap_ >> frame;
 		FW_ASSERT(!frame.empty()) << sstr("Error get frames: ", i);

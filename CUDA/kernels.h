@@ -287,8 +287,8 @@ size_t strafeFireworkDirections(
  * ==================================
  */
 // 获取二次爆炸的粒子的初位置
-void getSubFireworkPositions(
-	float* dStartPoses, float* dDirections, size_t nDirs,
+void getSubFireworkPositions(float* dStartPoses,
+	float* dDirections, const float* dSubDirs, size_t nDirs, size_t nSubDirs,
 	size_t nSubGroups, const float* dCentrifugalPos_, size_t startFrame,
 	size_t kShift, const float* dShiftX_, const float* dShiftY_);
 }// end namespace cudaKernel

@@ -13,8 +13,10 @@ class MultiExplosionFirework final : public FwRenderBase {
 
 private:
 	size_t nDirs_;
+	size_t nSubDirs_;
 	size_t nSubGroups_;
 	size_t* dColorAndSizeStarts_;
+	float* dSubDirections_;
 
 private:
 	float* pStartColors_;
@@ -32,6 +34,7 @@ private:
 	float* pMaxLifeTime_;
 	float* pDualExplosionTime_;
 	float* pDualExplosionRate_;
+	float* pSubCrossSectionNum_;
 
 private:
 	MultiExplosionFirework(float* args, bool initAttr = true,
@@ -57,11 +60,13 @@ private:
 		pMaxLifeTime_ = pRandomRate_ + 1;
 		pDualExplosionTime_ = pMaxLifeTime_ + 1;
 		pDualExplosionRate_ = pDualExplosionTime_ + 1;
+		pSubCrossSectionNum_ = pDualExplosionRate_ + 1;
 		if (initAttr) {
 			MULTI_EXPLOSION_RULE_GROUP(std::wstring(L""));
 			MULTI_EXPLOSION_RULE_VALUE(std::wstring(L""));
-
 		}
+
+		CUDACHECK(cudaMallocAlign(&dSubDirections_, 3 * kMaxParticleGroup * sizeof(float)));
 	}
 
 private:
@@ -69,6 +74,7 @@ private:
 		CUDACHECK(cudaMallocAlign(
 			&dColorAndSizeStarts_, nParticleGroups_ * sizeof(size_t)));
 	};
+
 	void releaseAppendixResource() override {
 		cudaFreeAll(dColorAndSizeStarts_);
 	};
@@ -76,14 +82,17 @@ private:
 	size_t initDirections() {
 		// 先获取所有的方向, 给dDirections_赋值
 		size_t n = static_cast<size_t>(*pCrossSectionNum_);
+		size_t nSub = static_cast<size_t>(*pSubCrossSectionNum_);
 		printf("%llu\n", n);
 		nDirs_ = normalFireworkDirections(dDirections_, n,
+			*pRandomRate_, *pRandomRate_, *pRandomRate_);
+		nSubDirs_ = normalFireworkDirections(dSubDirections_, nSub,
 			*pRandomRate_, *pRandomRate_, *pRandomRate_);
 		printf("%llu %f\n", nDirs_, *pDualExplosionRate_);
 		nSubGroups_ = static_cast<size_t>(
 			static_cast<float>(nDirs_) * *pDualExplosionRate_);
-		nParticleGroups_ = nDirs_ + nDirs_ * nSubGroups_;
-		cout << nSubGroups_ << endl;
+		nParticleGroups_ = nDirs_ + nSubDirs_ * nSubGroups_;
+		cout << nSubGroups_ << " " << nSubDirs_  << " " << nParticleGroups_ << endl;
 		FW_ASSERT(nParticleGroups_ < kMaxParticleGroup) << sstr(
 			"We can only support ", kMaxParticleGroup,
 			" particles, however ", nParticleGroups_, "is given");
@@ -93,6 +102,7 @@ private:
 	void getPoints(int currFrame) override {
 		innerSize_ = pInnerSize_[currFrame];
 		innerColor_ = pInnerColor_[currFrame];
+		show(dStartPoses_, (nDirs_ + nSubDirs_ * nSubGroups_) * 3);
 		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
 			dStartFrames_, dLifeTime_, nParticleGroups_, dDirections_,
 			dCentrifugalPos_, dStartPoses_, currFrame, nFrames_,
@@ -149,9 +159,12 @@ public:
 
 		fill(dStartPoses_, pStartPos_, nDirs_, 3);
 		scale(dStartPoses_, scaleRate_, 3 * nDirs_);
-		getSubFireworkPositions(dStartPoses_ + 3 * nDirs_, dDirections_,
-			nDirs_, nSubGroups_, dCentrifugalPos_, *pDualExplosionTime_,
-			nFrames_ * (nInterpolation_ + 1) - nInterpolation_, dShiftX_, dShiftY_);
+
+		getSubFireworkPositions(dStartPoses_ + 3 * nDirs_, dDirections_, dSubDirections_,
+			nDirs_, nSubDirs_, nSubGroups_, dCentrifugalPos_, *pDualExplosionTime_,
+			*pDualExplosionTime_ * (nInterpolation_ + 1) - nInterpolation_, dShiftX_, dShiftY_);
+
+		// cudaMemset(dStartPoses_ + 3 * nDirs_, 0, nSubDirs_ * nSubGroups_ * 3 * sizeof(float));
 		//show(dStartPoses_, nParticleGroups_ * 3, nDirs_ * 3);
 	}
 
@@ -172,6 +185,7 @@ public:
 	~MultiExplosionFirework() override {
 		releaseStaticResources();
 		releaseDynamicResources();
+		cudaFreeAll(dSubDirections_);
 	}
 };
 

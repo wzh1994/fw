@@ -34,16 +34,16 @@ FwBase* getFirework(FireWorkType type, float* args, bool initAttr, size_t buffer
 		return new NormalMixtureFirework(args, 3);
 		break;
 	case FireWorkType::MultiExplosion:
-		return new MultiExplosionFirework(args, initAttr);
+		return new MultiExplosionFirework(args, initAttr, bufferSize);
 		break;
 	case FireWorkType::Strafe:
-		return new StrafeFirework(args, initAttr);
+		return new StrafeFirework(args, initAttr, bufferSize);
 		break;
 	case FireWorkType::Circle:
-		return new CircleFirework(args, initAttr);
+		return new CircleFirework(args, initAttr, bufferSize);
 		break;
 	case FireWorkType::Twinkle:
-		return new TwinkleFirework(args, initAttr);
+		return new TwinkleFirework(args, initAttr, bufferSize);
 		break;
 	case FireWorkType::NormalCircleAndTwinkle:
 		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>{
@@ -55,7 +55,7 @@ FwBase* getFirework(FireWorkType type, float* args, bool initAttr, size_t buffer
 			5, FireWorkType::Normal));
 	case FireWorkType::SixCircle:
 		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>(
-			6, FireWorkType::Circle));
+			6, FireWorkType::Circle), 40000000);
 	case FireWorkType::ThreeNormalAndTwinkle:
 		return new MultiKindMixtureFirework(args, std::vector<FireWorkType>{
 			FireWorkType::Normal,

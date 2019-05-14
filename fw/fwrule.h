@@ -94,7 +94,8 @@ constexpr size_t kDefaultTwinkleArgs = kDefaultNormalArgs + kDefaultFrames;
 #define MULTI_EXPLOSION_RULE_VALUE(_x)  \
 	NORMAL_RULE_VALUE(_x)               \
 	AddValue("二次爆炸时间" + _x);      \
-	AddValue("二次爆炸比率" + _x);
+	AddValue("二次爆炸比率" + _x);		\
+	AddValue("子烟花横截面粒子数" + _x);
 
 constexpr size_t kDefaultMultiExplosionArgs = kDefaultNormalArgs + 2;
 #define kDynamicMultiExplosionArgs (kDynamicNormalArgs + 2)

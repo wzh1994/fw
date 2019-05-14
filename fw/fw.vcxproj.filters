@@ -60,9 +60,6 @@
     <ClInclude Include="Shader.h">
       <Filter>include\OpenGl</Filter>
     </ClInclude>
-    <ClInclude Include="particle.h">
-      <Filter>include\Firework</Filter>
-    </ClInclude>
     <ClInclude Include="exceptions.h">
       <Filter>include\base</Filter>
     </ClInclude>
@@ -135,6 +132,7 @@
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
     <None Include="ClassDiagram2.cd" />
+    <None Include="ClassDiagram3.cd" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\fw.ico">

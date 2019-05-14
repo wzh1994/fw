@@ -24,10 +24,11 @@ __global__ void calcFinalPosition(
 	size_t numPointsThisGroup = groupOffsets[bid + 1] - groupOffsets[bid];
 	if (tid < numPointsThisGroup) {
 		size_t start = startFrames[bid] * (nInterpolation + 1);
-		size_t end = groupStarts[bid] * (nInterpolation + 1) + tid;
+		size_t end = (startFrames[bid] + groupStarts[bid]) * (nInterpolation + 1) + tid; // (groupStarts[bid] - startFrames[bid]) * (nInterpolation + 1) + tid;
 		basePtr[3 * tid] += xShiftMatrix[start * shiftsize + end];
 		basePtr[3 * tid + 1] += yShiftMatrix[start * shiftsize + end];
-		if (bid == 0) {
+		if (tid == 0) {
+			printf("%llu, %llu: %llu, %llu, %llu\n", bid, tid, startFrames[bid], groupStarts[bid], end);
 			deviceDebugPrint("FinalPos: (%llu, %llu, %llu) : %llu, %llu, %f, %f\n",
 				bid, tid, numPointsThisGroup, start, end,
 				xShiftMatrix[start * shiftsize + end],

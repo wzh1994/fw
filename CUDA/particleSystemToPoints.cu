@@ -84,18 +84,29 @@ __global__ void particleSystemToPoints(
 	size_t tid = threadIdx.x;
 	size_t idx = bid * blockDim.x + tid;
 	if (tid == 0) {
-		groupStarts[bid] = startFrames[bid];
+		groupStarts[bid] = 0;
 	}
 	ll startFrame = static_cast<ll>(startFrames[bid]) + static_cast<ll>(tid);
 	ll existFrame = static_cast<ll>(currFrame) - startFrame;
 	size_t mIdx = (tid + colorAndSizeStarts[bid]) * blockDim.x + existFrame;
 	if (existFrame >= 0 && startFrame < lifeTime[bid]) {
-		points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
-			centrifugalPos[tid];
-		points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *
-			centrifugalPos[tid];
-		points[3 * idx + 2] = poses[bid * 3 + 2] + directions[bid * 3 + 2] *
-			centrifugalPos[tid];
+		if (colorAndSizeStarts[bid] == 0) {
+			points[3 * idx] = poses[bid * 3] + directions[bid * 3] *
+				centrifugalPos[tid];
+			points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] *
+				centrifugalPos[tid];
+			points[3 * idx + 2] = poses[bid * 3 + 2] + directions[bid * 3 + 2] *
+				centrifugalPos[tid];
+		} else {
+			deviceDebugPrint("%llu %llu: %f, %f, %f\n", bid, tid,
+				directions[bid * 3], directions[bid * 3 + 1], directions[bid * 3 + 2]);
+			points[3 * idx] = poses[bid * 3] + directions[bid * 3] * 
+				(centrifugalPos[tid + colorAndSizeStarts[bid]] - centrifugalPos[colorAndSizeStarts[bid]]);
+			points[3 * idx + 1] = poses[bid * 3 + 1] + directions[bid * 3 + 1] * 
+				(centrifugalPos[tid + colorAndSizeStarts[bid]] - centrifugalPos[colorAndSizeStarts[bid]]);
+			points[3 * idx + 2] = poses[bid * 3 + 2] + directions[bid * 3 + 2] * 
+				(centrifugalPos[tid + colorAndSizeStarts[bid]] - centrifugalPos[colorAndSizeStarts[bid]]);
+		}
 		colors[3 * idx] = colorMatrix[3 * mIdx];
 		colors[3 * idx + 1] = colorMatrix[3 * mIdx + 1];
 		colors[3 * idx + 2] = colorMatrix[3 * mIdx + 2];

@@ -217,7 +217,6 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <ClInclude Include="normalfirework.h" />
     <ClInclude Include="OpenGLWidget.h" />
     <ClInclude Include="OpenGLWindow.h" />
-    <ClInclude Include="particle.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stdafx.h" />
@@ -245,6 +244,7 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
     <None Include="ClassDiagram2.cd" />
+    <None Include="ClassDiagram3.cd" />
     <None Include="res\fw.rc2" />
   </ItemGroup>
   <ItemGroup>

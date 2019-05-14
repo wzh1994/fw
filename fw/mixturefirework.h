@@ -31,13 +31,14 @@ public:
 
 class MultiKindMixtureFirework final : public MixtureFireworkBase {
 	friend FwBase* getFirework(FireWorkType, float*, bool, size_t);
-	MultiKindMixtureFirework(float* args, std::vector<FireWorkType> types)
+	MultiKindMixtureFirework(float* args, std::vector<FireWorkType> types,
+			size_t bufferSize = 80000000)
 		: MixtureFireworkBase(args, types.size()) {
 		nFrames_ = kDefaultFrames;
 		size_t offset = 0;
 		size_t index = 1;
 		for (auto it = types.begin(); it != types.end(); ++it, ++index) {
-			fws.emplace_back(getFirework(*it, args + offset, false, 80000000));
+			fws.emplace_back(getFirework(*it, args + offset, false, bufferSize));
 			switch (*it) {
 			case FireWorkType::Normal:
 				NORMAL_RULE_GROUP(std::to_wstring(index));
