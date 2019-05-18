@@ -272,6 +272,29 @@ void CfwDlg::myInitialize() {
 		widgetWidth, widgetHeight, SWP_NOZORDER);
 
 	/* -------------------------------
+	 * list
+	 * -------------------------------
+	 */
+	CWnd  *pListWnd = GetDlgItem(IDC_LIST1);
+	pListWnd->SetWindowPos(NULL, leftMargin,
+		topMargin + subWindowHeight + rowMargin * 2 + widgetHeight,
+		widgetWidth, widgetHeight * 3, SWP_NOZORDER);
+	ListView_SetExtendedListViewStyle(
+		m_list.GetSafeHwnd(), m_list.GetExStyle() | LVS_EX_CHECKBOXES );
+	if (fw->isMixture()) {
+		m_list.ShowWindow(true);
+		const bool* showFlags = fw->showFlags();
+		for (size_t i = 0; i < fw->nSubFw(); ++i) {
+			BOOL fcheck = showFlags[i] ? 1 : 0;
+			m_list.InsertItem(i, (L"烟花" + std::to_wstring(i + 1)).c_str());
+			m_list.SetCheck(i, fcheck);
+		}
+	} else {
+		m_list.ShowWindow(false);
+	}
+
+
+	/* -------------------------------
 	 * slider and its control button
 	 * -------------------------------
 	 */
@@ -317,7 +340,7 @@ void CfwDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON3, m_btn_conform);
 	DDX_Control(pDX, IDC_BUTTON5, m_btn_color);
 	DDX_Control(pDX, IDC_BUTTON6, m_btn_get_color);
-	
+	DDX_Control(pDX, IDC_LIST1, m_list);
 }
 
 BEGIN_MESSAGE_MAP(CfwDlg, CDialogEx)
@@ -334,6 +357,7 @@ BEGIN_MESSAGE_MAP(CfwDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON6, &CfwDlg::changeGetColorStatus)
 	ON_BN_CLICKED(IDC_BUTTON7, &CfwDlg::OnBnClickAutoPlay)
 	ON_CBN_SELCHANGE(IDC_COMBO2, &CfwDlg::OnCbnSelchangeCombo2)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CfwDlg::OnLvnItemchangedList1)
 END_MESSAGE_MAP()
 
 // CfwDlg 消息处理程序
@@ -604,4 +628,22 @@ void CfwDlg::OnTimer(UINT_PTR nIDEvent) {
 	default:
 		break;
 	}
+}
+
+
+void CfwDlg::OnLvnItemchangedList1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	*pResult = 0;
+
+	int nItem, i;
+	nItem = m_list.GetItemCount();
+	for (i = 0; i < nItem; ++i) {
+		bool* showFlags = fw->showFlags();
+		showFlags[i] = m_list.GetCheck(i);
+	}
+	int pos = m_sliderc.GetPos();
+	fw->prepare();
+	fw->GetParticles(pos);
+	pOpenGLWindow->Invalidate();
 }

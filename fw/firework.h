@@ -97,10 +97,29 @@ public:
 			attrs_[idx].offset + frame * attrs_[idx].stride;
 	}
 
+	virtual bool isMixture() const noexcept{
+		return false;
+	}
+
+	virtual size_t nSubFw() const noexcept {
+		return 0;
+	}
+
+	virtual bool* showFlags() {
+		FW_NOTSUPPORTED << "Show flag is not supported yet!";
+		return nullptr;
+	}
+
+	virtual const bool* showFlags() const {
+		FW_NOTSUPPORTED << "Show flag is not supported yet!";
+		return nullptr;
+	}
+
 	virtual void initialize() {
 		FW_ASSERT(!isInited_) << "Cannot init fw class more than once!";
 		isInited_ = true;
 	};
+
 	virtual void GetParticles(int currFrame) = 0;
 	virtual void RenderScene(const Camera& camera) = 0;
 	virtual void prepare() = 0;

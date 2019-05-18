@@ -96,4 +96,6 @@ private:
 public:
 	afx_msg void OnCbnSelchangeCombo2();
 	
+	afx_msg void OnLvnItemchangedList1(NMHDR *pNMHDR, LRESULT *pResult);
+	CListCtrl m_list;
 };

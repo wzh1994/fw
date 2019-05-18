@@ -3,7 +3,7 @@
 #include "Shader.h"
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
-#undef USE_CUDA_KERNEL
+// #undef USE_CUDA_KERNEL
 #ifdef USE_CUDA_KERNEL //定义在vs工程的预处理器中
 // 使用CUDA计算面片
 #include "kernels.h"
