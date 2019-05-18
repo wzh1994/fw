@@ -10,7 +10,8 @@ protected:
 	std::vector<std::unique_ptr<FwBase>> fws;
 	size_t nSubFw_;
 
-	MixtureFireworkBase(float* args, size_t nSubFw) : nSubFw_(nSubFw), FwBase(args) {}
+	MixtureFireworkBase(float* args, size_t nSubFw)
+		: nSubFw_(nSubFw), FwBase(args) {}
 
 public:
 	// 仅被调用一次

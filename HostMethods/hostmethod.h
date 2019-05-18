@@ -17,9 +17,8 @@ namespace hostMethod {
 		return (size + align - 1ull) / align;
 	}
 
-}
+	using curandState = int;
 
-#define CUDACHECK(x) x
-#define cudaGetLastError() ;
+}
 
 #endif  // FW_HOSTMETHODS_HOSTMETHOD_HPP

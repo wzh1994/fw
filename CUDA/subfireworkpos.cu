@@ -14,8 +14,9 @@
 
 namespace cudaKernel{
 
-__global__ void getSubFireworkPositions(float* startPoses, float* directions,
-		const float* subDirs, size_t nDirs, size_t stride, const float* relativePos,
+__global__ void getSubFireworkPositions(
+		float* startPoses, float* directions, const float* subDirs,
+		size_t nDirs, size_t stride, const float* relativePos,
 		size_t kShift, const float* shiftX_, const float* shiftY_) {
 	size_t bid = blockIdx.x;
 	size_t tid = threadIdx.x;
@@ -36,8 +37,9 @@ void getSubFireworkPositions(float* dStartPoses, float* dDirections,
 		size_t kShift, const float* dShiftX_, const float* dShiftY_) {
 	size_t stride = nDirs / nSubGroups;
 	const float* relativePos = dCentrifugalPos_ + startFrame;
-	getSubFireworkPositions << <nSubGroups, nSubDirs >> > (dStartPoses,
-		dDirections, dSubDirs, nDirs, stride, relativePos, kShift, dShiftX_, dShiftY_);
+	getSubFireworkPositions << <nSubGroups, nSubDirs >> > (
+		dStartPoses, dDirections, dSubDirs, nDirs,
+		stride, relativePos, kShift, dShiftX_, dShiftY_);
 	CUDACHECK(cudaGetLastError());
 	CUDACHECK(cudaDeviceSynchronize());
 }

@@ -50,7 +50,7 @@ inline std::string errorCode2str(ErrorCode c) noexcept {
 
 
 // 方法来自https://blog.csdn.net/windpenguin/article/details/80382344
-// 本地改为调用栈打印成了20层
+// 改为调用栈打印成了20层，并删掉了不需要的输出
 inline std::string TraceStack()
 {
 	static constexpr int MAX_STACK_FRAMES = 20;
@@ -77,13 +77,14 @@ inline std::string TraceStack()
 		//SymSetOptions(SYMOPT_LOAD_LINES);
 		line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 
-		if (SymFromAddr(process, address, &displacementSym, pSymbol)
-			&& SymGetLineFromAddr64(process, address, &displacementLine, &line)) {
-			oss << "\t" << pSymbol->Name << " at " << line.FileName << ":" << line.LineNumber << "(0x" << std::hex << pSymbol->Address << std::dec << ")" << std::endl;
-		}
-		else {
-			// oss << "\terror: " << GetLastError() << std::endl;
-		}
+		if (SymFromAddr(process, address, &displacementSym, pSymbol) &&
+			SymGetLineFromAddr64(process, address, &displacementLine, &line)) {
+			oss << "\t" << pSymbol->Name << " at " << line.FileName << ":" <<
+				line.LineNumber << "(0x" << std::hex << pSymbol->Address <<
+				std::dec << ")" << std::endl;
+		}  /* else {
+			oss << "\terror: " << GetLastError() << std::endl;
+		} */
 	}
 	return oss.str();
 }

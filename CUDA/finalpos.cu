@@ -28,7 +28,8 @@ __global__ void calcFinalPosition(
 		basePtr[3 * tid] += xShiftMatrix[start * shiftsize + end];
 		basePtr[3 * tid + 1] += yShiftMatrix[start * shiftsize + end];
 		if (tid == 0) {
-			printf("%llu, %llu: %llu, %llu, %llu\n", bid, tid, startFrames[bid], groupStarts[bid], end);
+			deviceDebugPrint("%llu, %llu: %llu, %llu, %llu\n",
+				bid, tid, startFrames[bid], groupStarts[bid], end);
 			deviceDebugPrint("FinalPos: (%llu, %llu, %llu) : %llu, %llu, %f, %f\n",
 				bid, tid, numPointsThisGroup, start, end,
 				xShiftMatrix[start * shiftsize + end],

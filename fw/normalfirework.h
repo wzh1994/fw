@@ -74,7 +74,8 @@ private:
 
 		// 获取粒子的速度， 加速度
 		cudaMemset(dSpeed_, 0, (nFrames_ + 1) * sizeof(float));
-		cudaMemcpy(dSpeed_ + 1, pSpeed_, nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(dSpeed_ + 1, pSpeed_,
+			nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
 		cuSum(dCentrifugalPos_, dSpeed_, nFrames_ + 1);
 		scale(dCentrifugalPos_, scaleRate_ * kFrameTime, nFrames_ + 1);
 
@@ -82,7 +83,8 @@ private:
 		scale(dStartPoses_, scaleRate_, 3 * nParticleGroups_);
 
 		fill(dStartFrames_, 0, nParticleGroups_);
-		fill(dLifeTime_, static_cast<size_t>(*pMaxLifeTime_), nParticleGroups_);
+		fill(dLifeTime_,
+			static_cast<size_t>(*pMaxLifeTime_), nParticleGroups_);
 
 		CUDACHECK(cudaMemcpy(dShiftX_, pXAcc_,
 			nFrames_ * sizeof(float), cudaMemcpyHostToDevice));
@@ -116,12 +118,9 @@ public:
 		// 调用父类的初始化
 		FwRenderBase::initialize();
 		allocStaticResources();
-
 		maxNParticleGroups_ = initDirections();
-
 		// 在调用initDirections之后nParticleGroups_ 才有值
 		allocDynamicResources();
-
 		// 所有显存都被分配之后才可以调用prepare
 		prepare();
 	}

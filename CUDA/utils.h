@@ -8,7 +8,8 @@ template<class T>
 void cudaMallocAndCopy(T* &target, const T* source,
 	size_t size_target, size_t size_copy) {
 	CUDACHECK(cudaMallocAlign(&target, size_target * sizeof(T)));
-	CUDACHECK(cudaMemcpy(target, source, size_copy * sizeof(T), cudaMemcpyHostToDevice));
+	CUDACHECK(cudaMemcpy(
+		target, source, size_copy * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 template<class T>

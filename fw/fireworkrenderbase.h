@@ -1,17 +1,24 @@
 #pragma once
 #include "firework.h"
+#include "Shader.h"
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
-#include "kernels.h"
-#include "Shader.h"
-#include <utils.h>
-#include "test.h"
-
+#undef USE_CUDA_KERNEL
 #ifdef USE_CUDA_KERNEL //定义在vs工程的预处理器中
+// 使用CUDA计算面片
+#include "kernels.h"
+#include <curand_kernel.h>
+#include "../CUDA/utils.h"
+#include "../CUDA/test.h"
 using namespace cudaKernel;
 #else
-using namespace hostFunction;
+// 使用CPU计算面片
+#include <hostmethods.hpp>
+#include "../HostMethods/utils.h"
+#include "../HostMethods/dummycudafunctions.h"
+using namespace hostMethod;
 #endif
+
 
 namespace firework {
 
@@ -249,7 +256,7 @@ public:
 		shader_->setMat4("projection", camera.GetProjectionMatrix());
 		if (eboSize_ > 0) {
 			glBindVertexArray(vao);
-			// draw points 0-3 from the currently bound VAO with current in-use shader;
+
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
 			glBlendEquation(GL_MAX);

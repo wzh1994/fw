@@ -78,7 +78,8 @@ namespace firework {
 
 			// 获取粒子的速度， 加速度
 			cudaMemset(dSpeed_, 0, (nFrames_ + 1) * sizeof(float));
-			cudaMemcpy(dSpeed_ + 1, pSpeed_, nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
+			cudaMemcpy(dSpeed_ + 1,
+				pSpeed_, nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
 			cuSum(dCentrifugalPos_, dSpeed_, nFrames_ + 1);
 			scale(dCentrifugalPos_, scaleRate_ * kFrameTime, nFrames_ + 1);
 
@@ -105,10 +106,10 @@ namespace firework {
 		void getPoints(int currFrame) override {
 			innerSize_ = pInnerSize_[currFrame];
 			innerColor_ = pInnerColor_[currFrame];
-			particleSystemToPoints(
-				dPoints_, dColors_, dSizes_, dGroupStarts_, dStartFrames_,
-				dLifeTime_, nParticleGroups_, dDirections_, dCentrifugalPos_,
-				dStartPoses_, currFrame, nFrames_, dColorMatrix_, dSizeMatrix_);
+			particleSystemToPoints(dPoints_, dColors_, dSizes_,
+				dGroupStarts_, dStartFrames_, dLifeTime_, nParticleGroups_,
+				dDirections_, dCentrifugalPos_, dStartPoses_,
+				currFrame, nFrames_, dColorMatrix_, dSizeMatrix_);
 			visibleRate_ = pVisivbleRate_[currFrame];
 		}
 

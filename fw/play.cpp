@@ -90,6 +90,8 @@ void playInNewThread(firework::FireWorkType type,
 			else
 				i = 0;
 		}
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, true);
 	}
 
 	if (genVideo) {

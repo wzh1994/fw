@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{A948741B-78C0-4F32-B47E-8610124D4658}</ProjectGuid>
-    <RootNamespace>HostMethods</RootNamespace>
+    <ProjectGuid>{B4AF7B4E-360E-4B7C-9A0B-1DD7B69C3112}</ProjectGuid>
+    <RootNamespace>FrameDifference</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -45,9 +45,9 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -67,7 +67,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\props\cuda10.props" />
+    <Import Project="..\..\..\props\opencv4_release64.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -79,11 +79,19 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreLinkEvent>
+      <Command>
+      </Command>
+    </PreLinkEvent>
+    <PostBuildEvent>
+      <Command>copy /y "D:\GraduationProject\firework\fw\x64\Release\FrameDifference.dll" "D:\GraduationProject\firework\fw\python"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -116,25 +124,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="dummycudafunctions.h" />
-    <ClInclude Include="hostmethod.h" />
-    <ClInclude Include="hostmethods.hpp" />
-    <ClInclude Include="utils.h" />
+    <ClInclude Include="framedifference.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="argfirstnonezero.cpp" />
-    <ClCompile Include="compress.cpp" />
-    <ClCompile Include="directions.cpp" />
-    <ClCompile Include="fill.cpp" />
-    <ClCompile Include="finalpos.cpp" />
-    <ClCompile Include="interpolation.cpp" />
-    <ClCompile Include="normalize.cpp" />
-    <ClCompile Include="particlesystemtopoints.cpp" />
-    <ClCompile Include="pointtoline.cpp" />
-    <ClCompile Include="reduce.cpp" />
-    <ClCompile Include="scale.cpp" />
-    <ClCompile Include="scan.cpp" />
-    <ClCompile Include="shift.cpp" />
+    <ClCompile Include="framedifference.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

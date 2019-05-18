@@ -726,7 +726,8 @@ __device__ void calcHalfBallItem(float* pBufferBase, float* halfBall,
 
 	for (size_t i = 0; i < kHalfBallPoints; ++i) {
 		if (threadIdx.x == 0) {
-			deviceDebugPrint("%llu, %f, %f, %f", i, halfBall[3 * i], halfBall[3 * i + 1], halfBall[3 * i + 2]);
+			deviceDebugPrint("%llu, %f, %f, %f", i, halfBall[3 * i],
+				halfBall[3 * i + 1], halfBall[3 * i + 2]);
 		}
 		pBufferBase[7 * i] = halfBall[3 * i];
 		pBufferBase[7 * i + 1] = halfBall[3 * i + 1];
@@ -735,11 +736,10 @@ __device__ void calcHalfBallItem(float* pBufferBase, float* halfBall,
 		pBufferBase[7 * i + 4] = g + colorScale;
 		pBufferBase[7 * i + 5] = b + colorScale;
 		pBufferBase[7 * i + 6] = alpha;
-		rotate(axisX, axisY, axisZ, cos_theta, sin_theta,
-			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2]);
-		resizeAndTrans(
-			pBufferBase[7 * i], pBufferBase[7 * i + 1], pBufferBase[7 * i + 2],
-			size, x, y, z);
+		rotate(axisX, axisY, axisZ, cos_theta, sin_theta, pBufferBase[7 * i],
+			pBufferBase[7 * i + 1], pBufferBase[7 * i + 2]);
+		resizeAndTrans(pBufferBase[7 * i], pBufferBase[7 * i + 1],
+			pBufferBase[7 * i + 2], size, x, y, z);
 	}
 }
 
@@ -776,7 +776,8 @@ __global__ void calcLeftHalfBall(
 	calcHalfBallItem(
 		pBufferBase, halfBallLeft, pos[0], pos[1], pos[2], size * sizeScale,
 		color[0], color[1], color[2], normX, normY, normZ, alpha, colorScale);
-	fillHalfBallIndices(indexOffset, pIndicesBase, halfBallIndicesLeft, bufferStart);
+	fillHalfBallIndices(
+		indexOffset, pIndicesBase, halfBallIndicesLeft, bufferStart);
 }
 
 __global__ void calcRightHalfBall(
@@ -1008,10 +1009,12 @@ size_t pointToLine(
 		bufferOffsets, indicesOffsets);
 	CUDACHECK(cudaGetLastError());
 	calcHalfBall(dPointsIn, dSizesIn, dColorsIn, dGroupOffsets,
-		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 1.0f, innerColor, innerSize, 0);
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut,
+		1.0f, innerColor, innerSize, 0);
 	calcCircularTruncatedCone(
 		dPointsIn, dSizesIn, dColorsIn, dGroupOffsets, maxSizePerGroup,
-		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut, 1.0f, innerColor, innerSize, 0);
+		nGroups, bufferOffsets, indicesOffsets, dBuffer, dIndicesOut,
+		1.0f, innerColor, innerSize, 0);
 
 	size_t totalBuffers, totalIndices;
 	CUDACHECK(cudaMemcpy(&totalBuffers, bufferOffsets + nGroups,

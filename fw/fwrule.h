@@ -97,5 +97,5 @@ constexpr size_t kDefaultTwinkleArgs = kDefaultNormalArgs + kDefaultFrames;
 	AddValue("二次爆炸比率" + _x);		\
 	AddValue("子烟花横截面粒子数" + _x);
 
-constexpr size_t kDefaultMultiExplosionArgs = kDefaultNormalArgs + 2;
-#define kDynamicMultiExplosionArgs (kDynamicNormalArgs + 2)
+constexpr size_t kDefaultMultiExplosionArgs = kDefaultNormalArgs + 3;
+#define kDynamicMultiExplosionArgs (kDynamicNormalArgs + 3)

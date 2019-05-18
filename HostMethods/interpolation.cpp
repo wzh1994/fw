@@ -24,8 +24,9 @@ void interpolation(
 		for (size_t j = 0; j < size - 1; ++j) {
 			a[i * nPerGroup + j * (nInterpolation + 1)] = temp[i * size + j];
 			for (size_t k = 0; k < nInterpolation; ++k) {
-				a[i * nPerGroup + j * (nInterpolation + 1) + k] = interpolationValue(
-					temp[i * size + j], temp[i * size + j + 1], k + 1, nInterpolation + 1);
+				a[i * nPerGroup + j * (nInterpolation + 1) + k] =
+					interpolationValue(temp[i * size + j],
+						temp[i * size + j + 1], k + 1, nInterpolation + 1);
 			}
 		}
 		a[(i + 1) * nPerGroup - 1] = temp[(i + 1) * size - 1];

@@ -1,11 +1,6 @@
 #pragma once
 
-#include "firework.h"
 #include "fireworkrenderbase.h"
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include "test.h"
-#include "compare.h"
 
 namespace firework {
 
@@ -60,7 +55,7 @@ private:
 		// 先获取所有的方向, 给dDirections_赋值
 		size_t n = static_cast<size_t>(*pCrossSectionNum_);
 		nParticleGroups_ = strafeFireworkDirections(dDirections_, 5, 5);
-		show(dDirections_, 45, 15);
+		// show(dDirections_, 45, 15);
 		return nParticleGroups_;
 	}
 
@@ -81,7 +76,8 @@ private:
 
 		// 获取粒子的速度， 加速度
 		cudaMemset(dSpeed_, 0, (nFrames_ + 1) * sizeof(float));
-		cudaMemcpy(dSpeed_ + 1, pSpeed_, nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(dSpeed_ + 1, pSpeed_,
+			nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
 		cuSum(dCentrifugalPos_, dSpeed_, nFrames_ + 1);
 		scale(dCentrifugalPos_, scaleRate_ * kFrameTime, nFrames_ + 1);
 

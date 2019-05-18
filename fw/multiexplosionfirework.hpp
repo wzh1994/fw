@@ -1,10 +1,5 @@
 #pragma once
-#include "firework.h"
 #include "fireworkrenderbase.h"
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include "test.h"
-#include "compare.h"
 
 namespace firework {
 
@@ -66,7 +61,8 @@ private:
 			MULTI_EXPLOSION_RULE_VALUE(std::wstring(L""));
 		}
 
-		CUDACHECK(cudaMallocAlign(&dSubDirections_, 3 * kMaxParticleGroup * sizeof(float)));
+		CUDACHECK(cudaMallocAlign(
+			&dSubDirections_, 3 * kMaxParticleGroup * sizeof(float)));
 	}
 
 private:
@@ -83,16 +79,13 @@ private:
 		// 先获取所有的方向, 给dDirections_赋值
 		size_t n = static_cast<size_t>(*pCrossSectionNum_);
 		size_t nSub = static_cast<size_t>(*pSubCrossSectionNum_);
-		printf("%llu\n", n);
 		nDirs_ = normalFireworkDirections(dDirections_, n,
 			*pRandomRate_, *pRandomRate_, *pRandomRate_);
 		nSubDirs_ = normalFireworkDirections(dSubDirections_, nSub,
 			*pRandomRate_, *pRandomRate_, *pRandomRate_);
-		printf("%llu %f\n", nDirs_, *pDualExplosionRate_);
 		nSubGroups_ = static_cast<size_t>(
 			static_cast<float>(nDirs_) * *pDualExplosionRate_);
 		nParticleGroups_ = nDirs_ + nSubDirs_ * nSubGroups_;
-		cout << nSubGroups_ << " " << nSubDirs_  << " " << nParticleGroups_ << endl;
 		FW_ASSERT(nParticleGroups_ < kMaxParticleGroup) << sstr(
 			"We can only support ", kMaxParticleGroup,
 			" particles, however ", nParticleGroups_, "is given");
@@ -102,7 +95,6 @@ private:
 	void getPoints(int currFrame) override {
 		innerSize_ = pInnerSize_[currFrame];
 		innerColor_ = pInnerColor_[currFrame];
-		show(dStartPoses_, (nDirs_ + nSubDirs_ * nSubGroups_) * 3);
 		particleSystemToPoints(dPoints_, dColors_, dSizes_, dGroupStarts_,
 			dStartFrames_, dLifeTime_, nParticleGroups_, dDirections_,
 			dCentrifugalPos_, dStartPoses_, currFrame, nFrames_,
@@ -151,21 +143,18 @@ public:
 
 		// 获取粒子的位置
 		cudaMemset(dSpeed_, 0, (nFrames_ + 1) * sizeof(float));
-		cudaMemcpy(dSpeed_ + 1, pSpeed_, nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(dSpeed_ + 1, pSpeed_,
+			nFrames_ * sizeof(float), cudaMemcpyHostToDevice);
 		cuSum(dCentrifugalPos_, dSpeed_, nFrames_ + 1);
 		scale(dCentrifugalPos_, scaleRate_ * kFrameTime, nFrames_ + 1);
-
-		//show(dCentrifugalPos_, nFrames_ + 1);
 
 		fill(dStartPoses_, pStartPos_, nDirs_, 3);
 		scale(dStartPoses_, scaleRate_, 3 * nDirs_);
 
-		getSubFireworkPositions(dStartPoses_ + 3 * nDirs_, dDirections_, dSubDirections_,
-			nDirs_, nSubDirs_, nSubGroups_, dCentrifugalPos_, *pDualExplosionTime_,
-			*pDualExplosionTime_ * (nInterpolation_ + 1) - nInterpolation_, dShiftX_, dShiftY_);
-
-		// cudaMemset(dStartPoses_ + 3 * nDirs_, 0, nSubDirs_ * nSubGroups_ * 3 * sizeof(float));
-		//show(dStartPoses_, nParticleGroups_ * 3, nDirs_ * 3);
+		getSubFireworkPositions(dStartPoses_ + 3 * nDirs_, dDirections_,
+			dSubDirections_, nDirs_, nSubDirs_, nSubGroups_, dCentrifugalPos_,
+			*pDualExplosionTime_, *pDualExplosionTime_ * (nInterpolation_ + 1) -
+			nInterpolation_, dShiftX_, dShiftY_);
 	}
 
 public:

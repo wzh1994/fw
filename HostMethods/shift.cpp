@@ -27,6 +27,5 @@ namespace hostMethod {
 		cudaFreeAll(tempWorkSpace);
 		scale(in, time / static_cast<float>((nInterpolation + 1)),
 			numPerRow * numPerRow);
-		CUDACHECK(cudaGetLastError());
 	}
 }

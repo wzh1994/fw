@@ -30,6 +30,9 @@
     <ClInclude Include="hostmethods.hpp">
       <Filter>interface</Filter>
     </ClInclude>
+    <ClInclude Include="dummycudafunctions.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="directions.cpp">

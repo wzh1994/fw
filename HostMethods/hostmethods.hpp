@@ -15,7 +15,7 @@ namespace hostMethod {
 
 	static const float kFrameTime = 0.08333333333f;
 /*
- * 分配hosy上面的显存，以ALIGN对其
+ * 分配host上面的显存，以ALIGN对其
  * 此处名为cuda是为了方便调用者不改代码的情况下直接使用该函数。
  */
 	template <class T>
@@ -122,6 +122,25 @@ namespace hostMethod {
 		float time = kFrameTime // 两帧间隔的时间
 	);
 
+	void particleSystemToPoints(
+		float* dPoints, // 输出 起始位置 
+		float* dColors, // 输出 起始颜色
+		float* dSizes, // 输出 起始尺寸
+		size_t* dGroupStarts, // 输出 此方法将dStartFrames拷贝过来
+		const size_t* dStartFrames, // 每一组粒子的起始帧
+		const size_t* dLifeTime, // 每一组粒子的寿命
+		size_t nGroups, // 总计的粒子组数
+		const float* dDirections, // 每一组粒子的方向
+		const float* dCentrifugalPos, // 每一组粒子的初始速度
+		const float* dStartPoses, // 每一帧粒子生成时候的离心位置
+		size_t currFrame, // 当前帧数
+		size_t nFrames, // 总帧数
+		const size_t* dColorAndSizeStarts_,
+		const float* dColorMatrix, // 颜色随帧数变化的矩阵
+		const float* dSizeMatrix, // 尺寸随帧数变化的矩阵
+		float time = kFrameTime // 两帧间隔的时间
+	);
+
 	void argFirstNoneZero(size_t* matrix, size_t* result,
 		size_t nGroups, size_t size);
 
@@ -132,7 +151,9 @@ namespace hostMethod {
 		size_t nGroups, // 粒子组数
 		size_t size, // 每组粒子的个数，此方法输入的每组粒子数量相同
 		size_t* dGroupOffsets, // 输出 压缩后每组粒子位置相对于起始位置的偏移
-		size_t* dGroupStarts // 输出 压缩后的每组粒子的起始帧
+		size_t* dGroupStarts, // 输出 压缩后的每组粒子的起始帧
+		float rate = 1.0,
+		curandState* devStates = nullptr
 	);
 
 	/*
@@ -179,6 +200,39 @@ namespace hostMethod {
 		float innerSize,
 		float innerColor
 	);
+
+	/* ==================================
+	 * CircleFirework相关方法
+	 * ==================================
+	 */
+
+	// 获取normalFirework类型烟花的初始方向，返回其方向的数量
+	size_t circleFireworkDirections(
+		float* dDirections, size_t nIntersectingSurfaceParticle,
+		float* norm, float angleFromNormal = 0,
+		float xRate = 0.1, float yRate = 0.1, float zRate = 0.1,
+		float xStretch = 1, float yStretch = 1, float zStretch = 1);
+
+	/* ==================================
+	 * StrafeFirework相关方法
+	 * ==================================
+	 */
+
+	// 获取strafeFirework类型烟花的初始方向，返回其方向的数量，即粒子的组数
+	size_t strafeFireworkDirections(
+		float* dDirections, size_t nGroups, size_t size);
+
+	/* ==================================
+	 * MultiExplosionFirework相关方法
+	 * ==================================
+	 */
+	 // 获取二次爆炸的粒子的初位置
+	void getSubFireworkPositions(float* dStartPoses,
+		float* dDirections, const float* dSubDirs, size_t nDirs, size_t nSubDirs,
+		size_t nSubGroups, const float* dCentrifugalPos_, size_t startFrame,
+		size_t kShift, const float* dShiftX_, const float* dShiftY_);
+
+	inline void initRand(curandState *dev_states, size_t size) {};
 
 }
 

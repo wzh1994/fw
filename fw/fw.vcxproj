@@ -89,7 +89,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\CUDA;..\Allocator;$(IncludePath)</IncludePath>
+    <IncludePath>..\CUDA;..\Allocator;..\HostMethods;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -196,7 +196,8 @@
       <Command>copy /y "D:\GraduationProject\firework\fw\fw\fw.vs" "D:\GraduationProject\firework\fw\python"
 copy /y "D:\GraduationProject\firework\fw\fw\fw.fs" "D:\GraduationProject\firework\fw\python"
 copy /y "D:\GraduationProject\firework\fw\x64\Release\fw.dll" "D:\GraduationProject\firework\fw\python"
-copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\GraduationProject\firework\fw\python"</Command>
+copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\GraduationProject\firework\fw\python"
+copy /y "D:\GraduationProject\firework\fw\x64\Release\HostMethods.lib" "D:\GraduationProject\firework\fw\python"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -256,6 +257,9 @@ copy /y "D:\GraduationProject\firework\fw\x64\Release\Kernel.lib" "D:\Graduation
     </ProjectReference>
     <ProjectReference Include="..\CUDA\CUDA.vcxproj">
       <Project>{89982815-5f0f-489c-8314-83a5e6614230}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\HostMethods\HostMethods.vcxproj">
+      <Project>{a948741b-78c0-4f32-b47e-8610124d4658}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

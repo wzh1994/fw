@@ -13,11 +13,13 @@ namespace hostMethod {
 	) {
 		for (size_t i = 0; i < nFrames; ++i) {
 			for (size_t j = 0; j < nFrames; ++j) {
+				float colorRate = pow(colorDecay, j);
+				float sizeRate = pow(sizeDecay, j);
 				size_t idx = i * nFrames + j;
-				colorMatrix[idx * 3] = pow(startColors[3 * i], j);
-				colorMatrix[idx * 3 + 1] = pow(startColors[3 * i + 1], j);
-				colorMatrix[idx * 3 + 2] = pow(startColors[3 * i + 2], j);
-				sizeMatrix[idx] = pow(sizeMatrix[i], j);
+				colorMatrix[idx * 3] = startColors[3 * i] * colorRate;
+				colorMatrix[idx * 3 + 1] = startColors[3 * i + 1] * colorRate;
+				colorMatrix[idx * 3 + 2] = startColors[3 * i + 2] * colorRate;
+				sizeMatrix[idx] = startSizes[i] * sizeRate;
 			}
 		}
 	}
@@ -29,13 +31,16 @@ namespace hostMethod {
 			size_t shiftsize, size_t nGroups, size_t maxSize) {
 		for (size_t bid = 0; bid < nGroups; ++bid) {
 			float* basePtr = points + groupOffsets[bid] * 3;
-			size_t numPointsThisGroup = groupOffsets[bid + 1] - groupOffsets[bid];
+			size_t numPointsThisGroup =
+				groupOffsets[bid + 1] - groupOffsets[bid];
 			for (size_t tid = 0; tid < maxSize; ++tid) {
 				if (tid < numPointsThisGroup) {
 					size_t start = startFrames[bid] * (nInterpolation + 1);
-					size_t end = groupStarts[bid] * (nInterpolation + 1) + tid;
+					size_t end = (startFrames[bid] + groupStarts[bid]) * (
+						nInterpolation + 1) + tid;
 					basePtr[3 * tid] += xShiftMatrix[start * shiftsize + end];
-					basePtr[3 * tid + 1] += yShiftMatrix[start * shiftsize + end];
+					basePtr[3 * tid + 1] +=
+						yShiftMatrix[start * shiftsize + end];
 				}
 			}
 		}
@@ -44,8 +49,10 @@ namespace hostMethod {
 	void calcFinalPosition(float* dPoints, size_t nGroups, size_t maxSize,
 			size_t nInterpolation, size_t frame, const size_t* dGroupOffsets,
 			const size_t* dGroupStarts, const size_t* dStartFrames,
-			const float* dXShiftMatrix, const float* dYShiftMatrix, size_t shiftsize) {
-		calcFinalPositionImpl(dPoints, nInterpolation, frame, dGroupOffsets, dGroupStarts,
-			dStartFrames, dXShiftMatrix, dYShiftMatrix, shiftsize, nGroups, maxSize);
+			const float* dXShiftMatrix, const float* dYShiftMatrix,
+			size_t shiftsize) {
+		calcFinalPositionImpl(dPoints, nInterpolation, frame,
+			dGroupOffsets, dGroupStarts, dStartFrames, dXShiftMatrix,
+			dYShiftMatrix, shiftsize, nGroups, maxSize);
 	}
 }

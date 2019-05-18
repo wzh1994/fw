@@ -10,7 +10,8 @@ T max(T a, T b) {
 	return a > b ? a : b;
 }
 
-void judge(float* dColors, float* dSizes, size_t* indices, size_t nGroups, size_t size) {
+void judge(float* dColors, float* dSizes,
+		size_t* indices, size_t nGroups, size_t size) {
 	for (size_t i = 0; i < nGroups; ++i) {
 		for (size_t j = 0; j < size; ++j) {
 			size_t idx = i * size + j;
@@ -25,13 +26,29 @@ void judge(float* dColors, float* dSizes, size_t* indices, size_t nGroups, size_
 	}
 }
 
-void getGroupFlag(size_t *judgement, size_t* groupFlag, size_t nGroups, size_t size) {
+void getGroupFlag(size_t *judgement,
+		size_t* groupFlag, size_t nGroups, size_t size) {
 	for (size_t i = 0; i < nGroups; ++i) {
 		size_t sum = 0;
 		for (size_t j = 0; j < size; ++j) {
 			sum += judgement[i * size + j];
 		}
 		size_t flag = sum > 0 ? 1 : 0;
+		groupFlag[i] = flag;
+		for (size_t j = 0; j < size; ++j) {
+			judgement[i * size + j] &= flag;
+		}
+	}
+}
+
+void getGroupFlag(size_t *judgement, size_t* groupFlag,
+		size_t nGroups, size_t size, float rate) {
+	for (size_t i = 0; i < nGroups; ++i) {
+		size_t sum = 0;
+		for (size_t j = 0; j < size; ++j) {
+			sum += judgement[i * size + j];
+		}
+		size_t flag = sum > 0 && ((float)rand() / (float)RAND_MAX) < rate;
 		groupFlag[i] = flag;
 		for (size_t j = 0; j < size; ++j) {
 			judgement[i * size + j] &= flag;
@@ -90,7 +107,9 @@ size_t compress(
 	size_t nGroups, // 粒子组数
 	size_t size, // 每组粒子的个数，此方法输入的每组粒子数量相同
 	size_t* dGroupOffsets, // 输出 压缩后每组粒子位置相对于起始位置的偏移
-	size_t* dGroupStarts // 输出 压缩后的每组粒子的起始帧
+	size_t* dGroupStarts, // 输出 压缩后的每组粒子的起始帧
+	float rate,
+	curandState* devStates
 ) {
 	size_t *indices, *judgement, *groupFlag, *groupPos, *dNumGroup;
 	cudaMallocAlign(&judgement, nGroups * size * sizeof(size_t));
@@ -104,7 +123,12 @@ size_t compress(
 	cudaMallocAndCopy(dSizesTemp, dSizes, nGroups * size);
 
 	judge(dColors, dSizes, judgement, nGroups, size);
-	getGroupFlag(judgement, groupFlag, nGroups, size);
+	if (rate < 1.0f) {
+		getGroupFlag(judgement, groupFlag, nGroups, size, rate);
+	} else {
+		getGroupFlag(judgement, groupFlag, nGroups, size);
+	}
+
 	argFirstNoneZero(judgement, dGroupStarts, nGroups, size);
 	cuSum(indices, judgement, size * nGroups);
 	cuSum(groupPos, groupFlag, nGroups);

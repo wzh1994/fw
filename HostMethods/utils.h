@@ -24,7 +24,7 @@ inline void cudaFreeAll() {}
 
 template<class T, class ...Args>
 void cudaFreeAll(T* p, Args... args) {
-	CUDACHECK(cudaFree(p));
+	cudaFree(p);
 	cudaFreeAll(std::forward<Args>(args)...);
 }
 }
